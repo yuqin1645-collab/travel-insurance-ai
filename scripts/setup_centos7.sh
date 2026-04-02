@@ -13,19 +13,22 @@ echo "========================================"
 
 # ── 1. 安装系统依赖 ──────────────────────────────────────
 echo "[1/5] 安装系统依赖..."
-sudo yum install -y epel-release
+sudo yum install -y epel-release centos-release-scl
 sudo yum install -y \
-    gcc gcc-c++ make \
+    devtoolset-9-gcc devtoolset-9-gcc-c++ \
+    make \
     openssl-devel bzip2-devel libffi-devel zlib-devel \
     readline-devel sqlite-devel \
     wget curl git \
     poppler-utils \
     libGL libGLU
 
-# ── 2. 安装 Python 3.9（通过 IUS 源）────────────────────
+# 激活 gcc 9（仅当前 shell 生效，编译时用）
+source /opt/rh/devtoolset-9/enable
+
+# ── 2. 安装 Python 3.9 ───────────────────────────────────
 echo "[2/5] 安装 Python 3.9..."
 if ! command -v python3.9 &>/dev/null; then
-    # 方式一：从源码编译（推荐，兼容性最好）
     cd /tmp
     wget -q https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz
     tar xzf Python-3.9.18.tgz
