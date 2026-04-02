@@ -13,7 +13,24 @@ echo "========================================"
 
 # ── 1. 安装系统依赖 ──────────────────────────────────────
 echo "[1/5] 安装系统依赖..."
-sudo yum install -y epel-release centos-release-scl
+
+# CentOS 7 官方源已下线，切换到阿里云镜像
+sudo sed -i 's|mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-*.repo
+sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://mirrors.aliyun.com|g' /etc/yum.repos.d/CentOS-*.repo
+sudo yum clean all && sudo yum makecache
+
+sudo yum install -y epel-release
+# 配置 epel 也用阿里云镜像
+sudo sed -i 's|^metalink=|#metalink=|g' /etc/yum.repos.d/epel*.repo
+sudo sed -i 's|^#baseurl=https://download.fedoraproject.org/pub/epel|baseurl=https://mirrors.aliyun.com/epel|g' /etc/yum.repos.d/epel*.repo
+sudo yum clean all && sudo yum makecache
+
+# 安装 SCL（通过阿里云镜像）
+sudo yum install -y centos-release-scl
+sudo sed -i 's|mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-SCLo-*.repo 2>/dev/null || true
+sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://mirrors.aliyun.com|g' /etc/yum.repos.d/CentOS-SCLo-*.repo 2>/dev/null || true
+sudo yum clean all && sudo yum makecache
+
 sudo yum install -y \
     devtoolset-9-gcc devtoolset-9-gcc-c++ \
     make \
