@@ -1,0 +1,49 @@
+# 环境变量
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# 审核结果
+review_results/
+ai_review_results/
+
+# 下载的理赔数据
+claims_data/
+
+# 日志
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+*.diff
+
+# 缓存
+.cache/
+
+# Claude
+.claude/
+
+# 生产PID
+production.pid
+
+# 报告
+*.csv
