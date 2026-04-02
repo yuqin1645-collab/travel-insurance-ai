@@ -267,7 +267,6 @@ class ProductionWorkflow:
     def _sync_manual_status(self) -> tuple:
         """查询人工处理状态并更新数据库（同步方法，供executor调用）"""
         import os
-        import time
         import requests
         import pymysql
 
@@ -288,24 +287,44 @@ class ProductionWorkflow:
                 cur.execute("SELECT forceid FROM ai_review_result WHERE manual_status IS NULL")
                 rows = cur.fetchall()
 
-            for row in rows:
-                forceid = row["forceid"]
-                try:
-                    resp = requests.post(RESULT_API_URL, json={"forceid": forceid}, timeout=15)
-                    resp.raise_for_status()
-                    data = resp.json()
-                    if isinstance(data, list):
-                        data = data[0] if data else {}
-                    elif isinstance(data, dict):
-                        inner = data.get("data")
-                        if isinstance(inner, list):
-                            data = inner[0] if inner else {}
-                        elif isinstance(inner, dict):
-                            data = inner
+            if not rows:
+                return 0, 0
 
-                    if not data:
+            forceids = [row["forceid"] for row in rows]
+
+            # 批量查询接口
+            try:
+                resp = requests.post(
+                    RESULT_API_URL,
+                    json={"pageSize": "100", "pageIndex": "1", "data": forceids},
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                raw = resp.json()
+                if isinstance(raw, list):
+                    items = raw
+                elif isinstance(raw, dict):
+                    inner = raw.get("data")
+                    items = inner if isinstance(inner, list) else [raw]
+                else:
+                    items = []
+
+                result_map = {}
+                for item in items:
+                    if not isinstance(item, dict):
                         continue
+                    fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
+                    if fid:
+                        result_map[fid] = item
+            except Exception as e:
+                LOGGER.warning(f"批量查询人工状态接口失败: {e}")
+                return 0, len(forceids)
 
+            for forceid in forceids:
+                data = result_map.get(forceid)
+                if not data:
+                    continue
+                try:
                     sd_status = str(data.get("sd_status") or "").strip()
                     sd_cause = str(data.get("sd_cause") or "").strip()
                     rejection = str(data.get("Reimbursement_Rejection") or "").strip()
@@ -329,7 +348,6 @@ class ProductionWorkflow:
                         )
                     conn.commit()
                     success += 1
-                    time.sleep(0.3)
                 except Exception as e:
                     fail += 1
                     LOGGER.warning(f"同步人工状态失败 {forceid}: {e}")

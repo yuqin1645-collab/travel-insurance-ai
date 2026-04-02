@@ -108,33 +108,42 @@ def get_benefit_name(forceid: str) -> Optional[str]:
 
 # ── 接口查询 ─────────────────────────────────────────────────────────────────
 
-def query_manual_result(forceid: str, timeout: int = 15) -> Optional[dict]:
+def query_manual_results_batch(forceids: list, timeout: int = 30) -> dict:
     """
-    POST {"forceid": forceid} 到 Rest_AI_CLaim_Result，返回响应 dict 或 None。
-    接口可能返回 list（取第一条）或 dict。
+    批量查询人工处理状态。
+    POST {"pageSize":"100","pageIndex":"1","data":[forceid1, forceid2, ...]}
+    返回 {forceid: result_dict} 映射。
     """
     try:
         resp = requests.post(
             RESULT_API_URL,
-            json={"forceid": forceid},
+            json={"pageSize": "100", "pageIndex": "1", "data": forceids},
             timeout=timeout,
         )
         resp.raise_for_status()
-        data = resp.json()
-        if isinstance(data, list):
-            return data[0] if data else None
-        if isinstance(data, dict):
-            # 有些接口把结果包在 data 字段里
-            inner = data.get("data")
-            if isinstance(inner, list):
-                return inner[0] if inner else None
-            if isinstance(inner, dict):
-                return inner
-            return data
-        return None
+        raw = resp.json()
+
+        # 提取结果列表
+        if isinstance(raw, list):
+            items = raw
+        elif isinstance(raw, dict):
+            inner = raw.get("data")
+            items = inner if isinstance(inner, list) else [raw]
+        else:
+            return {}
+
+        # 以 forceid 为 key 建立映射
+        result_map = {}
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
+            if fid:
+                result_map[fid] = item
+        return result_map
     except Exception as e:
-        print(f"  [警告] 查询接口失败 forceid={forceid}: {e}")
-        return None
+        print(f"  [警告] 批量查询接口失败: {e}")
+        return {}
 
 
 # ── 状态映射 ─────────────────────────────────────────────────────────────────
@@ -187,6 +196,12 @@ def main() -> int:
         return 0
 
     success = fail = skip = 0
+    forceids = [row["forceid"] for row in rows]
+
+    # 批量查询接口
+    print(f"批量查询接口，共 {len(forceids)} 个 forceid...")
+    result_map = query_manual_results_batch(forceids)
+    print(f"接口返回 {len(result_map)} 条结果")
 
     for row in rows:
         forceid = row["forceid"]
@@ -194,12 +209,10 @@ def main() -> int:
         # benefit_name 从本地 claim_info.json 读取
         benefit_name = get_benefit_name(forceid)
 
-        # 查询人工状态
-        result = query_manual_result(forceid)
+        result = result_map.get(forceid)
         if result is None:
             skip += 1
             print(f"  [跳过] {forceid}: 接口无返回")
-            # 即使接口无返回，也更新 benefit_name
             if benefit_name:
                 update_row(conn, forceid, benefit_name, None, None, args.dry_run)
             continue
@@ -213,9 +226,6 @@ def main() -> int:
         except Exception as e:
             fail += 1
             print(f"  ✗ {forceid}: 写入失败 {e}")
-
-        if args.sleep > 0:
-            time.sleep(args.sleep)
 
     conn.close()
 
