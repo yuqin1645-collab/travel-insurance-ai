@@ -1,5 +1,6 @@
 requests
 python-dotenv
+urllib3<2
 
 # 异步HTTP请求
 aiohttp>=3.8.0

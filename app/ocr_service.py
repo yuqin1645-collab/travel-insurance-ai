@@ -168,7 +168,7 @@ class BaiduOCR(OCRProvider):
 class OCRService:
     """OCR服务管理器"""
     
-    def __init__(self, provider: str = None, use_cache: bool = None, cache_namespace: str | None = None):
+    def __init__(self, provider: str = None, use_cache: bool = None, cache_namespace: Optional[str] = None):
         """
         初始化OCR服务
         

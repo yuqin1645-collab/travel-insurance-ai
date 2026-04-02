@@ -22,7 +22,7 @@ class OCRCache:
         cache_dir: Path = None,
         enabled: bool = None,
         expire_days: int = None,
-        namespace: str | None = None,
+        namespace: Optional[str] = None,
     ):
         """
         初始化缓存管理器

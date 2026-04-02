@@ -1649,7 +1649,7 @@ async def main_async():
         main_retry_sleep = float(os.getenv("MAIN_RETRY_SLEEP_SEC", "3"))
 
         async def _run_with_retry(claim_folder: Path, idx: int) -> Optional[Dict]:
-            last_exc: Exception | None = None
+            last_exc: Optional[Exception] = None
             for attempt in range(1, max(1, main_max_retries) + 1):
                 try:
                     return await review_claim_async(
