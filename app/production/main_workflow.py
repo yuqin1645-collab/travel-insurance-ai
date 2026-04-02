@@ -284,7 +284,7 @@ class ProductionWorkflow:
         success = fail = 0
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT forceid FROM ai_review_result WHERE manual_status IS NULL")
+                cur.execute("SELECT forceid FROM ai_review_result")
                 rows = cur.fetchall()
 
             if not rows:
