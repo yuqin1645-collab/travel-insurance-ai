@@ -150,25 +150,25 @@ def query_manual_results_batch(forceids: list, timeout: int = 30) -> dict:
 
 def map_manual_status(result: dict) -> tuple[Optional[str], Optional[str]]:
     """
-    根据接口返回字段判断人工状态和结论：
-      - sd_status 有值 → 需补齐资料，结论取 sd_cause
-      - Reimbursement_Rejection 有值 → 拒绝，结论取 Reimbursement_Rejection
-      - Approved_amount 有值 → 通过，结论取 Approved_amount
-    优先级：补件 > 拒绝 > 通过
+    根据接口返回的 Final_Status 字段判断人工状态：
+      - 事后理赔拒赔         → 拒绝，结论取 Assessment_Remark
+      - 待补件               → 需补齐资料，结论取 Supplementary_Reason
+      - 支付成功             → 通过，结论取 Approved_amount
+      - 其他中间状态（线上理赔初审等）→ 通过（人工尚未最终审核，先按通过计，后续覆盖）
     """
-    sd_status = str(result.get("sd_status") or "").strip()
-    sd_cause = str(result.get("sd_cause") or "").strip()
-    rejection = str(result.get("Reimbursement_Rejection") or "").strip()
+    final_status = str(result.get("Final_Status") or "").strip()
+    supplementary_reason = str(result.get("Supplementary_Reason") or "").strip()
     approved = str(result.get("Approved_amount") or "").strip()
 
-    if sd_status:
-        return "需补齐资料", sd_cause or sd_status
-    if rejection:
-        return "拒绝", rejection
-    if approved:
+    if final_status == "事后理赔拒赔":
+        return "拒绝", str(result.get("Assessment_Remark") or "").strip()
+    if final_status == "待补件":
+        return "需补齐资料", supplementary_reason
+    if final_status == "支付成功":
         return "通过", approved
 
-    return None, None
+    # 非最终状态（如线上理赔初审），先按通过处理
+    return "通过", final_status
 
 
 # ── 主流程 ───────────────────────────────────────────────────────────────────
@@ -222,10 +222,10 @@ def main() -> int:
         try:
             update_row(conn, forceid, benefit_name, manual_status, manual_conclusion, args.dry_run)
             success += 1
-            print(f"  ✓ {forceid}: status={manual_status} benefit={benefit_name}")
+            print(f"  OK {forceid}: status={manual_status} benefit={benefit_name}")
         except Exception as e:
             fail += 1
-            print(f"  ✗ {forceid}: 写入失败 {e}")
+            print(f"  FAIL {forceid}: 写入失败 {e}")
 
     conn.close()
 

@@ -325,19 +325,20 @@ class ProductionWorkflow:
                 if not data:
                     continue
                 try:
-                    sd_status = str(data.get("sd_status") or "").strip()
-                    sd_cause = str(data.get("sd_cause") or "").strip()
-                    rejection = str(data.get("Reimbursement_Rejection") or "").strip()
+                    final_status = str(data.get("Final_Status") or "").strip()
+                    supplementary_reason = str(data.get("Supplementary_Reason") or "").strip()
                     approved = str(data.get("Approved_amount") or "").strip()
+                    assessment_remark = str(data.get("Assessment_Remark") or "").strip()
 
-                    if sd_status:
-                        manual_status, manual_conclusion = "需补齐资料", sd_cause or sd_status
-                    elif rejection:
-                        manual_status, manual_conclusion = "拒绝", rejection
-                    elif approved:
+                    if final_status == "事后理赔拒赔":
+                        manual_status, manual_conclusion = "拒绝", assessment_remark
+                    elif final_status == "待补件":
+                        manual_status, manual_conclusion = "需补齐资料", supplementary_reason
+                    elif final_status == "支付成功":
                         manual_status, manual_conclusion = "通过", approved
                     else:
-                        continue
+                        # 非最终状态（如线上理赔初审），先按通过处理，后续同步会覆盖
+                        manual_status, manual_conclusion = "通过", final_status
 
                     with conn.cursor() as cur:
                         cur.execute(
