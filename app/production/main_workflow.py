@@ -337,8 +337,8 @@ class ProductionWorkflow:
                     elif final_status == "支付成功":
                         manual_status, manual_conclusion = "通过", approved
                     else:
-                        # 非最终状态（如线上理赔初审），先按通过处理，后续同步会覆盖
-                        manual_status, manual_conclusion = "通过", final_status
+                        # 非最终状态（如线上理赔初审），标记为待定，前端过滤
+                        manual_status, manual_conclusion = "待定", final_status
 
                     with conn.cursor() as cur:
                         cur.execute(

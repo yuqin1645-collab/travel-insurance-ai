@@ -167,8 +167,8 @@ def map_manual_status(result: dict) -> tuple[Optional[str], Optional[str]]:
     if final_status == "支付成功":
         return "通过", approved
 
-    # 非最终状态（如线上理赔初审），先按通过处理
-    return "通过", final_status
+    # 非最终状态（如线上理赔初审），标记为待定，前端过滤
+    return "待定", final_status
 
 
 # ── 主流程 ───────────────────────────────────────────────────────────────────
