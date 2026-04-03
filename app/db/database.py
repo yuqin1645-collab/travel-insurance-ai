@@ -393,6 +393,8 @@ class SupplementaryDAO:
         async with self.db.get_connection() as conn:
             async with conn.cursor() as cursor:
                 record_dict = record.to_dict()
+                # 排除 id 字段（自增主键，不能显式插入 None）
+                record_dict = {k: v for k, v in record_dict.items() if k != 'id'}
                 keys = list(record_dict.keys())
                 placeholders = ['%s'] * len(keys)
                 values = list(record_dict.values())
