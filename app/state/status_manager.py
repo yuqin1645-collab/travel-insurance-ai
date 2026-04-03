@@ -273,8 +273,9 @@ class StatusManager:
         if not updated:
             return False, f"更新审核状态失败: {forceid}"
 
-        # 保存审核结果
-        await self._save_review_result(forceid, review_result, review_status)
+        # 保存审核结果（失败时不写空记录）
+        if success and review_result:
+            await self._save_review_result(forceid, review_result, review_status)
 
         # 更新整体状态
         if review_status == ReviewStatus.COMPLETED:
