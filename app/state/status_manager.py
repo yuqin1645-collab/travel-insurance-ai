@@ -5,6 +5,7 @@
 负责案件状态的创建、更新和查询
 """
 
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Tuple
@@ -508,7 +509,7 @@ class StatusManager:
             claim_id=review_result.get("claim_id"),
             remark=review_result.get("Remark", ""),
             is_additional=review_result.get("IsAdditional", "Y"),
-            key_conclusions=review_result.get("KeyConclusions"),
+            key_conclusions=json.dumps(review_result.get("KeyConclusions", []), ensure_ascii=False) if review_result.get("KeyConclusions") is not None else None,
             raw_result=str(review_result),
             audit_status=review_status,
             supplementary_count=review_result.get("supplementary_count", 0),

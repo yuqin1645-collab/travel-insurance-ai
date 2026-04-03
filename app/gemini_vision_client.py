@@ -8,7 +8,7 @@ Gemini Vision API客户端
 import os
 import base64
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import aiohttp
 from app.config import config
 
