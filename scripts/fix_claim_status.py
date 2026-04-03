@@ -44,7 +44,12 @@ print("=== 修复前状态 ===")
 with conn.cursor() as cur:
     cur.execute("SELECT forceid, current_status, download_status, review_status, next_check_time, error_message FROM ai_claim_status ORDER BY created_at")
     for row in cur.fetchall():
-        print(f"  {row['forceid']}: current={row['current_status']}, download={row['download_status']}, review={row['review_status']}, next_check={row['next_check_time']}")
+        fid = row["forceid"]
+        cs = row["current_status"]
+        ds = row["download_status"]
+        rs = row["review_status"]
+        nc = row["next_check_time"]
+        print("  %s: current=%s, download=%s, review=%s, next_check=%s" % (fid, cs, ds, rs, nc))
 
 print("\n=== 执行修复 ===")
 with conn.cursor() as cur:
@@ -73,7 +78,7 @@ with conn.cursor() as cur:
                    WHERE forceid = %s""",
                 (datetime(2026, 1, 1), datetime.now(), forceid)
             )
-        print(f"  已重置: {forceid}")
+        print("  已重置: %s" % forceid)
 
 conn.commit()
 
@@ -81,7 +86,12 @@ print("\n=== 修复后状态 ===")
 with conn.cursor() as cur:
     cur.execute("SELECT forceid, current_status, download_status, review_status, next_check_time, error_message FROM ai_claim_status ORDER BY created_at")
     for row in cur.fetchall():
-        print(f"  {row['forceid']}: current={row['current_status']}, download={row['download_status']}, review={row['review_status']}, next_check={row['next_check_time']}")
+        fid = row["forceid"]
+        cs = row["current_status"]
+        ds = row["download_status"]
+        rs = row["review_status"]
+        nc = row["next_check_time"]
+        print("  %s: current=%s, download=%s, review=%s, next_check=%s" % (fid, cs, ds, rs, nc))
 
 conn.close()
 print("\n修复完成！")
