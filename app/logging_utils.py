@@ -11,6 +11,7 @@ def setup_logger() -> logging.Logger:
         return logger
 
     logger.setLevel(logging.INFO)
+    logger.propagate = False  # 不向 root logger 传播，防止日志重复输出
 
     class _SafeExtraFormatter(logging.Formatter):
         """确保日志记录即使缺少 forceid/stage/attempt 也不会 KeyError。"""
