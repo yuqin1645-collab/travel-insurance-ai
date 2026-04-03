@@ -1,28 +1,27 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""检查 ai_claim_status 表中所有案件的详细状态"""
+"""检查 ai_claim_status 和 ai_review_result 表状态"""
 
 import os
 import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv(ROOT / ".env")
-except ImportError:
-    pass
-
 import pymysql
 
+# 读取 .env 文件
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 conn = pymysql.connect(
-    host=os.getenv("DB_HOST", ""),
-    port=int(os.getenv("DB_PORT", "3306")),
-    user=os.getenv("DB_USER", ""),
-    password=os.getenv("DB_PASSWORD", ""),
-    database=os.getenv("DB_NAME", "ai"),
+    host=os.environ.get("DB_HOST", ""),
+    port=int(os.environ.get("DB_PORT", "3306")),
+    user=os.environ.get("DB_USER", ""),
+    password=os.environ.get("DB_PASSWORD", ""),
+    database=os.environ.get("DB_NAME", "ai"),
     charset="utf8mb4",
     cursorclass=pymysql.cursors.DictCursor,
 )
