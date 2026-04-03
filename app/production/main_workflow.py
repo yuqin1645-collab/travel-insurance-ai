@@ -230,31 +230,20 @@ class ProductionWorkflow:
                         if not forceid:
                             continue
                         claim_info = info_cache.get(forceid, {})
-                        audit = data.get("flight_delay_audit") or data.get("DebugInfo", {}).get("flight_delay_audit") or {}
-                        audit_result = audit.get("audit_result", "")
-                        benefit_name = claim_info.get("BenefitName") or claim_info.get("benefit_name") or ""
-                        remark = (data.get("Remark") or "")[:2000]
-                        is_additional = str(data.get("IsAdditional", "N"))[:1]
-                        key_conclusions = json.dumps(data.get("KeyConclusions", []), ensure_ascii=False)
-                        raw_result = json.dumps(data, ensure_ascii=False)
-                        claim_id = data.get("ClaimId") or data.get("claim_id") or claim_info.get("ClaimId") or ""
-                        cur.execute(
-                            """INSERT INTO ai_review_result
-                               (forceid, claim_id, benefit_name, remark, is_additional,
-                                audit_result, key_conclusions, raw_result)
-                               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-                               ON DUPLICATE KEY UPDATE
-                                 claim_id=VALUES(claim_id),
-                                 benefit_name=VALUES(benefit_name),
-                                 remark=VALUES(remark),
-                                 is_additional=VALUES(is_additional),
-                                 audit_result=VALUES(audit_result),
-                                 key_conclusions=VALUES(key_conclusions),
-                                 raw_result=VALUES(raw_result),
-                                 updated_at=CURRENT_TIMESTAMP""",
-                            (forceid, claim_id, benefit_name, remark, is_additional,
-                             audit_result, key_conclusions, raw_result)
+                        fields = self._extract_review_fields(data, claim_info)
+
+                        # 构建完整字段列表
+                        keys = list(fields.keys())
+                        placeholders = ", ".join(["%s"] * len(keys))
+                        update_clause = ", ".join(
+                            [f"{k}=VALUES({k})" for k in keys if k != "forceid"]
                         )
+                        sql = (
+                            f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                            f"VALUES ({placeholders}) "
+                            f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
+                        )
+                        cur.execute(sql, list(fields.values()))
                         success += 1
                     except Exception as e:
                         fail += 1
@@ -263,6 +252,194 @@ class ProductionWorkflow:
         finally:
             conn.close()
         return success, fail
+
+    @staticmethod
+    def _parse_dt(value):
+        """解析日期时间字符串，返回 datetime 或 None"""
+        if not value:
+            return None
+        from datetime import datetime as _dt
+        if isinstance(value, _dt):
+            return value
+        try:
+            return _dt.fromisoformat(str(value).replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+    def _extract_review_fields(self, data: dict, claim_info: dict) -> dict:
+        """从审核结果JSON提取所有数据库字段"""
+        import json
+        from datetime import datetime as _dt
+
+        fields = {
+            "forceid": data.get("forceid", ""),
+            "claim_id": (
+                data.get("ClaimId") or data.get("claim_id")
+                or claim_info.get("ClaimId") or ""
+            ),
+        }
+
+        # benefit_name
+        fields["benefit_name"] = (
+            claim_info.get("BenefitName") or claim_info.get("benefit_name") or ""
+        )
+
+        # flight_delay_audit 部分
+        audit = (
+            data.get("flight_delay_audit")
+            or data.get("DebugInfo", {}).get("flight_delay_audit")
+            or {}
+        )
+        if audit:
+            fields["audit_result"] = audit.get("audit_result", "")
+            fields["audit_status"] = "completed" if audit.get("audit_result") else "pending"
+            fields["confidence_score"] = audit.get("confidence_score")
+            fields["audit_time"] = _dt.now() if audit.get("audit_result") else None
+            fields["auditor"] = "AI系统"
+
+            # 逻辑校验
+            logic_check = audit.get("logic_check", {})
+            fields["identity_match"] = "Y" if logic_check.get("identity_match") else "N"
+            fields["threshold_met"] = "Y" if logic_check.get("threshold_met") else "N"
+            fields["exclusion_triggered"] = "Y" if logic_check.get("exclusion_triggered") else "N"
+            fields["exclusion_reason"] = logic_check.get("exclusion_reason", "")
+
+            # key_data
+            key_data = audit.get("key_data", {})
+            fields["passenger_name"] = key_data.get("passenger_name", "")
+            fields["delay_duration_minutes"] = key_data.get("delay_duration_minutes")
+            fields["delay_reason"] = key_data.get("reason", "")
+
+            # 赔付
+            payout = audit.get("payout_suggestion", {})
+            fields["payout_amount"] = payout.get("amount")
+            fields["payout_currency"] = payout.get("currency", "CNY")
+            fields["payout_basis"] = payout.get("basis", "")
+
+            # 说明
+            fields["decision_reason"] = audit.get("explanation", "")
+            fields["final_decision"] = audit.get("final_decision", "")
+
+        # DebugInfo 部分
+        debug_info = data.get("DebugInfo", {})
+
+        # flight_delay_parse - 最完整的数据源
+        parse = debug_info.get("flight_delay_parse", {})
+        if parse:
+            # 乘客信息
+            passenger = parse.get("passenger", {})
+            if not fields.get("passenger_name"):
+                fields["passenger_name"] = passenger.get("name", "")
+            fields["passenger_id_type"] = passenger.get("id_type", "")
+            fields["passenger_id_number"] = passenger.get("id_number", "")
+
+            # 保单信息
+            policy_hint = parse.get("policy_hint", {})
+            fields["policy_no"] = policy_hint.get("policy_no", "")
+            fields["insurer"] = policy_hint.get("insurer", "")
+            fields["policy_effective_date"] = policy_hint.get("policy_effective_date")
+            fields["policy_expiry_date"] = policy_hint.get("policy_expiry_date")
+
+            # 航班信息
+            flight = parse.get("flight", {})
+            if not fields.get("flight_no"):
+                fields["flight_no"] = (
+                    flight.get("ticket_flight_no") or flight.get("operating_flight_no", "")
+                )
+            fields["operating_carrier"] = flight.get("operating_carrier", "")
+
+            # 航线信息
+            route = parse.get("route", {})
+            if not fields.get("dep_iata"):
+                fields["dep_iata"] = route.get("dep_iata", "")
+            if not fields.get("arr_iata"):
+                fields["arr_iata"] = route.get("arr_iata", "")
+            fields["dep_city"] = route.get("dep_city", "")
+            fields["arr_city"] = route.get("arr_city", "")
+            fields["dep_country"] = route.get("dep_country", "")
+            fields["arr_country"] = route.get("arr_country", "")
+
+            # 时间信息
+            schedule = parse.get("schedule_local", {})
+            actual = parse.get("actual_local", {})
+            alt = parse.get("alternate_local", {})
+            fields["planned_dep_time"] = self._parse_dt(schedule.get("planned_dep"))
+            fields["planned_arr_time"] = self._parse_dt(schedule.get("planned_arr"))
+            fields["actual_dep_time"] = self._parse_dt(actual.get("actual_dep"))
+            fields["actual_arr_time"] = self._parse_dt(actual.get("actual_arr"))
+            fields["alt_dep_time"] = self._parse_dt(alt.get("alt_dep"))
+            fields["alt_arr_time"] = self._parse_dt(alt.get("alt_arr"))
+
+        # flight_delay_aviation_lookup - 航班数据补充
+        lookup = debug_info.get("flight_delay_aviation_lookup", {})
+        if lookup:
+            if not fields.get("flight_no"):
+                fields["flight_no"] = lookup.get("flight_no", "")
+            if not fields.get("dep_iata"):
+                fields["dep_iata"] = lookup.get("dep_iata", "")
+            if not fields.get("arr_iata"):
+                fields["arr_iata"] = lookup.get("arr_iata", "")
+            if not fields.get("planned_dep_time"):
+                fields["planned_dep_time"] = self._parse_dt(lookup.get("planned_dep"))
+            if not fields.get("planned_arr_time"):
+                fields["planned_arr_time"] = self._parse_dt(lookup.get("planned_arr"))
+            if not fields.get("actual_dep_time"):
+                fields["actual_dep_time"] = self._parse_dt(lookup.get("actual_dep"))
+            if not fields.get("actual_arr_time"):
+                fields["actual_arr_time"] = self._parse_dt(lookup.get("actual_arr"))
+            if not fields.get("delay_duration_minutes"):
+                fields["delay_duration_minutes"] = lookup.get("delay_minutes")
+            if lookup.get("status") == "取消":
+                fields["delay_type"] = "cancelled"
+
+        # flight_delay_vision_extract - 视觉提取补充
+        vision = debug_info.get("flight_delay_vision_extract", {})
+        if vision:
+            flights_found = vision.get("all_flights_found", [])
+            if flights_found and not fields.get("flight_no"):
+                first = flights_found[0]
+                fields["flight_no"] = first.get("flight_no", "")
+                if not fields.get("dep_iata"):
+                    fields["dep_iata"] = first.get("dep_iata", "")
+                if not fields.get("arr_iata"):
+                    fields["arr_iata"] = first.get("arr_iata", "")
+
+        # flight_delay_payout - 赔付信息补充
+        payout_info = debug_info.get("flight_delay_payout", {})
+        if payout_info:
+            if not fields.get("insured_amount"):
+                fields["insured_amount"] = payout_info.get("insured_amount")
+            if not fields.get("remaining_coverage"):
+                fields["remaining_coverage"] = payout_info.get("remaining_coverage")
+
+        # claim_info 补充（本地文件）
+        if claim_info:
+            if not fields.get("insured_amount"):
+                fields["insured_amount"] = claim_info.get("Insured_Amount") or claim_info.get("Amount")
+            if not fields.get("remaining_coverage"):
+                fields["remaining_coverage"] = claim_info.get("Remaining_Coverage")
+            if not fields.get("policy_no"):
+                fields["policy_no"] = claim_info.get("PolicyNo", "")
+            if not fields.get("insurer"):
+                fields["insurer"] = claim_info.get("Insurance_Company", "")
+            if not fields.get("passenger_name"):
+                fields["passenger_name"] = claim_info.get("Applicant_Name", "")
+
+        # 基础字段
+        fields["remark"] = (data.get("Remark") or "")[:2000]
+        fields["is_additional"] = str(data.get("IsAdditional", "N"))[:1]
+        fields["supplementary_count"] = data.get("supplementary_count", 0)
+        fields["supplementary_reason"] = data.get("supplementary_reason") or data.get("Remark", "") if data.get("IsAdditional") == "Y" else ""
+        fields["key_conclusions"] = json.dumps(data.get("KeyConclusions", []), ensure_ascii=False)
+        fields["raw_result"] = json.dumps(data, ensure_ascii=False)
+
+        # 去掉 None 键（避免向不存在的列写数据），但保���空字符串
+        fields = {k: v for k, v in fields.items() if v is not None or k in (
+            "passenger_name", "flight_no", "dep_iata", "arr_iata",
+            "audit_result", "remark", "is_additional",
+        )}
+
+        return fields
 
     def _sync_manual_status(self) -> tuple:
         """查询人工处理状态并更新数据库（同步方法，供executor调用）"""
