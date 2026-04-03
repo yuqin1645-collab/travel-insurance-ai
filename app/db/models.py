@@ -306,10 +306,9 @@ class SupplementaryRecord:
         for key, value in data.items():
             if isinstance(value, datetime):
                 data[key] = value.isoformat()
-        if self.required_materials:
-            data['required_materials'] = json.dumps(self.required_materials, ensure_ascii=False)
-        if self.completed_materials:
-            data['completed_materials'] = json.dumps(self.completed_materials, ensure_ascii=False)
+        # 始终序列化 list 字段，空列表也序列化为 "[]"，避免直接传 Python list 给 MySQL
+        data['required_materials'] = json.dumps(self.required_materials or [], ensure_ascii=False)
+        data['completed_materials'] = json.dumps(self.completed_materials, ensure_ascii=False) if self.completed_materials else None
         return data
 
     @classmethod
