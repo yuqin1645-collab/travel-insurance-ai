@@ -100,8 +100,13 @@ class ClaimDownloader:
                         records = data[key]
                         break
                 if not records:
-                    print(f"[警告] 未识别的 API 返回格式: {type(data)}")
-                    break
+                    # 尝试把 dict 本身当作单条记录（API 只返回一条案件时）
+                    if data.get("CaseNo") or data.get("forceid") or data.get("Id"):
+                        records = [data]
+                        print(f"[信息] API 返回单条记录 dict，已按单条处理")
+                    else:
+                        print(f"[警告] 未识别的 API 返回格式: {type(data)}，keys={list(data.keys())[:10]}")
+                        break
 
             all_claims.extend(records)
 
