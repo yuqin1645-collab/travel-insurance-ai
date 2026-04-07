@@ -102,18 +102,57 @@ class IncrementalDownloadScheduler:
         log_id = await self.scheduler_log_dao.create_log(log)
 
         try:
-            # 用 ClaimDownloader 拉取并下载（在线程池里跑同步代码）
+            # 在下载前，先从接口拉取本次返回的案件列表，
+            # 识别出"已补件待审核"状态的案件，清空其进度文件下载记录，强制重新下载补件材料
             from scripts.download_claims import ClaimDownloader
+            import requests as _requests
+
+            # 接口补件状态标识
+            SUPPLEMENTARY_SUBMITTED_STATUS = {"已补件待审核"}
+
+            try:
+                _resp = _requests.post(self.api_url, json={}, timeout=30)
+                _resp.raise_for_status()
+                _raw = _resp.json()
+                if isinstance(_raw, list):
+                    _api_claims = _raw
+                elif isinstance(_raw, dict):
+                    _api_claims = _raw.get("records") or _raw.get("data") or _raw.get("claims") or []
+                else:
+                    _api_claims = []
+            except Exception as _e:
+                LOGGER.warning(f"预拉取接口数据失败（不影响下载）: {_e}")
+                _api_claims = []
+
+            # 加载进度文件，识别补件案件并清空其下载记录
             downloader = ClaimDownloader(
                 api_url=self.api_url,
                 output_dir=str(self.output_dir),
                 force_refresh=False,
             )
+            _supplementary_forceids = set()
+            for _claim in _api_claims:
+                _final_status = str(_claim.get("Final_Status") or _claim.get("final_status") or "").strip()
+                _case_no = str(
+                    _claim.get("CaseNo") or _claim.get("caseNo") or
+                    _claim.get("PolicyNo") or _claim.get("policyNo") or ""
+                ).strip()
+                _forceid = str(_claim.get("forceid") or _claim.get("Id") or "").strip()
+                if _final_status in SUPPLEMENTARY_SUBMITTED_STATUS and _case_no in downloader.progress:
+                    # 清空下载记录，让 ClaimDownloader 重新下载补件材料
+                    downloader.progress[_case_no]["downloadedFiles"] = []
+                    downloader.progress[_case_no]["failedFiles"] = []
+                    downloader.progress[_case_no]["status"] = "pending"
+                    if _forceid:
+                        _supplementary_forceids.add(_forceid)
+                    LOGGER.info(f"识别到补件案件，清空下载记录准备重新下载: {_case_no} (forceid={_forceid})")
+            if _supplementary_forceids:
+                downloader._save_progress()
 
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, downloader.run, {})
 
-            # 把下载完成的案件注册到状态管理器（供 review_scheduler 发现）
+            # 把下载完成的案件注册/更新到状态管理器（供 review_scheduler 发现）
             new_count = 0
             for case_no, record in downloader.progress.items():
                 if record.get("status") not in ("completed", "partial"):
@@ -132,11 +171,11 @@ class IncrementalDownloadScheduler:
                             pass
                 if not forceid:
                     continue
-                # 检查状态管理器里是否已有记录，避免重复注册
+                benefit_name = record.get("benefitName", "")
+                claim_type = "flight_delay" if "延误" in benefit_name else "baggage_damage"
                 existing = await self.status_manager.get_claim_status(forceid)
                 if existing is None:
-                    benefit_name = record.get("benefitName", "")
-                    claim_type = "flight_delay" if "延误" in benefit_name else "baggage_damage"
+                    # 全新案件：注册到审核队列
                     await self.status_manager.create_claim_status(
                         claim_id=case_no,
                         forceid=forceid,
@@ -144,6 +183,15 @@ class IncrementalDownloadScheduler:
                         initial_status=ClaimStatus.DOWNLOADED,
                     )
                     LOGGER.info(f"注册新案件到审核队列: {forceid} ({claim_type})")
+                    new_count += 1
+                elif forceid in _supplementary_forceids:
+                    # 补件重新下载完成：推回 downloaded 状态等待重新审核
+                    await self.status_manager.update_claim_status(
+                        forceid,
+                        ClaimStatus.DOWNLOADED,
+                        "补件材料已重新下载，等待重新审核"
+                    )
+                    LOGGER.info(f"补件案件重新入队: {forceid} ({claim_type})")
                     new_count += 1
 
             await self.scheduler_log_dao.update_log(

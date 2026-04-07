@@ -58,18 +58,19 @@ class ClaimStateMachine:
         ClaimStatus.DOWNLOAD_FAILED: [ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.ERROR],
 
         ClaimStatus.REVIEW_PENDING: [ClaimStatus.REVIEWING, ClaimStatus.ERROR],
-        ClaimStatus.REVIEWING: [ClaimStatus.REVIEWED, ClaimStatus.SUPPLEMENTARY_NEEDED, ClaimStatus.ERROR],
+        ClaimStatus.REVIEWING: [ClaimStatus.REVIEWED, ClaimStatus.SUPPLEMENTARY_NEEDED, ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.ERROR],
         ClaimStatus.REVIEWED: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.SUPPLEMENTARY_NEEDED],
 
-        ClaimStatus.SUPPLEMENTARY_NEEDED: [ClaimStatus.PENDING_SUPPLEMENTARY, ClaimStatus.REJECTED],
+        # 补件流转：支持外部确认补件已收到后直接重新入队（跳过中间环节）
+        ClaimStatus.SUPPLEMENTARY_NEEDED: [ClaimStatus.PENDING_SUPPLEMENTARY, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
         ClaimStatus.PENDING_SUPPLEMENTARY: [ClaimStatus.SUPPLEMENTARY_RECEIVED, ClaimStatus.REJECTED],
-        ClaimStatus.SUPPLEMENTARY_RECEIVED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.REJECTED],
+        ClaimStatus.SUPPLEMENTARY_RECEIVED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
 
         ClaimStatus.APPROVED: [ClaimStatus.COMPLETED],
         ClaimStatus.REJECTED: [ClaimStatus.COMPLETED],
         ClaimStatus.COMPLETED: [],
 
-        ClaimStatus.ERROR: [ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.REVIEW_PENDING],
+        ClaimStatus.ERROR: [ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOADED],
         ClaimStatus.MAX_RETRIES_EXCEEDED: [ClaimStatus.REJECTED],
     }
 
