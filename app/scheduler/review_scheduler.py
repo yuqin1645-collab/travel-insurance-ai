@@ -117,6 +117,19 @@ class ReviewScheduler:
                         )
                         LOGGER.info(f"审核结果已保存: {result_file}")
 
+                        # 推送审核结果到前端接口
+                        try:
+                            from app.output.frontend_pusher import push_to_frontend
+                            import aiohttp as _aiohttp
+                            async with _aiohttp.ClientSession() as _session:
+                                push_result = await push_to_frontend(result, _session)
+                            if push_result.get("success"):
+                                LOGGER.info(f"✓ 推送前端成功: {forceid}")
+                            else:
+                                LOGGER.warning(f"推送前端失败: {forceid}, 响应: {push_result.get('response', '')[:200]}")
+                        except Exception as _push_err:
+                            LOGGER.warning(f"推送前端异常: {forceid}, 错误: {_push_err}")
+
                     # 更新审核结果
                     success, message = await self.status_manager.update_review_status(
                         forceid,
