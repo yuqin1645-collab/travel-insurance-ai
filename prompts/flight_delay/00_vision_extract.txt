@@ -155,6 +155,8 @@
 }}
 
 ## 说明
+- **itinerary_segments**：仅列出与**本次理赔所指的延误/取消航段**直接相关的行程段（通常为去程该段的原定航班与改签结果）。不要把「返程」航班作为 segment_no=2 与去程改签混在同一延误链条里；返程仅在 all_flights_found 中列出并注明「返程」，在 extraction_notes 中说明即可，**禁止**把返程日期/时刻填入 alternate.alt_dep、alternate.alt_arr 或误当作改签后的替代航班。
+- **alternate.alt_dep / alt_arr**：必须与「行程变动后的新航班」同一航段、同一日期（除非材料明确跨日改签）；时间为**当地**时刻；若材料无 UTC 偏移，输出格式仍用 YYYY-MM-DD HH:MM（系统会按出发机场时区解析），**切勿**把返程航班的到达/起飞时刻填到去程改签的 alt 字段。
 - **先枚举、再判断**：不要在看到第一个航班号时就直接填入 flight_no，必须先完成 all_flights_found 的枚举，再根据角色判定规则填写 flight_no 和 alternate
 - **多程行程**：itinerary_segments 按程次顺序列出，flight_no 取触发延误险的那一程（通常是取消/延误的那程）
 - **保护航班**：若材料中出现"保护航班""如需乘坐请及时致电航司确认座位"等字样，必须提取到 protection_flight，并执行 protection_check

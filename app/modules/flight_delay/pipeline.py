@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -411,11 +412,17 @@ async def review_flight_delay_async(
                     f"[{forceid}] 接驳航班飞常准查询成功: {alt_fn} {alt_dep_date} -> {alt_aviation.get('status')}",
                     extra=log_extra(forceid=forceid, stage="fd_alt_aviation_lookup", attempt=0),
                 )
-                # 将接驳航班实际到达时间回填 alternate_local.alt_arr（若当前为 unknown）
+                # 将接驳航班实际到达时间回填 alternate_local.alt_arr：
+                # 与 alt_dep 一致：当前为 unknown，或当前值无时区（材料常为本地时刻串，误当 UTC 会拉长「到达口径」延误）
                 actual_arr = alt_aviation.get("actual_arr")
-                if actual_arr and _is_unknown(alt_local.get("alt_arr")):
+                alt_arr_current = str(alt_local.get("alt_arr") or "")
+                alt_arr_needs_fill = (
+                    _is_unknown(alt_local.get("alt_arr"))
+                    or "unknown" in alt_arr_current.lower()
+                    or not _has_timezone(alt_arr_current)
+                )
+                if actual_arr and alt_arr_needs_fill:
                     parsed.setdefault("alternate_local", {})["alt_arr"] = actual_arr
-                    # 同时回填 actual_local（用于兜底计算）
                     parsed.setdefault("actual_local", {})["actual_arr"] = actual_arr
                 # 将接驳航班实际起飞时间回填 alternate_local.alt_dep（优先用 actual_dep）
                 # 条件：当前为 unknown，或当前值不含时区信息（飞常准数据含时区更准确）
@@ -1283,9 +1290,14 @@ def _parse_utc_dt(value: Any) -> Optional[datetime]:
     if not value:
         return None
     if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return None
         return value.astimezone(timezone.utc)
     s = str(value).strip()
     if not s or s.lower() == "unknown":
+        return None
+    # 无时区后缀的字符串不得当作 UTC（否则会把「材料上的本地时刻」误解析成 UTC，导致取长原则算出过大的延误）
+    if not _has_timezone(s):
         return None
     # 常见格式：
     # - 2026-02-26 15:49Z
@@ -1297,7 +1309,7 @@ def _parse_utc_dt(value: Any) -> Optional[datetime]:
     try:
         dt = datetime.fromisoformat(s2)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            return None
         return dt.astimezone(timezone.utc)
     except Exception:
         return None
@@ -1345,6 +1357,29 @@ def _parse_local_dt(value: Any, tz_hint: Any) -> Optional[datetime]:
     return None
 
 
+def _parse_local_dt_iana(value: Any, iana_tz: Optional[str]) -> Optional[datetime]:
+    """将无时区的本地时间串按 IANA 时区（如 Asia/Makassar）解析为 UTC。"""
+    if not value or not iana_tz or str(iana_tz).strip().lower() in ("", "unknown"):
+        return None
+    s = str(value).strip()
+    if not s or s.lower() == "unknown":
+        return None
+    # 已含显式偏移的交给 _parse_utc_dt
+    if _has_timezone(s):
+        return None
+    try:
+        zi = ZoneInfo(str(iana_tz).strip())
+    except Exception:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
+        try:
+            dt = datetime.strptime(s[:19], fmt)
+            return dt.replace(tzinfo=zi).astimezone(timezone.utc)
+        except Exception:
+            continue
+    return None
+
+
 def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
     """
     按规则"取长原则"计算延误分钟数：
@@ -1356,40 +1391,44 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
     schedule_local = (parsed or {}).get("schedule_local") or {}
     alternate_local = (parsed or {}).get("alternate_local") or {}
     actual_local = (parsed or {}).get("actual_local") or {}
+    # 出发地机场 IANA 时区：用于解析「无时区后缀」的材料/模型输出的本地时刻
+    _route = (parsed or {}).get("route") or {}
+    _dep_iata = str(_route.get("dep_iata") or "").strip().upper()
+    _airport_iana: Optional[str] = None
+    if _dep_iata and _dep_iata not in ("UNKNOWN", "NULL", "NONE", ""):
+        _ap = resolve_country(_dep_iata)
+        if _ap.get("found") and str(_ap.get("timezone") or "").lower() != "unknown":
+            _airport_iana = str(_ap["timezone"])
 
     planned_dep_utc = (
         _parse_utc_dt(utc.get("planned_dep_utc"))
         or _parse_utc_dt(schedule_local.get("planned_dep"))
-        or _parse_local_dt(schedule_local.get("planned_dep"), schedule_local.get("timezone_hint"))
+        or _parse_local_dt_iana(schedule_local.get("planned_dep"), _airport_iana)
     )
     planned_arr_utc = (
         _parse_utc_dt(utc.get("planned_arr_utc"))
         or _parse_utc_dt(schedule_local.get("planned_arr"))
-        or _parse_local_dt(schedule_local.get("planned_arr"), schedule_local.get("timezone_hint"))
+        or _parse_local_dt_iana(schedule_local.get("planned_arr"), _airport_iana)
     )
-    # alt 时间优先用 alternate_local.timezone_hint，若为 unknown 则 fallback 用出发地时区
-    _alt_tz_hint = alternate_local.get("timezone_hint") or ""
-    if not _alt_tz_hint or _alt_tz_hint.lower() == "unknown":
-        _alt_tz_hint = schedule_local.get("timezone_hint") or ""
+    # alt/actual 时间：同样优先用显式 UTC（含时区后缀的 ISO 串），否则统一按出发地机场时区解析
+    # 注意：不走 _parse_local_dt(..., timezone_hint)，因为 material_hint 多为 unknown 导致解析失败
     alt_dep_utc = (
         _parse_utc_dt(utc.get("alt_dep_utc"))
-        or _parse_local_dt(alternate_local.get("alt_dep"), _alt_tz_hint)
+        or _parse_utc_dt(alternate_local.get("alt_dep"))
+        or _parse_local_dt_iana(alternate_local.get("alt_dep"), _airport_iana)
     )
     alt_arr_utc = (
         _parse_utc_dt(utc.get("alt_arr_utc"))
-        or _parse_local_dt(alternate_local.get("alt_arr"), _alt_tz_hint)
+        or _parse_utc_dt(alternate_local.get("alt_arr"))
+        or _parse_local_dt_iana(alternate_local.get("alt_arr"), _airport_iana)
     )
-    # 飞常准实际时间（ISO8601含时区，直接解析；无时区则 fallback 用出发地时区）
-    _actual_tz_hint = actual_local.get("timezone_hint") or ""
-    if not _actual_tz_hint or _actual_tz_hint.lower() == "unknown":
-        _actual_tz_hint = schedule_local.get("timezone_hint") or ""
     actual_dep_utc = (
         _parse_utc_dt(actual_local.get("actual_dep"))
-        or _parse_local_dt(actual_local.get("actual_dep"), _actual_tz_hint)
+        or _parse_local_dt_iana(actual_local.get("actual_dep"), _airport_iana)
     )
     actual_arr_utc = (
         _parse_utc_dt(actual_local.get("actual_arr"))
-        or _parse_local_dt(actual_local.get("actual_arr"), _actual_tz_hint)
+        or _parse_local_dt_iana(actual_local.get("actual_arr"), _airport_iana)
     )
 
     a_minutes: Optional[int] = None

@@ -13,7 +13,7 @@ Skill H/E/F/G/I: 保单/客票/材料相关 Skills
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from app.logging_utils import LOGGER
@@ -156,18 +156,23 @@ def check_delay_in_coverage(
     applied_from_dt = ef_dt
     applied_to_dt = et_dt
     used_extension = False
+    extension_type = ""  # "顺延" 或 "提前"
 
-    # 安联顺延逻辑（顺延以天为单位，生效/满期各加相同天数）
+    # 安联顺延/提前生效逻辑（顺延以天为单位，生效/满期各加相同天数）
+    # 场景1：出境时间晚于生效日（推迟）：保单生效日和满期日都顺延
+    # 场景2：出境时间早于生效日（提前出境）：保单生效日和满期日都提前，但保障期限保持不变
     if is_allianz and first_exit_date:
         fex = _parse_date_str(first_exit_date)
         ef_date_only = ef_dt.date()
-        if fex and fex > ef_date_only:
+        if fex:
             diff_days = (fex - ef_date_only).days
-            if diff_days <= 15:
-                from datetime import timedelta
+            # 仅在出境时间与生效日差距在 ±15 天内时允许调整
+            if abs(diff_days) <= 15:
                 applied_from_dt = applied_from_dt + timedelta(days=diff_days)
+                # 满期日也相应调整，确保保障期限长度不变
                 applied_to_dt = applied_to_dt + timedelta(days=diff_days)
                 used_extension = True
+                extension_type = "顺延" if diff_days > 0 else "提前"
 
     in_coverage = applied_from_dt <= delay_dt <= applied_to_dt
 
@@ -180,7 +185,7 @@ def check_delay_in_coverage(
             f"原出发航班计划起飞时间 {delay_dt.strftime('%Y-%m-%d %H:%M')} "
             f"{'在' if in_coverage else '不在'}保单有效期 "
             f"{applied_from_dt.strftime('%Y-%m-%d %H:%M')}~{applied_to_dt.strftime('%Y-%m-%d %H:%M')} 内"
-            + ("（已应用安联顺延规则）" if used_extension else "")
+            + (f"（已应用安联{extension_type}规则，出境时间与原生效日相差{abs(diff_days)}天）" if used_extension else "")
         ),
     }
 
