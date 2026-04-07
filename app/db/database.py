@@ -163,16 +163,15 @@ class ClaimStatusDAO:
                 return [ClaimStatusRecord.from_dict(row) for row in rows]
 
     async def get_pending_reviews(self, limit: int = 10) -> List[ClaimStatusRecord]:
-        """获取待审核的案件（已下载但未审核完成的案件）"""
+        """获取待审核的案件（仅限已下载但尚未开始审核的案件）"""
         async with self.db.get_connection() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 await cursor.execute(
                     f"""SELECT * FROM {TABLE_CLAIM_STATUS}
-                        WHERE current_status IN (%s, %s, %s, %s)
+                        WHERE current_status IN (%s, %s)
                         AND (next_check_time IS NULL OR next_check_time <= %s)
                         ORDER BY created_at ASC LIMIT %s""",
-                    (ClaimStatus.DOWNLOADED, ClaimStatus.REVIEW_PENDING, ClaimStatus.REVIEWING,
-                     ClaimStatus.SUPPLEMENTARY_NEEDED, datetime.now(), limit)
+                    (ClaimStatus.DOWNLOADED, ClaimStatus.REVIEW_PENDING, datetime.now(), limit)
                 )
                 rows = await cursor.fetchall()
                 return [ClaimStatusRecord.from_dict(row) for row in rows]
