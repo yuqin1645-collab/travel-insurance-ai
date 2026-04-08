@@ -208,11 +208,28 @@ class ClaimDownloader:
         case_dir = self._get_case_dir(benefit_name, case_no)
         existing_record = self.progress.get(case_no, {})
 
-        # force_refresh 模式：仅删除旧 claim_info.json，附件文件不重新下载
+        # force_refresh 模式：删除旧 claim_info.json，附件文件也重新下载
         if self.force_refresh:
             claim_info_path_old = case_dir / "claim_info.json"
             if claim_info_path_old.exists():
                 claim_info_path_old.unlink()
+            existing_record["downloadedFiles"] = []
+            existing_record["failedFiles"] = []
+            existing_record["status"] = "pending"
+            print(f"    [强制刷新] 清除下载进度，重新下载所有附件")
+
+        # ---------- 自愈检查：进度文件说「已完成」但磁盘没有材料文件 → 重置状态 ----------
+        # 防止：磁盘文件被误删 / 进度文件损坏 / 之前某次下载中途失败
+        if existing_record.get("status") == "completed" and len(files) > 0:
+            has_real_files = any(
+                f.is_file() and f.name != "claim_info.json"
+                for f in case_dir.iterdir()
+            ) if case_dir.exists() else False
+            if not has_real_files:
+                print(f"    [自愈] 进度标记已完成但磁盘无材料文件，重置下载状态")
+                existing_record["downloadedFiles"] = []
+                existing_record["failedFiles"] = []
+                existing_record["status"] = "pending"
 
         # ---------- 将案件基本信息写入 claim_info.json ----------
         claim_info_path = case_dir / "claim_info.json"
