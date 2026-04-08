@@ -154,6 +154,20 @@ def sync_to_db(results: list[dict], dry_run: bool = False) -> tuple[int, int]:
     return success, fail
 
 
+def sync_review_to_db_for_forceid(review_result: dict) -> bool:
+    """
+    根据审核结果 dict 同步到数据库（覆盖写入）。
+    用于 rerun_redownloaded.py 在单个案件重审后调用。
+    返回 True 表示成功，False 表示失败。
+    """
+    try:
+        success, fail = sync_to_db([review_result], dry_run=False)
+        return fail == 0
+    except Exception as e:
+        print(f"[DB同步异常] forceid={review_result.get('forceid')}: {e}")
+        return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="同步AI审核结果到数据库")
     parser.add_argument("--dry-run", action="store_true", help="仅预览，不写入")
