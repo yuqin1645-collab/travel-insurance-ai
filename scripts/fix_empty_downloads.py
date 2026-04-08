@@ -33,14 +33,26 @@ for case_no, record in progress.items():
     file_list = record.get("fileList", [])
 
     # 条件：status=completed 但 downloadedFiles 为空（附件没有下载）
-    # 同时原始 fileList 不为空（有附件需要下载）
+    # 同时 fileList 不为空（有附件需要下载）
     if status == "completed" and len(downloaded_files) == 0 and len(file_list) > 0:
-        print(f"  重置案件: {case_no} | 姓名: {record.get('insured_And_Policy', record.get('applicantName', ''))} | fileList数量: {len(file_list)}")
-        record["downloadedFiles"] = []
-        record["failedFiles"] = []
-        record["status"] = "pending"
-        record["totalFiles"] = len(file_list)
-        reset_count += 1
+        # 进一步确认磁盘上确实没有文件（防止误判）
+        import sys, os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        from app.config import config
+        benefit_name = record.get("benefitName", "")
+        case_dir = config.CLAIMS_DATA_DIR / benefit_name / f"{benefit_name}-案件号【{case_no}】"
+        if not case_dir.exists() or not any(
+            f.is_file() and f.name != "claim_info.json"
+            for f in case_dir.iterdir()
+        ):
+            print(f"  重置案件: {case_no} | fileList数量: {len(file_list)}")
+            record["downloadedFiles"] = []
+            record["failedFiles"] = []
+            record["status"] = "pending"
+            record["totalFiles"] = len(file_list)
+            reset_count += 1
+        else:
+            print(f"  忽略（磁盘文件已存在）: {case_no}")
 
 print(f"\n共重置 {reset_count} 个案件")
 

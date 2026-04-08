@@ -169,14 +169,22 @@ class ClaimDownloader:
         """返回案件文件夹路径，格式：{output_dir}/{BenefitName}/{BenefitName}-案件号【{CaseNo}】"""
         return self.output_dir / benefit_name / f"{benefit_name}-案件号【{case_no}】"
 
-    def _is_file_downloaded(self, case_no: str, file_id: str) -> bool:
-        """判断某个文件是否已经成功下载（按文件 ID 去掉扩展名后匹配）"""
+    def _is_file_downloaded(self, case_no: str, file_id: str, case_dir: Path) -> bool:
+        """判断某个文件是否已经成功下载。
+        验证逻辑：① 进度文件记录了 ID  ② 磁盘上对应文件真实存在（防止记录存在但文件已丢失）
+        """
         record = self.progress.get(case_no, {})
         downloaded = record.get("downloadedFiles", [])
-        # downloadedFiles 中 A 类文件存的是无扩展名的 ID，B 类存带扩展名的文件名
-        # 统一用去掉扩展名后的 stem 比较
         file_stem = Path(file_id).stem
-        return any(Path(f).stem == file_stem for f in downloaded)
+        if not any(Path(f).stem == file_stem for f in downloaded):
+            return False
+        # 进度文件有记录 → 再验证磁盘上文件是否真实存在
+        if not case_dir.exists():
+            return False
+        for f in case_dir.iterdir():
+            if f.is_file() and f.stem == file_stem:
+                return True
+        return False
 
     def process_claim(self, claim: Dict) -> None:
         """处理单条理赔记录：只下载缺失/失败的文件，并更新进度 JSON 中的新增字段"""
@@ -241,6 +249,9 @@ class ClaimDownloader:
             if progress_key not in protected_keys:
                 existing_record[progress_key] = v
 
+        # 记录本次 API 返回的 fileList（用于 fix_empty_downloads 判断「是否真的应该有附件」）
+        existing_record["fileList"] = files
+
         # 补齐固定字段
         existing_record.setdefault("applicantName", applicant_name)
         existing_record.setdefault("benefitName", benefit_name)
@@ -260,7 +271,7 @@ class ClaimDownloader:
         # 需要下载 = 未下载 + 上次失败
         files_to_download = [
             f for f in files
-            if not self._is_file_downloaded(case_no, self._get_file_id(f))
+            if not self._is_file_downloaded(case_no, self._get_file_id(f), case_dir)
         ]
 
         if not files_to_download:
