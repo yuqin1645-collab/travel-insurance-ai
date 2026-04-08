@@ -55,7 +55,11 @@ def scan_redownloaded_cases() -> list[dict]:
 
     results = []
 
+    # 诊断计数
+    diag = dict(total=0, no_material=0, concluded=0, no_forceid=0, no_rerun_needed=0, will_rerun=0)
+
     for case_no, record in progress.items():
+        diag["total"] += 1
         status = record.get("status", "")
         total_files = record.get("totalFiles", 0)
         downloaded_files = record.get("downloadedFiles", [])
@@ -63,12 +67,16 @@ def scan_redownloaded_cases() -> list[dict]:
 
         # 只处理「已有材料」的案件（totalFiles > 0 且 downloadedFiles 非空）
         if total_files == 0 or len(downloaded_files) == 0:
+            diag["no_material"] += 1
+            print(f"  [筛掉-无材料] {case_no}: totalFiles={total_files}, downloaded={len(downloaded_files)}")
             continue
 
         # 跳过结案状态
         final_status = str(record.get("final_Status") or record.get("final_status") or "").strip()
         CONCLUDED = {"零结关案", "支付成功", "事后理赔拒赔", "取消理赔", "结案待财务付款"}
         if final_status in CONCLUDED:
+            diag["concluded"] += 1
+            print(f"  [筛掉-结案] {case_no}: final_status={final_status}")
             continue
 
         # 通过 forceid 找案件目录
@@ -85,6 +93,8 @@ def scan_redownloaded_cases() -> list[dict]:
                     pass
 
         if not forceid:
+            diag["no_forceid"] += 1
+            print(f"  [筛掉-无forceid] {case_no}")
             continue
 
         claim_folder = config.CLAIMS_DATA_DIR / benefit_name / f"{benefit_name}-案件号【{case_no}】"
@@ -106,16 +116,18 @@ def scan_redownloaded_cases() -> list[dict]:
                 if review_mtime < completed_dt:
                     need_rerun = True
                     reason = f"审核结果旧于下载完成时间（审核: {review_mtime.strftime('%m-%d %H:%M')}, 下载: {completed_dt.strftime('%m-%d %H:%M')}）"
+                else:
+                    diag["no_rerun_needed"] += 1
+                    print(f"  [筛掉-已是新审核] {case_no} / {forceid}: 审核({review_mtime.strftime('%m-%d %H:%M')}) >= 下载({completed_dt.strftime('%m-%d %H:%M')})")
             except Exception:
-                # 无法比较时间，安全起见重审
                 need_rerun = True
-                reason = "无法比较时间（重审）"
+                reason = "时间解析异常（重审）"
         else:
-            # 没有下载完成时间，无法判断新旧，但有材料没审核 → 重审
             need_rerun = True
-            reason = "无法判断新旧，有材料待审"
+            reason = "无下载完成时间，但有材料待审"
 
         if need_rerun:
+            diag["will_rerun"] += 1
             results.append({
                 "forceid": forceid,
                 "case_no": case_no,
@@ -123,6 +135,13 @@ def scan_redownloaded_cases() -> list[dict]:
                 "claim_folder": claim_folder,
                 "reason": reason,
             })
+
+    print(f"\n  扫描摘要（共 {diag['total']} 条记录）:")
+    print(f"    无材料跳过:      {diag['no_material']}")
+    print(f"    结案状态跳过:    {diag['concluded']}")
+    print(f"    无 forceid 跳过: {diag['no_forceid']}")
+    print(f"    已是最新审核:    {diag['no_rerun_needed']}")
+    print(f"    将重新审核:      {diag['will_rerun']}")
 
     return results
 
