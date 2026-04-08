@@ -65,10 +65,18 @@ def scan_redownloaded_cases() -> list[dict]:
         downloaded_files = record.get("downloadedFiles", [])
         benefit_name = record.get("benefitName", "")
 
-        # 只处理「已有材料」的案件（totalFiles > 0 且 downloadedFiles 非空）
-        if total_files == 0 or len(downloaded_files) == 0:
-            diag["no_material"] += 1
-            print(f"  [筛掉-无材料] {case_no}: totalFiles={total_files}, downloaded={len(downloaded_files)}")
+        # 只处理「已有材料」的案件（downloadedFiles 非空即为已下载）
+        # 注意：totalFiles 可能为 0 但 downloadedFiles 非空的情况（如下载器漏填 totalFiles）
+        # 下载器漏填 totalFiles 时，从 fileList 长度推断
+        if len(downloaded_files) == 0:
+            file_list = record.get("fileList", [])
+            # 有 fileList 但 downloadedFiles 为空：下载器还没下载完，先跳过，等下载完再重审
+            if file_list:
+                diag["no_material"] += 1
+                print(f"  [筛掉-下载中] {case_no}: fileList={len(file_list)} 个URL，但下载尚未完成（downloaded=0）")
+            else:
+                diag["no_material"] += 1
+                print(f"  [筛掉-无材料] {case_no}: totalFiles={total_files}, downloaded={len(downloaded_files)}")
             continue
 
         # 跳过结案状态
