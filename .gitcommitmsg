@@ -1,0 +1,13 @@
+feat: 同步服务器最新代码
+
+主要更新：
+- 新增行李延误(baggage_delay)审核模块（pipeline + module + prompts）
+- 优化航班延误审核流程（时区解析、数据提取）
+- 增强下载任务：文件下载重试机制（3次重试，2秒间隔）
+- 修复 claim_ai_reviewer 和 material_extractor
+- 完善调度器错误处理和兜底注册逻辑
+- 新增 rerun_single 单案件重审脚本
+- 新增 debug_delay_calc 延误计算调试脚本
+- 更新文档和流程说明
+
+不包含：venv、.env、claims_data、review_results、logs
