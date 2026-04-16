@@ -63,7 +63,7 @@ class ClaimStateMachine:
 
         # 补件流转：支持外部确认补件已收到后直接重新入队（跳过中间环节）
         ClaimStatus.SUPPLEMENTARY_NEEDED: [ClaimStatus.PENDING_SUPPLEMENTARY, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
-        ClaimStatus.PENDING_SUPPLEMENTARY: [ClaimStatus.SUPPLEMENTARY_RECEIVED, ClaimStatus.REJECTED],
+        ClaimStatus.PENDING_SUPPLEMENTARY: [ClaimStatus.SUPPLEMENTARY_RECEIVED, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
         ClaimStatus.SUPPLEMENTARY_RECEIVED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
 
         ClaimStatus.APPROVED: [ClaimStatus.COMPLETED],

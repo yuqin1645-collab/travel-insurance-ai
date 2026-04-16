@@ -378,7 +378,11 @@ class ClaimDownloader:
             time.sleep(0.2)  # 适当限速，避免被服务端限流
 
         # ---------- 更新进度 ----------
-        existing_record["downloadedFiles"] = downloaded_files + newly_downloaded
+        # 合并后去重（以 stem 为唯一键），防止补件重新下载时文件名重复累积
+        merged = {Path(f).stem: f for f in downloaded_files}
+        for f in newly_downloaded:
+            merged[Path(f).stem] = f
+        existing_record["downloadedFiles"] = list(merged.values())
         existing_record["failedFiles"] = list(set(failed_files + newly_failed))
 
         all_done = len(existing_record["downloadedFiles"]) >= len(files) and not existing_record["failedFiles"]

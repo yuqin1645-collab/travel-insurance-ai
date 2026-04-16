@@ -227,7 +227,7 @@ class IncrementalDownloadScheduler:
                         LOGGER.info(f"Registered new case to review queue: {forceid} ({claim_type})")
                         new_count += 1
                     elif forceid in _supplementary_forceids:
-                        # Supplementary materials redownloaded: enqueue for re-review
+                        # 补件材料已重新下载：推进到 DOWNLOADED 重新入队审核
                         await self.status_manager.update_claim_status(
                             forceid,
                             ClaimStatus.DOWNLOADED,
@@ -235,6 +235,36 @@ class IncrementalDownloadScheduler:
                         )
                         LOGGER.info(f"Supplementary case re-queued: {forceid} ({claim_type})")
                         new_count += 1
+                    else:
+                        # 案件已存在，检查是否卡在补件中间状态（需要强制推进）
+                        # 场景：API 返回"待补件"但案件状态机已卡在 SUPPLEMENTARY_NEEDED/
+                        #       PENDING_SUPPLEMENTARY/SUPPLEMENTARY_RECEIVED，无法自动进入审核队列
+                        stuck_supplementary_statuses = {
+                            ClaimStatus.SUPPLEMENTARY_NEEDED,
+                            ClaimStatus.PENDING_SUPPLEMENTARY,
+                            ClaimStatus.SUPPLEMENTARY_RECEIVED,
+                        }
+                        current_status = getattr(existing, "current_status", None)
+                        api_final_status = record.get("final_Status") or record.get("finalStatus") or ""
+                        # 若 API 显示"已补件待审核"但状态机未更新，或案件卡在补件中间态，
+                        # 且文件已下载完成 → 强制推进到 DOWNLOADED
+                        if current_status in stuck_supplementary_statuses:
+                            try:
+                                await self.status_manager.update_claim_status(
+                                    forceid,
+                                    ClaimStatus.DOWNLOADED,
+                                    f"强制推进：案件卡在 {current_status}，文件已完成下载，重新入队审核"
+                                )
+                                LOGGER.info(
+                                    f"Stuck supplementary case force-requeued: {forceid} "
+                                    f"({current_status} -> DOWNLOADED)"
+                                )
+                                new_count += 1
+                            except Exception as force_err:
+                                LOGGER.warning(
+                                    f"Force-requeue failed for {forceid} "
+                                    f"(current={current_status}): {force_err}"
+                                )
                 except Exception as reg_err:
                     LOGGER.error(
                         f"Failed to register claim status; skip and continue: "
