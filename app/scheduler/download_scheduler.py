@@ -214,26 +214,33 @@ class IncrementalDownloadScheduler:
                     continue
                 benefit_name = record.get("benefitName", "")
                 claim_type = _detect_claim_type(benefit_name=benefit_name)
-                existing = await self.status_manager.get_claim_status(forceid)
-                if existing is None:
-                    # 全新案件：注册到审核队列
-                    await self.status_manager.create_claim_status(
-                        claim_id=case_no,
-                        forceid=forceid,
-                        claim_type=claim_type,
-                        initial_status=ClaimStatus.DOWNLOADED,
+                try:
+                    existing = await self.status_manager.get_claim_status(forceid)
+                    if existing is None:
+                        # New case: register to review queue
+                        await self.status_manager.create_claim_status(
+                            claim_id=case_no,
+                            forceid=forceid,
+                            claim_type=claim_type,
+                            initial_status=ClaimStatus.DOWNLOADED,
+                        )
+                        LOGGER.info(f"Registered new case to review queue: {forceid} ({claim_type})")
+                        new_count += 1
+                    elif forceid in _supplementary_forceids:
+                        # Supplementary materials redownloaded: enqueue for re-review
+                        await self.status_manager.update_claim_status(
+                            forceid,
+                            ClaimStatus.DOWNLOADED,
+                            "Supplementary materials redownloaded, waiting for re-review"
+                        )
+                        LOGGER.info(f"Supplementary case re-queued: {forceid} ({claim_type})")
+                        new_count += 1
+                except Exception as reg_err:
+                    LOGGER.error(
+                        f"Failed to register claim status; skip and continue: "
+                        f"forceid={forceid}, claim_id={case_no}, error={reg_err}"
                     )
-                    LOGGER.info(f"注册新案件到审核队列: {forceid} ({claim_type})")
-                    new_count += 1
-                elif forceid in _supplementary_forceids:
-                    # 补件重新下载完成：推回 downloaded 状态等待重新审核
-                    await self.status_manager.update_claim_status(
-                        forceid,
-                        ClaimStatus.DOWNLOADED,
-                        "补件材料已重新下载，等待重新审核"
-                    )
-                    LOGGER.info(f"补件案件重新入队: {forceid} ({claim_type})")
-                    new_count += 1
+                    continue
 
             await self.scheduler_log_dao.update_log(
                 log_id, TaskStatus.SUCCESS, new_count, new_count, 0, None

@@ -148,6 +148,15 @@ class ClaimStatusDAO:
                 row = await cursor.fetchone()
                 return ClaimStatusRecord.from_dict(row) if row else None
 
+    async def get_status_by_claim_id(self, claim_id: str) -> Optional[ClaimStatusRecord]:
+        """根据 claim_id 获取案件状态"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT * FROM {TABLE_CLAIM_STATUS} WHERE claim_id = %s", (claim_id,)
+                )
+                row = await cursor.fetchone()
+                return ClaimStatusRecord.from_dict(row) if row else None
     async def get_pending_downloads(self, limit: int = 10) -> List[ClaimStatusRecord]:
         """获取待下载的案件（仅限尚未下载完成的案件）"""
         async with self.db.get_connection() as conn:
@@ -535,3 +544,4 @@ def get_supplementary_dao() -> SupplementaryDAO:
 def get_scheduler_log_dao() -> SchedulerLogDAO:
     """获取任务日志DAO"""
     return SchedulerLogDAO(_db_connection)
+
