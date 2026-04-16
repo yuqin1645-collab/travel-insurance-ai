@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Gemini Vision API客户端
+Vision API客户端
 支持直接上传图片和PDF文件进行多模态审核
 """
 
 import os
+import asyncio
 import base64
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import aiohttp
 from app.config import config
+
+_VISION_GLOBAL_CONCURRENCY = max(1, int(getattr(config, 'VISION_GLOBAL_CONCURRENCY', 6) or 6))
+_VISION_SEMAPHORE = asyncio.Semaphore(_VISION_GLOBAL_CONCURRENCY)
+_VISION_INFLIGHT = 0
 
 
 class GeminiVisionClient:
@@ -66,56 +71,25 @@ class GeminiVisionClient:
         session: Optional[aiohttp.ClientSession] = None
     ) -> Dict:
         """
-        使用Gemini Vision审核材料
-        
-        Args:
-            material_files: 材料文件列表(图片、PDF等)
-            prompt: 审核提示词
-            session: aiohttp会话
-        
-        Returns:
-            审核结果
+        Review claim materials with Vision API.
         """
-        # 构建消息内容
-        # 先对 prompt 做控制字符过滤，防止模型输出中含非法 JSON 控制字符导致解析失败
         import re as _re
         prompt_clean = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", prompt)
         content_parts = [{"type": "text", "text": prompt_clean}]
-        
-        # 添加所有材料文件
+
         for file_path in material_files:
             if not file_path.exists():
                 continue
-            
-            # 编码文件
             mime_type = self._get_mime_type(file_path)
             file_data = self._encode_file_base64(file_path)
-            
             data_url = f"data:{mime_type};base64,{file_data}"
-
-            # OpenRouter: 图片使用 image_url；PDF使用 file（Universal PDF Support）
             if mime_type.startswith("image/"):
-                content_parts.append({
-                    "type": "image_url",
-                    "image_url": {"url": data_url}
-                })
+                content_parts.append({"type": "image_url", "image_url": {"url": data_url}})
             elif mime_type == "application/pdf":
-                content_parts.append({
-                    "type": "file",
-                    "file": {"url": data_url}
-                })
-            else:
-                # 其他类型暂不发送
-                continue
-        
-        messages = [
-            {
-                "role": "user",
-                "content": content_parts
-            }
-        ]
+                content_parts.append({"type": "file", "file": {"url": data_url}})
 
-        # 根据 provider 选择对应的视觉模型
+        messages = [{"role": "user", "content": content_parts}]
+
         if self.provider == 'openrouter':
             vision_model = getattr(config, 'MODEL_VISION_OPENROUTER', 'google/gemini-2.5-pro-preview')
         else:
@@ -126,12 +100,9 @@ class GeminiVisionClient:
             "temperature": 0.1,
             "max_tokens": 8000,
         }
-
-        # OpenRouter 支持 response_format，DashScope 可能不支持
         if self.provider == 'openrouter':
             payload["response_format"] = {"type": "json_object"}
-        
-        # 如果没有提供session,创建临时session
+
         close_session = False
         if session is None:
             connector = aiohttp.TCPConnector()
@@ -140,53 +111,53 @@ class GeminiVisionClient:
                 trust_env=True
             )
             close_session = True
-        
+
         try:
-            # 代理：优先读环境变量，读不到则依赖 trust_env=True 自动使用系统代理
             proxy = (
                 os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
                 or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
             ) or None
 
-            async with session.post(
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                proxy=proxy if proxy else None,
-                ssl=False if proxy else None,  # 仅在明确指定代理时跳过SSL验证
-                timeout=aiohttp.ClientTimeout(total=300)
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    print(f"Gemini Vision API错误:")
-                    print(f"  状态码: {response.status}")
-                    print(f"  响应: {error_text[:500]}")
-                response.raise_for_status()
-                raw_bytes = await response.read()
-                import json as _json
-                # 先尝试正常解析；若报控制字符错误则过滤后重试一次
+            global _VISION_INFLIGHT
+            async with _VISION_SEMAPHORE:
+                _VISION_INFLIGHT += 1
                 try:
-                    result = _json.loads(raw_bytes.decode('utf-8'))
-                except _json.JSONDecodeError as _je:
-                    if "control character" in str(_je).lower():
-                        # 过滤响应文本中的控制字符后重试
-                        cleaned = raw_bytes.decode('utf-8', errors='replace')
-                        import re as _re
-                        cleaned = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
-                        result = _json.loads(cleaned)
-                    else:
-                        raise
-                
-                # 提取内容
-                content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+                    print(f"Vision API request start(provider={self.provider}, inflight={_VISION_INFLIGHT}/{_VISION_GLOBAL_CONCURRENCY})")
+                    async with session.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=self.headers,
+                        json=payload,
+                        proxy=proxy if proxy else None,
+                        ssl=False if proxy else None,
+                        timeout=aiohttp.ClientTimeout(total=300)
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            print(f"Vision API error(provider={self.provider}):")
+                            print(f"  status: {response.status}")
+                            print(f"  response: {error_text[:500]}")
+                        response.raise_for_status()
+                        raw_bytes = await response.read()
+                        import json as _json
+                        try:
+                            result = _json.loads(raw_bytes.decode('utf-8'))
+                        except _json.JSONDecodeError as _je:
+                            if "control character" in str(_je).lower():
+                                cleaned = raw_bytes.decode('utf-8', errors='replace')
+                                cleaned = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
+                                result = _json.loads(cleaned)
+                            else:
+                                raise
 
-                # 解析 JSON（兼容模型偶发输出前后带少量文本/代码围栏）
-                return self._parse_json_object_from_content(content)
-        
+                        content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+                        return self._parse_json_object_from_content(content)
+                finally:
+                    _VISION_INFLIGHT = max(0, _VISION_INFLIGHT - 1)
+
         except Exception as e:
-            print(f"Gemini Vision API调用失败: {e}")
+            print(f"Vision API call failed(provider={self.provider}): {e}")
             raise
-        
+
         finally:
             if close_session:
                 await session.close()

@@ -73,6 +73,8 @@ class ReviewScheduler:
                 status_filter=[ClaimStatus.DOWNLOADED, ClaimStatus.REVIEW_PENDING],
                 limit=limit
             )
+            queue_depth = len(pending_claims)
+            LOGGER.info(f"review queue snapshot: pending={queue_depth}, limit={limit}, configured_batch_size={self.batch_size}")
 
             if not pending_claims:
                 LOGGER.info("没有待审核案件")
@@ -84,7 +86,9 @@ class ReviewScheduler:
             LOGGER.info(f"找到 {len(pending_claims)} 个待审核案件")
 
             # 2. 批量审核
-            for claim in pending_claims:
+            for claim_index, claim in enumerate(pending_claims, 1):
+                remaining = len(pending_claims) - claim_index
+                LOGGER.info(f"review queue progress: {claim_index}/{len(pending_claims)}, remaining={remaining}")
                 processed_count += 1
                 forceid = claim.get('forceid', '')
 

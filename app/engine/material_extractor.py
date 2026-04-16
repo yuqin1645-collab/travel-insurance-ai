@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import enum
 import copy
+import random
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -294,8 +295,12 @@ class MaterialExtractor:
         import asyncio as _asyncio
         import json as _json
 
-        # 分批扫描：每批最多 batch_size，直到全量附件扫描完
-        _max_attempts = 3
+        # Batch scan all attachments by chunk size.
+        network_max_attempts = max(1, int(getattr(config, "VISION_RETRY_NETWORK_MAX_ATTEMPTS", 3) or 3))
+        json_max_attempts = max(1, int(getattr(config, "VISION_RETRY_JSON_MAX_ATTEMPTS", 2) or 2))
+        base_delay = float(getattr(config, "VISION_RETRY_BASE_DELAY", 2.0) or 2.0)
+        max_delay = float(getattr(config, "VISION_RETRY_MAX_DELAY", 20.0) or 20.0)
+        jitter_ratio = max(0.0, float(getattr(config, "VISION_RETRY_JITTER", 0.35) or 0.0))
         vision_data: Dict[str, Any] = {}
         total_batches = (len(attachment_paths) + batch_size - 1) // batch_size
         for bi in range(0, len(attachment_paths), batch_size):
@@ -311,13 +316,17 @@ class MaterialExtractor:
                 )
             except Exception as e:
                 LOGGER.warning(
-                    f"材料提取 [Vision] prompt构建失败(batch {batch_index}/{total_batches}): {e}",
+                    f"material extract [Vision] prompt build failed(batch {batch_index}/{total_batches}): {e}",
                     extra=log_extra(forceid=self._forceid, stage="material_extractor"),
                 )
                 continue
 
             batch_data: Dict[str, Any] = {}
-            for _attempt in range(1, _max_attempts + 1):
+            for _attempt in range(1, network_max_attempts + 1):
+                LOGGER.info(
+                    f"material extract [Vision] request start(batch {batch_index}/{total_batches}, attempt {_attempt}/{network_max_attempts})",
+                    extra=log_extra(forceid=self._forceid, stage="material_extractor"),
+                )
                 try:
                     batch_data = await self._reviewer.vision_client.review_materials_with_vision(
                         material_files=batch_paths,
@@ -327,20 +336,27 @@ class MaterialExtractor:
                     break
                 except Exception as e:
                     err_str = str(e).lower()
-                    is_retryable = any(k in err_str for k in (
-                        "ssl", "connect", "timeout", "connection", "reset",
-                        "json", "balance", "brace", "parse", "decode",
-                        "invalid control character",
+                    network_retryable = any(k in err_str for k in (
+                        "ssl", "connect", "timeout", "connection", "reset", "temporarily unavailable",
                     ))
-                    if is_retryable and _attempt < _max_attempts:
+                    json_retryable = any(k in err_str for k in (
+                        "invalid control character", "json", "balance", "brace", "parse", "decode",
+                    ))
+                    error_type = "network" if network_retryable else ("json" if json_retryable else "other")
+                    allowed_attempts = json_max_attempts if error_type == "json" else network_max_attempts
+                    should_retry = (error_type in ("network", "json")) and (_attempt < allowed_attempts)
+
+                    if should_retry:
+                        backoff = min(max_delay, base_delay * (2 ** (_attempt - 1)))
+                        wait_seconds = backoff + random.uniform(0, backoff * jitter_ratio)
                         LOGGER.warning(
-                            f"材料提取 [Vision] 连接失败(batch {batch_index}/{total_batches}, attempt {_attempt}/{_max_attempts}), 重试中: {e}",
+                            f"material extract [Vision] retryable failure(batch {batch_index}/{total_batches}, attempt {_attempt}/{allowed_attempts}, type={error_type}), retry in {wait_seconds:.1f}s: {e}",
                             extra=log_extra(forceid=self._forceid, stage="material_extractor"),
                         )
-                        await _asyncio.sleep(3 * _attempt)
+                        await _asyncio.sleep(wait_seconds)
                     else:
                         LOGGER.warning(
-                            f"材料提取 [Vision] 失败(batch {batch_index}/{total_batches}, attempt {_attempt}/{_max_attempts}): {e}",
+                            f"material extract [Vision] failed(batch {batch_index}/{total_batches}, attempt {_attempt}/{allowed_attempts}, type={error_type}): {e}",
                             extra=log_extra(forceid=self._forceid, stage="material_extractor"),
                         )
                         break

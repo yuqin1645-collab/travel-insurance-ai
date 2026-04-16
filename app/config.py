@@ -56,6 +56,12 @@ class Config:
     VISION_IMAGE_JPEG_QUALITY: int = int(os.getenv('VISION_IMAGE_JPEG_QUALITY', '82'))
     # vision 模式下: 单次请求最多发送多少张附件图片（避免模型/通道对图片数量限制或注意力稀释）
     VISION_MAX_ATTACHMENTS: int = int(os.getenv('VISION_MAX_ATTACHMENTS', '10'))
+    VISION_GLOBAL_CONCURRENCY: int = int(os.getenv('VISION_GLOBAL_CONCURRENCY', '6'))
+    VISION_RETRY_NETWORK_MAX_ATTEMPTS: int = int(os.getenv('VISION_RETRY_NETWORK_MAX_ATTEMPTS', '3'))
+    VISION_RETRY_JSON_MAX_ATTEMPTS: int = int(os.getenv('VISION_RETRY_JSON_MAX_ATTEMPTS', '2'))
+    VISION_RETRY_BASE_DELAY: float = float(os.getenv('VISION_RETRY_BASE_DELAY', '2.0'))
+    VISION_RETRY_MAX_DELAY: float = float(os.getenv('VISION_RETRY_MAX_DELAY', '20.0'))
+    VISION_RETRY_JITTER: float = float(os.getenv('VISION_RETRY_JITTER', '0.35'))
     
     # OCR配置
     OCR_PROVIDER: str = os.getenv('OCR_PROVIDER', 'tesseract')
