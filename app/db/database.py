@@ -81,52 +81,45 @@ class ClaimStatusDAO:
         self.db = db
 
     async def create_or_update_status(self, status_record: ClaimStatusRecord) -> int:
-        """创建或更新案件状态"""
+        """创建或更新案件状态（原子操作，防止并发竞态导致重复插入）"""
+        now = datetime.now()
         async with self.db.get_connection() as conn:
             async with conn.cursor() as cursor:
+                # 使用 INSERT ... ON DUPLICATE KEY UPDATE，对 forceid 和 claim_id 两个唯一键均幂等
                 await cursor.execute(
-                    f"SELECT id FROM {TABLE_CLAIM_STATUS} WHERE forceid = %s",
-                    (status_record.forceid,)
+                    f"""INSERT INTO {TABLE_CLAIM_STATUS}
+                        (claim_id, forceid, claim_type, current_status, previous_status, status_changed_at,
+                        download_status, download_attempts, last_download_time, review_status, review_attempts,
+                        last_review_time, supplementary_count, max_supplementary, next_check_time, error_message,
+                        created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON DUPLICATE KEY UPDATE
+                        claim_id = VALUES(claim_id),
+                        claim_type = VALUES(claim_type),
+                        current_status = VALUES(current_status),
+                        previous_status = VALUES(previous_status),
+                        status_changed_at = VALUES(status_changed_at),
+                        download_status = VALUES(download_status),
+                        download_attempts = VALUES(download_attempts),
+                        last_download_time = VALUES(last_download_time),
+                        review_status = VALUES(review_status),
+                        review_attempts = VALUES(review_attempts),
+                        last_review_time = VALUES(last_review_time),
+                        supplementary_count = VALUES(supplementary_count),
+                        max_supplementary = VALUES(max_supplementary),
+                        next_check_time = VALUES(next_check_time),
+                        error_message = VALUES(error_message),
+                        updated_at = VALUES(updated_at)""",
+                    (
+                        status_record.claim_id, status_record.forceid, status_record.claim_type,
+                        status_record.current_status, status_record.previous_status, status_record.status_changed_at,
+                        status_record.download_status, status_record.download_attempts, status_record.last_download_time,
+                        status_record.review_status, status_record.review_attempts, status_record.last_review_time,
+                        status_record.supplementary_count, status_record.max_supplementary, status_record.next_check_time,
+                        status_record.error_message, now, now
+                    )
                 )
-                existing = await cursor.fetchone()
-
-                if existing:
-                    await cursor.execute(
-                        f"""UPDATE {TABLE_CLAIM_STATUS} SET
-                            claim_id = %s, claim_type = %s, current_status = %s,
-                            previous_status = %s, status_changed_at = %s, download_status = %s,
-                            download_attempts = %s, last_download_time = %s, review_status = %s,
-                            review_attempts = %s, last_review_time = %s, supplementary_count = %s,
-                            max_supplementary = %s, next_check_time = %s, error_message = %s, updated_at = %s
-                            WHERE forceid = %s""",
-                        (
-                            status_record.claim_id, status_record.claim_type, status_record.current_status,
-                            status_record.previous_status, status_record.status_changed_at, status_record.download_status,
-                            status_record.download_attempts, status_record.last_download_time, status_record.review_status,
-                            status_record.review_attempts, status_record.last_review_time, status_record.supplementary_count,
-                            status_record.max_supplementary, status_record.next_check_time, status_record.error_message,
-                            datetime.now(), status_record.forceid
-                        )
-                    )
-                    return existing[0]
-                else:
-                    await cursor.execute(
-                        f"""INSERT INTO {TABLE_CLAIM_STATUS}
-                            (claim_id, forceid, claim_type, current_status, previous_status, status_changed_at,
-                            download_status, download_attempts, last_download_time, review_status, review_attempts,
-                            last_review_time, supplementary_count, max_supplementary, next_check_time, error_message,
-                            created_at, updated_at)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (
-                            status_record.claim_id, status_record.forceid, status_record.claim_type,
-                            status_record.current_status, status_record.previous_status, status_record.status_changed_at,
-                            status_record.download_status, status_record.download_attempts, status_record.last_download_time,
-                            status_record.review_status, status_record.review_attempts, status_record.last_review_time,
-                            status_record.supplementary_count, status_record.max_supplementary, status_record.next_check_time,
-                            status_record.error_message, datetime.now(), datetime.now()
-                        )
-                    )
-                    return cursor.lastrowid
+                return cursor.lastrowid
 
     async def update_current_status(self, forceid: str, new_status, change_reason: Optional[str] = None) -> bool:
         """更新案件当前状态"""

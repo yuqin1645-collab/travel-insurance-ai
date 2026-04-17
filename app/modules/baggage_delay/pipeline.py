@@ -9,6 +9,10 @@ import aiohttp
 from app.engine.workflow import StageRunner
 from app.logging_utils import LOGGER, log_extra
 from app.skills.flight_lookup import get_flight_lookup_skill
+from app.rules.common.policy_validity import check as _rules_check_policy_validity
+from app.rules.common.material_gate import check as _rules_material_gate, BAGGAGE_DELAY_KEYWORDS
+from app.rules.flight.exclusions import check as _rules_check_exclusions, BAGGAGE_DELAY_EXCLUSIONS
+from app.rules.claim_types.baggage_delay import compute_payout as _rules_compute_payout
 
 
 def _safe_float(value: Any) -> Optional[float]:
@@ -211,41 +215,11 @@ def _extract_file_names(claim_info: Dict[str, Any]) -> List[str]:
 
 
 def _check_policy_validity(claim_info: Dict[str, Any], debug: Dict[str, Any]) -> Optional[str]:
-    """
-    前置准入校验：
-    1) 主险合同状态（通过 PolicyStatus / MainPolicyStatus 字段推断）
-    2) 保障有效期（含安联专属顺延规则：被保险人推迟出境≤15日的，生效日/满期日顺延）
-    3) 身份匹配校验（姓名、证件���）
-     """
-    # 1) 主险状态
-    main_status = str((claim_info.get("PolicyStatus") or claim_info.get("MainPolicyStatus") or "")).strip().lower()
-    if main_status in {"terminated", "expired", "失效", "终止"}:
-        return "拒赔：主险合同效力终止，行李延误权益同步失效"
-
-    # 2) 保障有效期（含顺延）
-    accident_dt = _parse_date(claim_info.get("Date_of_Accident"))
-    eff_dt = _parse_date(claim_info.get("Effective_Date"))
-    exp_dt = _parse_date(claim_info.get("Expiry_Date"))
-    if not (accident_dt and eff_dt and exp_dt):
-        return None  # 缺字段暂不拦截
-    # 顺延规则：若被保险人推迟出境 ≤15 日，保单生效日/满期日均顺延，保障期限不变
-    # 此处暂缺“推迟出境”字段，先通过 rule_override 或 policy_terms 中是否有顺延说明来动态调整
-    # 若后续字段完备，可补充 _apply_ally_defer_rule(eff_dt, exp_dt, defer_days)
-    if not (eff_dt <= accident_dt <= exp_dt):
-        return "拒赔：事故发生时间超出保单保障有效期"
-
-    # 3) 身份匹配
-    claimant_name = str(claim_info.get("Claimant_Name") or "").strip()
-    insured_name = str(claim_info.get("Insured_Name") or "").strip()
-    claimant_id = str(claim_info.get("Claimant_IDNumber") or "").strip()
-    insured_id = str(claim_info.get("Insured_IDNumber") or "").strip()
-    if claimant_name and insured_name and claimant_name != insured_name:
-        # 允许未成年人亲属代办的特殊说明
-        relationship = str(claim_info.get("Relationship") or "").strip().lower()
-        if relationship not in {"parent", "guardian", "监护人", "父母", "亲属"}:
-            return "拒赔：申请人身份与保单权益人信息不匹配"
-    if claimant_id and insured_id and claimant_id != insured_id:
-        return "拒赔：申请人证件号与保单权益人不匹配"
+    # 保单有效期综合校验（委托 rules.common.policy_validity）
+    result = _rules_check_policy_validity(claim_info)
+    debug["policy_validity"] = result.detail
+    if not result.passed:
+        return result.reason
     return None
 
 
@@ -331,24 +305,12 @@ def _check_info_consistency(claim_info: Dict[str, Any], ai_parsed: Dict[str, Any
 
 
 def _check_exclusions(claim_info: Dict[str, Any], text_blob: str, parsed: Dict[str, Any]) -> Optional[str]:
-    """
-    检查条款除外责任（行李延误保险条款 二、不属于权益范围的情形）
-    命中任一即返回拒赔原因，否则返回 None。
-    """
-    content = f"{str(claim_info.get('Description_of_Accident') or '')} {str(claim_info.get('Assessment_Remark') or '')} {text_blob}".lower()
-    content += " " + str(parsed.get("notes") or "").lower()
-
-    exclusion_checks = [
-        ("海关或其他政府部门没收、扣留、隔离、检验或销毁", "海关/政府部门没收导致，属除外责任"),
-        ("未将行李延误一事通知有关公共交通工具承运人", "未通知承运人，属除外责任"),
-        ("非于该次旅行时托运之行李", "非本次旅行托运行李，属除外责任"),
-        ("权益人留置其行李于公共交通工具承运人或其代理人", "行李被留置，属除外责任"),
-        ("战争、军事行动、暴乱、武装叛乱、罢工、暴动、内乱", "战争/罢工等社会风险，属除外责任"),
-        ("恐怖活动", "恐怖活动，属除外责任"),
-    ]
-    for keyword, reason in exclusion_checks:
-        if keyword in content:
-            return reason
+    """条款除外责任校验（委托 rules.flight.exclusions）"""
+    content = f"{str(claim_info.get('Description_of_Accident') or '')} {str(claim_info.get('Assessment_Remark') or '')} {text_blob}"
+    extra = str(parsed.get("notes") or "")
+    result = _rules_check_exclusions(content, BAGGAGE_DELAY_EXCLUSIONS, extra_text=extra)
+    if not result.passed:
+        return result.reason
     return None
 
 
@@ -359,58 +321,16 @@ def _compute_payout_with_rules(
     ai_parsed: Dict[str, Any],
     claim_info: Dict[str, Any],
 ) -> float:
-    """
-    赔付金额核算：
-    - 阶梯标准：6-12h:500；12-18h:1000；>=18h:1500（保单保额上限）
-    - 责任竞合：若同时申请随身财产损失，按较高者赔付（此处需要外部传入对比金额）
-    - 索赔金额校准：取申请金额与核算金额的较小值
-    - 多件行李：按一次事故计，不叠加
-    """
-    base = _compute_payout(delay_hours, claim_amount, cap)
-
-    # 责任竞合：如 claim_info 中存在 "Personal_Effect_Claim_Amount"，对比两者
+    """赔付金额核算（委托 rules.claim_types.baggage_delay）"""
     personal_claim = _safe_float(claim_info.get("Personal_Effect_Claim_Amount"))
-    if personal_claim is not None and personal_claim > 0:
-        base = max(base, personal_claim)  # 按较高额度赔付
-
-    # 多件行李：按一次事故核算（已在 delay_hours 取单次值，不叠加）
-
-    # 索赔金额校准已在 _compute_payout 内部完成（base 与 claim_amount 取小）
-    return base
+    result = _rules_compute_payout(delay_hours, claim_amount, cap, personal_claim)
+    return result.detail.get("payout", 0.0)
 
 
 def _material_gate(text_blob: str, file_names: List[str]) -> List[str]:
-    missing: List[str] = []
-    if not file_names:
-        missing.append("缺少附件材料（需上传票据、行李延误证明、签收证明）")
-        return missing
-
-    joined = f"{text_blob} {' '.join(file_names)}".lower()
-    keywords = {
-        "交通票据（机票/登机牌/行程单）": ["机票", "登机牌", "行程单", "ticket", "boarding"],
-        "行李延误证明（含航班及原因）": ["行李延误", "行李不正常", "pir", "baggage", "delay proof"],
-        "行李签收时间证明": ["签收", "领取", "receipt", "delivered"],
-    }
-    for label, words in keywords.items():
-        if not any(w in joined for w in words):
-            missing.append(label)
-    return missing
-
-
-def _compute_payout(delay_hours: float, claim_amount: Optional[float], cap: Optional[float]) -> float:
-    if delay_hours < 6:
-        return 0.0
-    if delay_hours < 12:
-        base = 500.0
-    elif delay_hours < 18:
-        base = 1000.0
-    else:
-        base = 1500.0
-    if claim_amount is not None and claim_amount > 0:
-        base = min(base, claim_amount)
-    if cap is not None and cap >= 0:
-        base = min(base, cap)
-    return round(base, 2)
+    """材料门禁校验（委托 rules.common.material_gate，使用行李延误关键词映射）"""
+    result = _rules_material_gate(text_blob, file_names, BAGGAGE_DELAY_KEYWORDS)
+    return result.detail.get("missing", [])
 
 
 def _result(forceid: str, remark: str, is_additional: str, conclusions: List[Dict[str, str]], debug: Dict[str, Any]) -> Dict[str, Any]:

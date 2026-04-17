@@ -54,10 +54,10 @@ class ClaimStateMachine:
         # 整体状态流转
         ClaimStatus.DOWNLOAD_PENDING: [ClaimStatus.DOWNLOADING, ClaimStatus.DOWNLOAD_FAILED],
         ClaimStatus.DOWNLOADING: [ClaimStatus.DOWNLOADED, ClaimStatus.DOWNLOAD_FAILED],
-        ClaimStatus.DOWNLOADED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.ERROR],
+        ClaimStatus.DOWNLOADED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.ERROR],
         ClaimStatus.DOWNLOAD_FAILED: [ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.ERROR],
 
-        ClaimStatus.REVIEW_PENDING: [ClaimStatus.REVIEWING, ClaimStatus.ERROR],
+        ClaimStatus.REVIEW_PENDING: [ClaimStatus.REVIEWING, ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.ERROR],
         ClaimStatus.REVIEWING: [ClaimStatus.REVIEWED, ClaimStatus.SUPPLEMENTARY_NEEDED, ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.ERROR],
         ClaimStatus.REVIEWED: [ClaimStatus.APPROVED, ClaimStatus.REJECTED, ClaimStatus.SUPPLEMENTARY_NEEDED],
 

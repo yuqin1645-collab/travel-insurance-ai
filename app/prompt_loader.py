@@ -45,9 +45,23 @@ class PromptLoader:
         
         with open(prompt_file, 'r', encoding='utf-8') as f:
             template = f.read()
-        
+
+        template = self._resolve_includes(template)
         self._cache[cache_key] = template
         return template
+
+    def _resolve_includes(self, content: str) -> str:
+        """将 {{include:block_name}} 替换为 _shared/ 目录下对应文件的内容"""
+        import re
+
+        def replacer(m: "re.Match") -> str:
+            block_name = m.group(1).strip()
+            shared_file = self.prompts_dir / "_shared" / f"{block_name}.txt"
+            if shared_file.exists():
+                return shared_file.read_text(encoding="utf-8")
+            return m.group(0)  # 找不到时保留原文
+
+        return re.sub(r'\{\{include:(.*?)\}\}', replacer, content)
     
     def format(self, prompt_name: str, namespace: str = "", **kwargs) -> str:
         """加载并格式化prompt"""

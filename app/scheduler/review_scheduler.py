@@ -201,7 +201,13 @@ class ReviewScheduler:
         # 找到案件目录
         claim_folder = self._find_claim_folder(forceid)
         if not claim_folder:
-            raise FileNotFoundError(f"找不到案件目录: {forceid}")
+            # 目录不存在说明文件未下载到本机，重置为待下载让下载器重新处理
+            await self.status_manager.update_claim_status(
+                forceid,
+                ClaimStatus.DOWNLOAD_PENDING,
+                "审核时找不到本地案件目录，重置为待下载"
+            )
+            raise FileNotFoundError(f"找不到案件目录: {forceid}，已重置为待下载")
 
         # 加载条款文本
         try:
@@ -232,6 +238,8 @@ class ReviewScheduler:
     def _find_claim_folder(self, forceid: str) -> Optional[Path]:
         """根据 forceid 在 claims_data 中找到案件目录"""
         claims_dir = config.CLAIMS_DATA_DIR
+
+        # 主路径：遍历 claim_info.json 匹配 forceid
         for info_file in claims_dir.rglob("claim_info.json"):
             try:
                 data = json.loads(info_file.read_text(encoding="utf-8"))
@@ -239,6 +247,23 @@ class ReviewScheduler:
                     return info_file.parent
             except Exception:
                 continue
+
+        # 兜底：从进度文件里找 case_no + benefitName，拼出目录路径
+        progress_file = claims_dir / ".download_progress.json"
+        if progress_file.exists():
+            try:
+                progress = json.loads(progress_file.read_text(encoding="utf-8"))
+                for case_no, rec in progress.items():
+                    if not isinstance(rec, dict):
+                        continue
+                    if rec.get("forceid") == forceid:
+                        benefit_name = rec.get("benefitName", "")
+                        candidate = claims_dir / benefit_name / f"{benefit_name}-案件号【{case_no}】"
+                        if candidate.exists():
+                            return candidate
+            except Exception:
+                pass
+
         return None
 
     async def retry_failed_reviews(self, limit: int = 10) -> Tuple[int, str]:

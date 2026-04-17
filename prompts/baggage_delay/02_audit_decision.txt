@@ -1,4 +1,4 @@
-你是保险理赔审核员。根据解析结果与条款摘要，给出“行李延误”审核结论。
+你是保险理赔审核员。根据解析结果与条款摘要，给出”行李延误”审核结论。
 
 解析结果:
 {parsed_json}
@@ -9,15 +9,19 @@
 claim_info:
 {claim_info_json}
 
+{{include:policy_validity_block}}
+
+{{include:war_exclusion_block}}
+
 请严格输出 JSON：
 {{
-  "audit_result": "通过/拒绝/需补齐资料/人工复核",
-  "reason": "一句话结论原因",
-  "delay_hours": "number/unknown",
-  "tier_amount": "number/unknown",
-  "missing_materials": ["..."],
-  "manual_review_reason": "string/none",
-  "notes": "补充说明"
+  “audit_result”: “通过/拒绝/需补齐资料/人工复核”,
+  “reason”: “一句话结论原因”,
+  “delay_hours”: “number/unknown”,
+  “tier_amount”: “number/unknown”,
+  “missing_materials”: [“...”],
+  “manual_review_reason”: “string/none”,
+  “notes”: “补充说明”
 }}
 
 判定规则：

@@ -58,11 +58,18 @@ class StatusManager:
         """
         LOGGER.info(f"创建案件状态记录: {forceid} ({claim_type})")
 
-        # 检查是否已存在
+        # 检查是否已存在（先按 forceid 查，再按 claim_id 查，防止同一案件号用不同 forceid 重复插入）
         existing = await self.claim_status_dao.get_status_by_forceid(forceid)
         if existing:
-            LOGGER.warning(f"案件状态记录已存在: {forceid}")
+            LOGGER.warning(f"案件状态记录已存在(forceid): {forceid}")
             return existing
+        existing_by_claim = await self.claim_status_dao.get_status_by_claim_id(claim_id)
+        if existing_by_claim:
+            LOGGER.warning(
+                f"案件状态记录已存在(claim_id={claim_id})，"
+                f"数据库 forceid={existing_by_claim.forceid}，本次 forceid={forceid}，跳过插入"
+            )
+            return existing_by_claim
 
         # 创建新记录
         status_record = ClaimStatusRecord(
