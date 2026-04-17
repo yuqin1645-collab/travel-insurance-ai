@@ -94,6 +94,7 @@ def check(claim_info: dict) -> RuleResult:
 | `prompts/_shared/policy_validity_block.txt` | 保单有效期判定规则（4时间点 + 安联顺延/提前规则） |
 | `prompts/_shared/war_exclusion_block.txt` | 战争/社会风险/恐怖活动除外责任 |
 | `prompts/_shared/identity_check_block.txt` | 申请人与权益人身份匹配规则 |
+| `prompts/_shared/flight_info_extract_block.txt` | 航班信息识别核心规则（逐字符核对、改签/联程识别、保护航班校验、三步枚举法）及对应 JSON 字段结构 |
 
 ### 5. RuleResult 数据类说明
 
