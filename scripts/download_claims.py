@@ -1007,7 +1007,7 @@ class AsyncClaimDownloader:
 
 
 def _sanitize_filename(name: str) -> str:
-    """替换 Windows 文件名中的非法字符（\ / : * ? " < > |）为下划线。"""
+    """替换 Windows 文件名中的非法字符（\\ / : * ? " < > |）为下划线。"""
     import re
     return re.sub(r'[\\/:*?"<>|]', '_', name)
 
