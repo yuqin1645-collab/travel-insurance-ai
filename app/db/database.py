@@ -67,12 +67,23 @@ class DatabaseConnection:
     async def get_connection(self):
         """获取数据库连接"""
         if not self.pool:
-            await self.initialize()
-        conn = await self.pool.acquire()
+            try:
+                await self.initialize()
+            except Exception as e:
+                LOGGER.warning(f"Database pool initialization failed: {e}")
+                raise RuntimeError(f"Database pool not available: {e}") from e
         try:
-            yield conn
-        finally:
-            self.pool.release(conn)
+            conn = await self.pool.acquire()
+            try:
+                yield conn
+            finally:
+                self.pool.release(conn)
+        except RuntimeError as e:
+            if "Cannot acquire connection after closing pool" in str(e):
+                LOGGER.warning("Database pool is closed, skipping database operation")
+                raise RuntimeError("Database pool is closed") from e
+            else:
+                raise
 
 
 class ClaimStatusDAO:

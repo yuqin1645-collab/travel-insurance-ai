@@ -113,10 +113,13 @@ class GeminiVisionClient:
             close_session = True
 
         try:
-            proxy = (
-                os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
-                or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
-            ) or None
+            proxy = None
+            # DashScope/Qwen 请求直连，不走代理（国内服务）
+            if self.provider != 'dashscope':
+                proxy = (
+                    os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
+                    or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
+                ) or None
 
             global _VISION_INFLIGHT
             async with _VISION_SEMAPHORE:
@@ -127,7 +130,7 @@ class GeminiVisionClient:
                         f"{self.base_url}/chat/completions",
                         headers=self.headers,
                         json=payload,
-                        proxy=proxy if proxy else None,
+                        proxy=proxy,
                         ssl=False if proxy else None,
                         timeout=aiohttp.ClientTimeout(total=300)
                     ) as response:

@@ -58,6 +58,7 @@ class ProductionWorkflow:
         # 运行状态
         self.is_running = False
         self.last_run_time = None
+        self._is_shutting_down = False
 
     async def initialize(self):
         """初始化所有组件"""
@@ -101,6 +102,10 @@ class ProductionWorkflow:
         }
 
         try:
+            # 检查是否正在关闭
+            if getattr(self, '_is_shutting_down', False):
+                LOGGER.info("系统正在关闭，跳过本次检查")
+                return {"status": "skipped", "reason": "系统正在关闭"}
             # 0. 孤儿案件兜底扫描（已下载但未进入审核队列的案件）
             LOGGER.info("\n[0/8] 孤儿案件兜底扫描...")
             orphan_result = await self._orphan_sweep()
@@ -848,6 +853,7 @@ class ProductionWorkflow:
         """关闭系统"""
         LOGGER.info("关闭生产化工作流...")
 
+        self._is_shutting_down = True
         self.is_running = False
 
         # 关闭数据库连接

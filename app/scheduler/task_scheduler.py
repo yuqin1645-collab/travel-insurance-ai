@@ -44,6 +44,7 @@ class TaskScheduler:
         self.workflow = workflow or get_production_workflow()
         self.scheduler = AsyncIOScheduler()
         self.is_initialized = False
+        self._is_shutting_down = False
 
         # 注册事件监听
         self.scheduler.add_listener(self._job_executed, EVENT_JOB_EXECUTED)
@@ -536,7 +537,27 @@ async def main():
     except Exception as e:
         LOGGER.error(f"调度器异常: {e}", exc_info=True)
     finally:
-        scheduler.stop()
+        # 优雅关闭：先停止调度器接受新任务，再等待任务完成，最后关闭数据库
+        LOGGER.info("开始优雅关闭...")
+        scheduler._is_shutting_down = True
+
+        # 暂停所有待执行任务（防止新任务启动）
+        for job in scheduler.scheduler.get_jobs():
+            try:
+                scheduler.scheduler.pause_job(job.id)
+                LOGGER.info(f"  已暂停任务: {job.id}")
+            except Exception as e:
+                LOGGER.warning(f"  暂停任务失败 {job.id}: {e}")
+
+        # 停止调度器（不等待正在运行的任务，让它们自己检查shutdown标志）
+        scheduler.scheduler.shutdown(wait=False)
+        LOGGER.info("定时任务调度器已停止")
+
+        # 等待一小段时间让正在运行的任务自然结束或检查shutdown标志
+        LOGGER.info("等待正在运行的任务完成...")
+        await asyncio.sleep(2)
+
+        # 最后关闭数据库连接
         await scheduler.workflow.shutdown()
         LOGGER.info("系统已停止")
 

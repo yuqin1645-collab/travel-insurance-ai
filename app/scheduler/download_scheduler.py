@@ -100,6 +100,11 @@ class IncrementalDownloadScheduler:
         Returns:
             (新下载案件数, 消息)
         """
+        # 检查是否正在关闭
+        if getattr(self, '_is_shutting_down', False):
+            LOGGER.info("系统正在关闭，跳过下载检查")
+            return 0, "系统正在关闭"
+
         LOGGER.info("开始每小时案件检查...")
 
         if not self.api_url:
@@ -266,6 +271,10 @@ class IncrementalDownloadScheduler:
                                     f"(current={current_status}): {force_err}"
                                 )
                 except Exception as reg_err:
+                    # 忽略关闭期间的注册错误
+                    if getattr(self, '_is_shutting_down', False):
+                        LOGGER.debug(f"关闭期间跳过注册: {forceid}")
+                        continue
                     LOGGER.error(
                         f"Failed to register claim status; skip and continue: "
                         f"forceid={forceid}, claim_id={case_no}, error={reg_err}"

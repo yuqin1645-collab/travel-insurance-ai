@@ -245,11 +245,13 @@ class OpenRouterClient:
                 session = aiohttp.ClientSession(connector=connector)
             close_session = True
         
-        # 代理：HTTPS 请求优先用 HTTPS_PROXY，降级到 HTTP_PROXY
-        proxy = (
-            os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
-            or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
-        ) or None
+        # 代理：仅 OpenRouter 国外服务使用代理，DashScope/Qwen 直连
+        proxy = None
+        if self.provider != 'dashscope':
+            proxy = (
+                os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
+                or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
+            ) or None
 
         try:
             last_exc: Exception = RuntimeError("未执行任何请求")
@@ -288,108 +290,172 @@ class OpenRouterClient:
             if close_session:
                 await session.close()
     
-    def extract_content(self, response: Dict) -> str:
+    def extract_content(self, response: Dict, stage_name: str = "unknown") -> str:
         """从API响应中提取内容"""
         try:
-            content = response['choices'][0]['message']['content']
+            # 安全提取 choices[0].message.content
+            choices = response.get('choices', [])
+            if not choices:
+                print(f"[{stage_name}] ⚠️ 警告: 响应中没有 choices 字段")
+                print(f"[{stage_name}] 响应结构: {list(response.keys())}")
+                raise KeyError("choices 为空")
+
+            first_choice = choices[0]
+            message = first_choice.get('message', {})
+            if not message:
+                print(f"[{stage_name}] ⚠️ 警告: choices[0] 中没有 message 字段")
+                print(f"[{stage_name}] choice 内容: {first_choice}")
+                raise KeyError("message 为空")
+
+            content = message.get('content', '')
+            if not content:
+                print(f"[{stage_name}] ⚠️ 警告: message.content 为空")
+                print(f"[{stage_name}] message 完整内容: {message}")
+
+            # 记录原始 LLM 响应内容
+            print(f"[{stage_name}] 📝 LLM原始响应内容 ({len(content)} 字符):")
+            print(f"--- 开始 LLM 响应 ---")
+            print(content[:2000] if len(content) > 2000 else content)
+            print(f"--- 结束 LLM 响应 ---")
+
             import re
             json_match = re.search(r'\{.*\}', content, re.DOTALL)
             if json_match:
                 return json_match.group()
             return content
         except (KeyError, IndexError) as e:
-            print(f"解析响应失败: {e}")
-            print(f"响应内容: {json.dumps(response, indent=2)}")
+            print(f"[{stage_name}] ❌ 解析响应失败: {e}")
+            print(f"[{stage_name}] 响应内容: {json.dumps(response, indent=2, ensure_ascii=False)[:1000]}")
             raise
     
     def chat_completion_json(
         self,
         messages: List[Dict[str, str]],
         difficulty: TaskDifficulty = TaskDifficulty.MEDIUM,
+        max_retries: int = 3,
         **kwargs
     ) -> Dict:
-        """同步调用API并返回JSON格式结果"""
+        """同步调用API并返回JSON格式结果（带重试机制）"""
         if messages and messages[-1]['role'] == 'user':
             original_content = messages[-1]['content']
             if 'JSON' not in original_content and 'json' not in original_content:
                 messages[-1]['content'] = original_content + "\n\n请以JSON格式返回结果。"
-        
-        response = self.chat_completion(
-            messages=messages,
-            difficulty=difficulty,
-            response_format={"type": "json_object"},
-            **kwargs
-        )
-        
-        content = self.extract_content(response)
-        
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError as e:
-            print(f"JSON解析失败: {e}")
-            print(f"原始内容: {content}")
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
+
+        last_error = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = self.chat_completion(
+                    messages=messages,
+                    difficulty=difficulty,
+                    response_format={"type": "json_object"},
+                    **kwargs
+                )
+
+                content = self.extract_content(response, stage_name=f"chat_completion_json[attempt={attempt}]")
+
                 try:
-                    return json.loads(json_match.group())
-                except:
-                    pass
-            # 尝试修复字符串未转义问题（换行符、引号等）
-            fixed = _try_fix_json_string_escapes(content)
-            if fixed is not None:
-                print(f"JSON转义修复成功")
-                return fixed
-            # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
-            repaired = _try_repair_truncated_json(content)
-            if repaired is not None:
-                print(f"JSON截断修复成功")
-                return repaired
-            raise
+                    return json.loads(content)
+                except json.JSONDecodeError as e:
+                    last_error = e
+                    print(f"[attempt={attempt}] JSON解析失败: {e}")
+                    print(f"[attempt={attempt}] 原始内容: {content[:500]}...")
+                    import re
+                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if json_match:
+                        try:
+                            return json.loads(json_match.group())
+                        except:
+                            pass
+                    # 尝试修复字符串未转义问题（换行符、引号等）
+                    fixed = _try_fix_json_string_escapes(content)
+                    if fixed is not None:
+                        print(f"[attempt={attempt}] JSON转义修复成功")
+                        return fixed
+                    # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
+                    repaired = _try_repair_truncated_json(content)
+                    if repaired is not None:
+                        print(f"[attempt={attempt}] JSON截断修复成功")
+                        return repaired
+
+                    if attempt < max_retries:
+                        import time
+                        time.sleep(1 * attempt)  # 递增等待
+                        continue
+                    raise
+
+            except Exception as e:
+                last_error = e
+                print(f"[attempt={attempt}] API调用异常: {e}")
+                if attempt < max_retries:
+                    import time
+                    time.sleep(1 * attempt)
+                    continue
+
+        raise last_error or RuntimeError("chat_completion_json 全部重试失败")
 
     async def chat_completion_json_async(
         self,
         messages: List[Dict[str, str]],
         difficulty: TaskDifficulty = TaskDifficulty.MEDIUM,
         session: Optional[aiohttp.ClientSession] = None,
+        max_retries: int = 3,
         **kwargs
     ) -> Dict:
-        """异步调用API并返回JSON格式结果"""
+        """异步调用API并返回JSON格式结果（带重试机制）"""
         if messages and messages[-1]['role'] == 'user':
             original_content = messages[-1]['content']
             if 'JSON' not in original_content and 'json' not in original_content:
                 messages[-1]['content'] = original_content + "\n\n请以JSON格式返回结果。"
-        
-        response = await self.chat_completion_async(
-            messages=messages,
-            difficulty=difficulty,
-            response_format={"type": "json_object"},
-            session=session,
-            **kwargs
-        )
-        
-        content = self.extract_content(response)
-        
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError as e:
-            print(f"JSON解析失败: {e}")
-            print(f"原始内容: {content}")
-            import re
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
+
+        last_error = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = await self.chat_completion_async(
+                    messages=messages,
+                    difficulty=difficulty,
+                    response_format={"type": "json_object"},
+                    session=session,
+                    **kwargs
+                )
+
+                content = self.extract_content(response, stage_name=f"chat_completion_json_async[attempt={attempt}]")
+
                 try:
-                    return json.loads(json_match.group())
-                except:
-                    pass
-            # 尝试修复字符串未转义问题（换行符、引号等）
-            fixed = _try_fix_json_string_escapes(content)
-            if fixed is not None:
-                print(f"JSON转义修复成功")
-                return fixed
-            # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
-            repaired = _try_repair_truncated_json(content)
-            if repaired is not None:
-                print(f"JSON截断修复成功")
-                return repaired
-            raise
+                    return json.loads(content)
+                except json.JSONDecodeError as e:
+                    last_error = e
+                    print(f"[attempt={attempt}] JSON解析失败: {e}")
+                    print(f"[attempt={attempt}] 原始内容: {content[:500]}...")
+                    import re
+                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if json_match:
+                        try:
+                            return json.loads(json_match.group())
+                        except:
+                            pass
+                    # 尝试修复字符串未转义问题（换行符、引号等）
+                    fixed = _try_fix_json_string_escapes(content)
+                    if fixed is not None:
+                        print(f"[attempt={attempt}] JSON转义修复成功")
+                        return fixed
+                    # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
+                    repaired = _try_repair_truncated_json(content)
+                    if repaired is not None:
+                        print(f"[attempt={attempt}] JSON截断修复成功")
+                        return repaired
+
+                    if attempt < max_retries:
+                        import asyncio
+                        await asyncio.sleep(1 * attempt)  # 递增等待
+                        continue
+                    raise
+
+            except Exception as e:
+                last_error = e
+                print(f"[attempt={attempt}] API调用异常: {e}")
+                if attempt < max_retries:
+                    import asyncio
+                    await asyncio.sleep(1 * attempt)
+                    continue
+
+        raise last_error or RuntimeError("chat_completion_json_async 全部重试失败")
