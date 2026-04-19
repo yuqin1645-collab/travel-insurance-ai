@@ -35,6 +35,7 @@ class DatabaseConnection:
 
     def __init__(self):
         self.pool = None
+        self._closed = False
 
     async def initialize(self):
         """初始化数据库连接池"""
@@ -57,8 +58,9 @@ class DatabaseConnection:
             raise DatabaseError(f"数据库连接失败: {e}")
 
     async def close(self):
-        """关闭数据库连接池"""
-        if self.pool:
+        """关闭数据库连接池（幂等，多次调用安全）"""
+        if self.pool and not self._closed:
+            self._closed = True
             self.pool.close()
             await self.pool.wait_closed()
             LOGGER.info("数据库连接池已关闭")
@@ -66,6 +68,8 @@ class DatabaseConnection:
     @asynccontextmanager
     async def get_connection(self):
         """获取数据库连接"""
+        if self._closed:
+            raise RuntimeError("Database pool is closed")
         if not self.pool:
             try:
                 await self.initialize()
