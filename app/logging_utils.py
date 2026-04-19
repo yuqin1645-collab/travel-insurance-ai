@@ -40,7 +40,12 @@ def setup_logger() -> logging.Logger:
     try:
         log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
-        fh = logging.FileHandler(log_dir / "ai_review.log", encoding="utf-8", delay=False)
+        from logging.handlers import TimedRotatingFileHandler
+        fh = TimedRotatingFileHandler(
+            log_dir / "ai_review.log",
+            when="midnight", interval=1, backupCount=30, encoding="utf-8"
+        )
+        fh.suffix = "%Y%m%d"
         fh.setFormatter(fmt)
         logger.addHandler(fh)
     except Exception:
