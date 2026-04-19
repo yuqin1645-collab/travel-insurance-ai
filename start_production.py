@@ -33,27 +33,21 @@ def setup_logging():
     if root_logger.handlers:
         return logging.getLogger(__name__)
 
-    # 配置日志格式
+    # 配置日志格式（只写文件，stdout 丢弃）
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            # 控制台输出
-            logging.StreamHandler(sys.stdout),
-            # 文件输出（delay=False 确保每次写入后立即刷盘，避免日志中断）
             logging.FileHandler(log_file, encoding='utf-8', delay=False),
         ]
     )
 
-    # 禁用特定logger的传播，避免日志重复输出
-    # 这些模块会配置自己的handler，不需要向root传播
-    for logger_name in ['scripts.download_claims', 'scripts']:
-        logger = logging.getLogger(logger_name)
-        logger.propagate = False
-
     # 设置第三方库日志级别
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
     logging.getLogger('aiomysql').setLevel(logging.WARNING)
+
+    # 确保下载器日志传播到 root（production 日志文件可见）
+    # 注意：不设 propagate=False，让 scripts.download_claims 日志正常流向 root handler
 
     return logging.getLogger(__name__)
 
