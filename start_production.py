@@ -28,6 +28,11 @@ def setup_logging():
     # 日志文件名包含日期
     log_file = log_dir / f"production_{datetime.now().strftime('%Y%m%d')}.log"
 
+    # 避免重复配置
+    root_logger = logging.getLogger()
+    if root_logger.handlers:
+        return logging.getLogger(__name__)
+
     # 配置日志格式
     logging.basicConfig(
         level=logging.INFO,
@@ -39,6 +44,12 @@ def setup_logging():
             logging.FileHandler(log_file, encoding='utf-8', delay=False),
         ]
     )
+
+    # 禁用特定logger的传播，避免日志重复输出
+    # 这些模块会配置自己的handler，不需要向root传播
+    for logger_name in ['scripts.download_claims', 'scripts']:
+        logger = logging.getLogger(logger_name)
+        logger.propagate = False
 
     # 设置第三方库日志级别
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
