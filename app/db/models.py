@@ -154,13 +154,41 @@ class ReviewResult:
     dep_country: Optional[str] = None
     arr_country: Optional[str] = None
 
-    # 航班时间
-    planned_dep_time: Optional[datetime] = None
-    actual_dep_time: Optional[datetime] = None
-    planned_arr_time: Optional[datetime] = None
-    actual_arr_time: Optional[datetime] = None
-    alt_dep_time: Optional[datetime] = None
-    alt_arr_time: Optional[datetime] = None
+    # 航班时间（原航班）
+    planned_dep_time: Optional[datetime] = None   # 原航班首次购票计划起飞（schedule_local）
+    actual_dep_time: Optional[datetime] = None    # 原航班飞常准实际起飞
+    planned_arr_time: Optional[datetime] = None   # 原航班首次购票计划到达
+    actual_arr_time: Optional[datetime] = None    # 原航班飞常准实际到达
+
+    # 实际乘坐航班时间（改签/替代）
+    alt_dep_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际起飞
+    alt_arr_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际到达
+
+    # 航班场景
+    flight_scenario: Optional[str] = None        # direct/connecting/rebooking/multi_rebooking/cancelled_nofly
+    rebooking_count: Optional[int] = None        # 改签次数（0=无改签）
+
+    # 实际乘坐航班信息
+    alt_flight_no: Optional[str] = None          # 被保险人实际乘坐的改签航班号
+    alt_dep_iata: Optional[str] = None           # 实际乘坐航班出发机场
+    alt_arr_iata: Optional[str] = None           # 实际乘坐航班到达机场
+
+    # 飞常准查原航班
+    avi_status: Optional[str] = None             # 飞常准原航班状态（正常/延误/取消）
+    avi_planned_dep: Optional[datetime] = None   # 飞常准原航班计划起飞
+    avi_planned_arr: Optional[datetime] = None   # 飞常准原航班计划到达
+    avi_actual_dep: Optional[datetime] = None    # 飞常准原航班实际起飞
+    avi_actual_arr: Optional[datetime] = None    # 飞常准原航班实际到达
+
+    # 飞常准查替代航班
+    avi_alt_flight_no: Optional[str] = None      # 飞常准查到的替代航班号
+    avi_alt_planned_dep: Optional[datetime] = None
+    avi_alt_actual_dep: Optional[datetime] = None
+    avi_alt_actual_arr: Optional[datetime] = None
+
+    # 延误计算追溯
+    delay_calc_from: Optional[str] = None        # 延误起算时间点来源字段名
+    delay_calc_to: Optional[str] = None          # 延误终止时间点来源字段名
 
     # 延误计算
     delay_duration_minutes: Optional[int] = None
@@ -222,7 +250,10 @@ class ReviewResult:
         # 处理datetime字段
         datetime_fields = [
             'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time', 'audit_time', 'supplementary_deadline',
+            'alt_dep_time', 'alt_arr_time',
+            'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
+            'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
+            'audit_time', 'supplementary_deadline',
             'forwarded_at', 'created_at', 'updated_at'
         ]
         for key, value in data.items():
@@ -246,7 +277,10 @@ class ReviewResult:
         # 处理datetime字段
         datetime_fields = [
             'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time', 'audit_time', 'supplementary_deadline',
+            'alt_dep_time', 'alt_arr_time',
+            'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
+            'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
+            'audit_time', 'supplementary_deadline',
             'forwarded_at', 'created_at', 'updated_at'
         ]
         for field_name in datetime_fields:
@@ -411,9 +445,72 @@ class StatusHistory:
         return cls(**data)
 
 
+@dataclass
+class ClaimInfoRaw:
+    """案件原始下载信息（claim_info.json 落库备份）"""
+    id: Optional[int] = None
+
+    forceid: str = ""
+    claim_id: Optional[str] = None
+
+    benefit_name: Optional[str] = None
+    applicant_name: Optional[str] = None
+
+    # 来自 samePolicyClaim 的被保险人信息
+    insured_name: Optional[str] = None
+    id_type: Optional[str] = None
+    id_number: Optional[str] = None
+    birthday: Optional[date] = None
+    gender: Optional[str] = None
+
+    # 保单信息（samePolicyClaim）
+    policy_no: Optional[str] = None
+    insurance_company: Optional[str] = None
+    product_name: Optional[str] = None
+    plan_name: Optional[str] = None
+    effective_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    date_of_insurance: Optional[str] = None
+
+    # 本案维度（camelCase 字段）
+    case_insured_name: Optional[str] = None
+    case_policy_no: Optional[str] = None
+    case_insurance_company: Optional[str] = None
+    case_effective_date: Optional[str] = None
+    case_expiry_date: Optional[str] = None
+    case_id_type: Optional[str] = None
+    case_id_number: Optional[str] = None
+    insured_amount: Optional[float] = None
+    reserved_amount: Optional[float] = None
+    remaining_coverage: Optional[float] = None
+    claim_amount: Optional[float] = None
+
+    # 事故信息
+    date_of_accident: Optional[date] = None
+    final_status: Optional[str] = None
+    description_of_accident: Optional[str] = None
+
+    source_date: Optional[str] = None
+
+    raw_json: Optional[str] = None
+
+    downloaded_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
+            elif isinstance(value, date):
+                data[key] = value.isoformat()
+        return data
+
+
 # 数据库表名常量
 TABLE_CLAIM_STATUS = "ai_claim_status"
 TABLE_REVIEW_RESULT = "ai_review_result"
 TABLE_SUPPLEMENTARY_RECORDS = "ai_supplementary_records"
 TABLE_SCHEDULER_LOGS = "ai_scheduler_logs"
 TABLE_STATUS_HISTORY = "ai_status_history"
+TABLE_CLAIM_INFO_RAW = "ai_claim_info_raw"

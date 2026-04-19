@@ -291,6 +291,11 @@ async def review_flight_delay_async(
                 rev_planned_arr = str(first_rev.get("planned_arr") or "").strip()
                 rev_dep_tz = str(first_rev.get("dep_timezone_hint") or "").strip()
                 rev_arr_tz = str(first_rev.get("arr_timezone_hint") or "").strip()
+                # 去掉 /unknown 后缀（Vision 常输出 "2026-04-08 12:00/unknown" 格式）
+                if "/" in rev_planned_dep:
+                    rev_planned_dep = rev_planned_dep.split("/")[0].strip()
+                if "/" in rev_planned_arr:
+                    rev_planned_arr = rev_planned_arr.split("/")[0].strip()
                 if not _is_unknown(rev_planned_dep) and _is_unknown(sched_node.get("planned_dep")):
                     sched_node["planned_dep"] = rev_planned_dep
                 if not _is_unknown(rev_planned_arr) and _is_unknown(sched_node.get("planned_arr")):
@@ -440,12 +445,31 @@ async def review_flight_delay_async(
             if _is_unknown(actual_node.get("actual_arr")):
                 actual_node["actual_arr"] = proof_actual_arr
 
-        # 7) boarding_pass_actual_dep：登机牌上的实际起飞时间，作为 actual_dep 的补充来源
+        # 7) boarding_pass_actual_dep：登机牌上的实际起飞时间
+        # 改签/取消场景：登机牌是改签后乘坐的航班，时间应填入 alternate_local.alt_dep
+        # 非改签场景（原航班正常）：登机牌是原航班，时间填入 actual_local.actual_dep
         bp_actual = str(v_evidence.get("boarding_pass_actual_dep") or "").strip()
         if not _is_unknown(bp_actual):
-            actual_node = parsed.setdefault("actual_local", {})
-            if _is_unknown(actual_node.get("actual_dep")):
-                actual_node["actual_dep"] = bp_actual
+            # 判断是否改签/取消场景：
+            # - Vision 已提供 alternate.alt_flight_no（明确改签航班号），或
+            # - chain 存在（有调时记录，通常伴随改签），或
+            # - aviation_status 为"取消"
+            v_alt_fn = str(v_alt.get("alt_flight_no") or "").strip()
+            has_alt_flight = not _is_unknown(v_alt_fn)
+            has_chain = isinstance(v_chain, list) and len(v_chain) > 0
+            avi_status = str(parsed.get("aviation_status") or "").strip()
+            is_cancelled = avi_status in ("取消", "cancelled", "CANCELLED")
+            is_rebooking = has_alt_flight or has_chain or is_cancelled
+            if is_rebooking:
+                # 改签场景：登机牌 = 改签后乘坐的航班，填 alt_dep
+                alt_node = parsed.setdefault("alternate_local", {})
+                if _is_unknown(alt_node.get("alt_dep")):
+                    alt_node["alt_dep"] = bp_actual
+            else:
+                # 非改签场景：登机牌 = 原航班，填 actual_dep
+                actual_node = parsed.setdefault("actual_local", {})
+                if _is_unknown(actual_node.get("actual_dep")):
+                    actual_node["actual_dep"] = bp_actual
 
         ctx["flight_delay_parse"] = parsed
 
@@ -1286,12 +1310,33 @@ def _run_hardcheck(
             or (is_connecting_flight is True and reason_suggests_missed and not vision_denies_missed)
         )
 
-        # 关键豁免：飞常准已确认被保险航班自身状态（延误/取消），理赔事由明确，不适用中转接驳免责
         aviation_delay_proof_override = False
         overbooking_override = False
-        if is_missed_connection and aviation_delay_proof is True:
+        rebooking_override = False
+
+        # 豁免：原航班取消后承运人整体改签（旅客从未乘坐"前序延误航班"）
+        # 判定条件：aviation_status=取消 AND alternate_local.alt_dep 已知（有实际乘坐的改签登机牌）
+        # 此时不存在"前序延误导致误机"的前提，中转接驳免责不适用
+        avi_status = str((parsed or {}).get("aviation_status") or "").strip()
+        alt_dep_val = str((parsed or {}).get("alternate_local", {}).get("alt_dep") or "").strip()
+        alt_flight_no = str((parsed or {}).get("alternate_local", {}).get("alt_flight_no") or "").strip()
+        has_rebooking = (
+            not _is_unknown(alt_dep_val)
+            or (not _is_unknown(alt_flight_no) and alt_flight_no != "")
+        )
+        # is_connecting_rebooking=true 表示承运人主动改签整段行程（旅客从未登上"前序延误航班"）
+        # 此时飞常准可能仍显示原航班"已到达"，所以不能只靠 avi_status=="取消" 判断
+        vision_itinerary = (vision_extract or {}).get("itinerary_segments") or []
+        vision_alt_cr = str((vision_extract or {}).get("alternate", {}).get("is_connecting_rebooking") or "").strip().lower()
+        is_conn_rebooking_flag = vision_alt_cr == "true"
+        if not is_conn_rebooking_flag and isinstance(vision_itinerary, list):
+            for seg in vision_itinerary:
+                if str(seg.get("is_connecting_rebooking") or "").strip().lower() == "true":
+                    is_conn_rebooking_flag = True
+                    break
+        if is_missed_connection and (avi_status == "取消" or is_conn_rebooking_flag) and has_rebooking:
             is_missed_connection = False
-            aviation_delay_proof_override = True
+            rebooking_override = True
 
         # 关键豁免：超售（overbooking/denied boarding）导致无法登机，属于外部原因，不适用中转接驳免责
         _overbooking_keywords = ["超售", "overbooking", "overbooked", "denied boarding", "denied_boarding", "拒绝登机"]
@@ -1313,15 +1358,20 @@ def _run_hardcheck(
             "vision_denies_missed": vision_denies_missed,
             "aviation_delay_proof_override": aviation_delay_proof_override,
             "overbooking_override": overbooking_override,
+            "rebooking_override": rebooking_override,
             "note": (
                 "前序航班延误导致无法搭乘后续接驳航班，属于免责情形4，不予赔付" if is_missed_connection
                 else (
-                    "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
-                    if aviation_delay_proof_override
+                    "原航班取消后承运人整体改签，旅客未乘坐原联程航班，不适用中转接驳免责"
+                    if rebooking_override
                     else (
-                        "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
-                        if overbooking_override
-                        else "未检测到中转接驳延误特征"
+                        "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
+                        if aviation_delay_proof_override
+                        else (
+                            "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
+                            if overbooking_override
+                            else "未检测到中转接驳延误特征"
+                        )
                     )
                 )
             ),
@@ -1336,6 +1386,10 @@ def _run_hardcheck(
         has_boarding_pass = _truthy(evidence.get("has_boarding_pass"))
         has_passport = _truthy(evidence.get("has_passport"))
         has_exit_entry_record = _truthy(evidence.get("has_exit_entry_record"))
+        # 兜底：exit_datetime 有值说明确实读到了出入境记录，强制修正为 true
+        exit_dt = str(evidence.get("exit_datetime") or "").strip()
+        if has_exit_entry_record is not True and not _is_unknown(exit_dt):
+            has_exit_entry_record = True
         id_type_text = str(claim_info.get("ID_Type") or claim_info.get("id_type") or "").strip()
         is_id_card_policy = "身份证" in id_type_text
 
@@ -2514,77 +2568,8 @@ def _check_duplicate_claim(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _check_inheritance_scenario(claim_info: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    遗产继承场景检测：
-    若申请人与被保险人姓名/证件号不一致，且无委托代办标志，
-    则疑似遗产继承场景，需补充合法继承权证明文件。
-
-    Returns:
-        {
-            "is_inheritance_suspected": bool,
-            "applicant_name": str,
-            "insured_name": str,
-            "applicant_id": str,
-            "insured_id": str,
-            "note": str,
-        }
-    """
-    # 申请人信息
-    applicant_name = str(claim_info.get("Applicant_Name") or claim_info.get("applicant_name") or "").strip()
-    applicant_id = str(claim_info.get("Applicant_ID") or claim_info.get("applicant_id") or "").strip()
-
-    # 被保险人信息
-    insured_name = str(
-        claim_info.get("Insured_Name") or claim_info.get("insured_name")
-        or claim_info.get("BeneficiaryName") or ""
-    ).strip()
-    insured_id = str(
-        claim_info.get("ID_Number") or claim_info.get("id_number")
-        or claim_info.get("Insured_ID") or ""
-    ).strip()
-
-    # 若任一侧信息缺失，无法判断
-    if not applicant_name or not insured_name:
-        return {
-            "is_inheritance_suspected": False,
-            "applicant_name": applicant_name or "unknown",
-            "insured_name": insured_name or "unknown",
-            "applicant_id": applicant_id or "unknown",
-            "insured_id": insured_id or "unknown",
-            "note": "申请人或被保险人姓名缺失，无法判断是否为遗产继承场景",
-        }
-
-    def _norm(s: str) -> str:
-        return re.sub(r"[\s\-]", "", s).upper()
-
-    name_match = _norm(applicant_name) == _norm(insured_name)
-    id_match = (not applicant_id or not insured_id) or (_norm(applicant_id) == _norm(insured_id))
-
-    if name_match and id_match:
-        return {
-            "is_inheritance_suspected": False,
-            "applicant_name": applicant_name,
-            "insured_name": insured_name,
-            "applicant_id": applicant_id,
-            "insured_id": insured_id,
-            "note": "申请人与被保险人一致，非遗产继承场景",
-        }
-
-    # 姓名或证件号不一致 → 疑似遗产继承
-    reason_parts = []
-    if not name_match:
-        reason_parts.append(f"姓名不一致（申请人={applicant_name}，被保险人={insured_name}）")
-    if applicant_id and insured_id and _norm(applicant_id) != _norm(insured_id):
-        reason_parts.append(f"证件号不一致（申请人={applicant_id}，被保险人={insured_id}）")
-
-    return {
-        "is_inheritance_suspected": True,
-        "applicant_name": applicant_name,
-        "insured_name": insured_name,
-        "applicant_id": applicant_id,
-        "insured_id": insured_id,
-        "note": "；".join(reason_parts) + "，疑似遗产继承场景，需补充合法继承权证明文件",
-    }
+    """遗产继承场景检测（已禁用）。"""
+    return {"is_inheritance_suspected": False, "note": "继承检测已禁用"}
 
 
 def _check_legal_capacity(claim_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -2711,7 +2696,7 @@ def _check_name_match(
 
     # 从保单侧提取姓名
     policy_name = ""
-    for field in ("Insured_Name", "insured_name", "Applicant_Name", "applicant_name", "BeneficiaryName"):
+    for field in ("Insured_And_Policy", "Insured_Name", "insured_name", "BeneficiaryName"):
         v = str(claim_info.get(field) or "").strip()
         if v and not _is_unknown(v):
             policy_name = v

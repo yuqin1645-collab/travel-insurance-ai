@@ -7,7 +7,7 @@
 
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 # 加载.env文件
@@ -78,6 +78,13 @@ class Config:
     DOC_CACHE_ENABLED: bool = os.getenv('DOC_CACHE_ENABLED', 'true').lower() == 'true'
     DOC_CACHE_DIR: Path = Path(os.getenv('DOC_CACHE_DIR', '.cache/docs'))
     DOC_CACHE_EXPIRE_DAYS: int = int(os.getenv('DOC_CACHE_EXPIRE_DAYS', '30'))
+
+    # 启用的险种类型（逗号分隔，默认只开航班延误）
+    # 生产环境：ENABLED_CLAIM_TYPES=flight_delay
+    # 全量开启：ENABLED_CLAIM_TYPES=flight_delay,baggage_delay
+    ENABLED_CLAIM_TYPES: List[str] = [
+        t.strip() for t in os.getenv('ENABLED_CLAIM_TYPES', 'flight_delay').split(',') if t.strip()
+    ]
     
     # 审核配置
     MAX_RETRY: int = int(os.getenv('MAX_RETRY', '3'))

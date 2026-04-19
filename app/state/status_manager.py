@@ -24,6 +24,13 @@ from app.state.claim_state_machine import ClaimStateMachine, StateTransitionErro
 LOGGER = logging.getLogger(__name__)
 
 
+def _safe_float(val) -> float | None:
+    try:
+        return float(val) if val is not None and val != "" else None
+    except (ValueError, TypeError):
+        return None
+
+
 class StatusManager:
     """状态管理器"""
 
@@ -524,6 +531,14 @@ class StatusManager:
             supplementary_reason=review_result.get("supplementary_reason"),
             final_decision=review_result.get("final_decision"),
             decision_reason=review_result.get("decision_reason"),
+            # 优先用 claim_info.json 注入的固定字段（_ci_* 前缀），AI 解析结果做兜底
+            passenger_name=review_result.get("_ci_insured_name"),
+            passenger_id_type=review_result.get("_ci_id_type"),
+            passenger_id_number=review_result.get("_ci_id_number"),
+            policy_no=review_result.get("_ci_policy_no"),
+            insurer=review_result.get("_ci_insurer"),
+            insured_amount=_safe_float(review_result.get("_ci_insured_amount")),
+            remaining_coverage=_safe_float(review_result.get("_ci_remaining_coverage")),
             metadata={
                 "review_timestamp": datetime.now().isoformat(),
                 "source": "ai_review"

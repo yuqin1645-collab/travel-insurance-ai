@@ -18,7 +18,8 @@ from app.db.models import (
     ClaimStatusRecord, ReviewResult, SupplementaryRecord, SchedulerLog, StatusHistory,
     ClaimStatus, DownloadStatus, ReviewStatus, SupplementaryStatus, TaskType, TaskStatus,
     TABLE_CLAIM_STATUS, TABLE_REVIEW_RESULT, TABLE_SUPPLEMENTARY_RECORDS,
-    TABLE_SCHEDULER_LOGS, TABLE_STATUS_HISTORY
+    TABLE_SCHEDULER_LOGS, TABLE_STATUS_HISTORY,
+    ClaimInfoRaw, TABLE_CLAIM_INFO_RAW
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -342,11 +343,11 @@ class ReviewResultDAO:
                     identity_match='Y' if logic_check.get('identity_match') else 'N',
                     threshold_met='Y' if logic_check.get('threshold_met') else 'N',
                     exclusion_triggered='Y' if logic_check.get('exclusion_triggered') else 'N',
-                    passenger_name=parse.get('passenger', {}).get('name'),
-                    passenger_id_type=parse.get('passenger', {}).get('id_type'),
-                    passenger_id_number=parse.get('passenger', {}).get('id_number'),
-                    policy_no=parse.get('policy_hint', {}).get('policy_no'),
-                    insurer=parse.get('policy_hint', {}).get('insurer'),
+                    passenger_name=data.get('_ci_insured_name') or parse.get('passenger', {}).get('name'),
+                    passenger_id_type=data.get('_ci_id_type') or parse.get('passenger', {}).get('id_type'),
+                    passenger_id_number=data.get('_ci_id_number') or parse.get('passenger', {}).get('id_number'),
+                    policy_no=data.get('_ci_policy_no') or parse.get('policy_hint', {}).get('policy_no'),
+                    insurer=data.get('_ci_insurer') or parse.get('policy_hint', {}).get('insurer'),
                     flight_no=parse.get('flight', {}).get('ticket_flight_no') or parse.get('flight', {}).get('operating_flight_no'),
                     operating_carrier=parse.get('flight', {}).get('operating_carrier'),
                     dep_iata=parse.get('route', {}).get('dep_iata'),
@@ -537,4 +538,79 @@ def get_supplementary_dao() -> SupplementaryDAO:
 def get_scheduler_log_dao() -> SchedulerLogDAO:
     """获取任务日志DAO"""
     return SchedulerLogDAO(_db_connection)
+
+
+class ClaimInfoRawDAO:
+    """案件原始下载信息 DAO（ai_claim_info_raw）"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def upsert(self, record: ClaimInfoRaw) -> int:
+        """写入或更新一条原始案件信息（以 forceid 为唯一键）"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    f"""INSERT INTO {TABLE_CLAIM_INFO_RAW}
+                        (forceid, claim_id, benefit_name, applicant_name,
+                         insured_name, id_type, id_number, birthday, gender,
+                         policy_no, insurance_company, product_name, plan_name,
+                         effective_date, expiry_date, date_of_insurance,
+                         case_insured_name, case_policy_no, case_insurance_company,
+                         case_effective_date, case_expiry_date, case_id_type, case_id_number,
+                         insured_amount, reserved_amount, remaining_coverage, claim_amount,
+                         date_of_accident, final_status, description_of_accident,
+                         source_date, raw_json, downloaded_at)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                                %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        ON DUPLICATE KEY UPDATE
+                            claim_id               = VALUES(claim_id),
+                            benefit_name           = VALUES(benefit_name),
+                            applicant_name         = VALUES(applicant_name),
+                            insured_name           = VALUES(insured_name),
+                            id_type                = VALUES(id_type),
+                            id_number              = VALUES(id_number),
+                            birthday               = VALUES(birthday),
+                            gender                 = VALUES(gender),
+                            policy_no              = VALUES(policy_no),
+                            insurance_company      = VALUES(insurance_company),
+                            product_name           = VALUES(product_name),
+                            plan_name              = VALUES(plan_name),
+                            effective_date         = VALUES(effective_date),
+                            expiry_date            = VALUES(expiry_date),
+                            date_of_insurance      = VALUES(date_of_insurance),
+                            case_insured_name      = VALUES(case_insured_name),
+                            case_policy_no         = VALUES(case_policy_no),
+                            case_insurance_company = VALUES(case_insurance_company),
+                            case_effective_date    = VALUES(case_effective_date),
+                            case_expiry_date       = VALUES(case_expiry_date),
+                            case_id_type           = VALUES(case_id_type),
+                            case_id_number         = VALUES(case_id_number),
+                            insured_amount         = VALUES(insured_amount),
+                            reserved_amount        = VALUES(reserved_amount),
+                            remaining_coverage     = VALUES(remaining_coverage),
+                            claim_amount           = VALUES(claim_amount),
+                            date_of_accident       = VALUES(date_of_accident),
+                            final_status           = VALUES(final_status),
+                            description_of_accident= VALUES(description_of_accident),
+                            source_date            = VALUES(source_date),
+                            raw_json               = VALUES(raw_json)""",
+                    (
+                        record.forceid, record.claim_id, record.benefit_name, record.applicant_name,
+                        record.insured_name, record.id_type, record.id_number, record.birthday, record.gender,
+                        record.policy_no, record.insurance_company, record.product_name, record.plan_name,
+                        record.effective_date, record.expiry_date, record.date_of_insurance,
+                        record.case_insured_name, record.case_policy_no, record.case_insurance_company,
+                        record.case_effective_date, record.case_expiry_date, record.case_id_type, record.case_id_number,
+                        record.insured_amount, record.reserved_amount, record.remaining_coverage, record.claim_amount,
+                        record.date_of_accident, record.final_status, record.description_of_accident,
+                        record.source_date, record.raw_json, record.downloaded_at,
+                    )
+                )
+                return cursor.lastrowid
+
+
+def get_claim_info_raw_dao() -> ClaimInfoRawDAO:
+    """获取案件原始信息DAO"""
+    return ClaimInfoRawDAO(_db_connection)
 

@@ -289,7 +289,7 @@ def _check_info_consistency(claim_info: Dict[str, Any], ai_parsed: Dict[str, Any
         flags.append({"checkpoint": "行李牌号一致性", "Eligible": "否", "Remark": f"行李牌号{baggage_tag}与登机牌{ boarding_baggage_tag }不匹配"})
 
     passenger_name = str(ai_parsed.get("passenger_name") or "").strip()
-    insured_name = str(claim_info.get("Insured_Name") or "").strip()
+    insured_name = str(claim_info.get("Insured_And_Policy") or claim_info.get("Insured_Name") or "").strip()
     if passenger_name and insured_name and passenger_name != insured_name:
         flags.append({"checkpoint": "姓名匹配", "Eligible": "否", "Remark": f"行李材料登记姓名{passenger_name}与保单权益人{ insured_name }不匹配"})
 

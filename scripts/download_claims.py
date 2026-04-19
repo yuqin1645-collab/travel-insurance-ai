@@ -7,6 +7,7 @@
 
 import os
 import json
+import time
 import logging
 import requests
 import aiohttp
@@ -293,6 +294,12 @@ class ClaimDownloader:
         with open(claim_info_path, "w", encoding="utf-8") as f:
             json.dump(claim_info, f, ensure_ascii=False, indent=4)
 
+        # ---------- 将原始字段写入 ai_claim_info_raw 表（数据追溯备份） ----------
+        try:
+            _save_claim_info_to_db(claim_info)
+        except Exception as _db_err:
+            LOGGER.warning(f"claim_info 写库失败（不影响下载）: {_db_err}")
+
         # ---------- 更新进度记录中的已知字段（新增字段直接合并） ----------
         # 把 claim 中所有字段（除 Files/files）写入进度，但不覆盖下载状态字段
         protected_keys = {"totalFiles", "downloadedFiles", "failedFiles", "status", "startTime", "completedTime"}
@@ -360,7 +367,7 @@ class ClaimDownloader:
                 continue
 
             # 确定保存路径（无后缀时先用 file_id，下载后再补扩展名）
-            dest_name = file_name or file_id
+            dest_name = _sanitize_filename(file_name or file_id)
             dest_path = case_dir / dest_name
 
             LOGGER.info(f"    ↓ {dest_name[:60]}{'...' if len(dest_name) > 60 else ''}")
@@ -826,7 +833,7 @@ class AsyncClaimDownloader:
                     LOGGER.warning(f"    [跳过] 文件无 URL: {file_info}")
                     continue
 
-                dest_name = file_name or file_id
+                dest_name = _sanitize_filename(file_name or file_id)
                 dest_path = case_dir / dest_name
 
                 LOGGER.info(f"    ↓ {dest_name[:60]}{'...' if len(dest_name) > 60 else ''}")
@@ -991,6 +998,109 @@ class AsyncClaimDownloader:
 # ------------------------------------------------------------------ #
 #  脚本入口（保持兼容）
 # ------------------------------------------------------------------ #
+
+
+def _sanitize_filename(name: str) -> str:
+    """替换 Windows 文件名中的非法字符（\ / : * ? " < > |）为下划线。"""
+    import re
+    return re.sub(r'[\\/:*?"<>|]', '_', name)
+
+
+def _safe_float_dl(val):
+    try:
+        return float(val) if val is not None and val != "" else None
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_date_dl(val: str):
+    """将 'YYYYMMDDHHMMSS' 或 'YYYY-MM-DD' 等格式转为 date，失败返回 None"""
+    if not val:
+        return None
+    s = str(val).strip()
+    for fmt in ("%Y-%m-%d", "%Y%m%d%H%M%S", "%Y%m%d"):
+        try:
+            return datetime.strptime(s[:len(fmt)], fmt).date()
+        except Exception:
+            continue
+    return None
+
+
+def _save_claim_info_to_db(claim_info: dict):
+    """将 claim_info.json 关键字段同步写入 ai_claim_info_raw 表。
+    download_claims.py 是同步脚本，用 asyncio.run 包裹异步 upsert。"""
+    import asyncio
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from app.db.database import DatabaseConnection, ClaimInfoRawDAO
+    from app.db.models import ClaimInfoRaw
+
+    # 从 samePolicyClaim[0] 提取 PascalCase 字段（被保险人维度）
+    spc_list = claim_info.get("samePolicyClaim") or []
+    spc = spc_list[0] if spc_list else {}
+
+    def _g(d, *keys):
+        """取多个候选键中第一个非空值"""
+        for k in keys:
+            v = d.get(k)
+            if v is not None and v != "":
+                return v
+        return None
+
+    record = ClaimInfoRaw(
+        forceid=str(claim_info.get("forceid") or ""),
+        claim_id=str(_g(claim_info, "claimId", "ClaimId") or ""),
+
+        benefit_name=_g(claim_info, "benefitName", "BenefitName"),
+        applicant_name=_g(claim_info, "applicant_Name", "applicantName", "Applicant_Name"),
+
+        # 来自 samePolicyClaim 的被保险人信息
+        insured_name=_g(spc, "Insured_And_Policy"),
+        id_type=_g(spc, "ID_Type"),
+        id_number=_g(spc, "ID_Number"),
+        birthday=_parse_date_dl(_g(spc, "Birthday")),
+        gender=_g(spc, "Gender"),
+        policy_no=_g(spc, "PolicyNo"),
+        insurance_company=_g(spc, "Insurance_Company"),
+        product_name=_g(spc, "Product_Name"),
+        plan_name=_g(spc, "Plan_Name"),
+        effective_date=_g(spc, "Effective_Date"),
+        expiry_date=_g(spc, "Expiry_Date"),
+        date_of_insurance=_g(spc, "Date_of_Insurance"),
+
+        # 本案维度（camelCase）
+        case_insured_name=_g(claim_info, "insured_And_Policy", "insuredAndPolicy"),
+        case_policy_no=_g(claim_info, "policyNo", "PolicyNo"),
+        case_insurance_company=_g(claim_info, "insurance_Company", "Insurance_Company"),
+        case_effective_date=_g(claim_info, "effective_Date", "Effective_Date"),
+        case_expiry_date=_g(claim_info, "expiry_Date", "Expiry_Date"),
+        case_id_type=_g(claim_info, "iD_Type", "ID_Type"),
+        case_id_number=_g(claim_info, "iD_Number", "ID_Number"),
+        insured_amount=_safe_float_dl(_g(claim_info, "insured_Amount", "Insured_Amount")),
+        reserved_amount=_safe_float_dl(_g(claim_info, "reserved_Amount", "Reserved_Amount")),
+        remaining_coverage=_safe_float_dl(_g(claim_info, "remaining_Coverage", "Remaining_Coverage")),
+        claim_amount=_safe_float_dl(_g(claim_info, "amount", "Amount")),
+
+        date_of_accident=_parse_date_dl(_g(claim_info, "date_of_Accident", "Date_of_Accident")),
+        final_status=_g(claim_info, "final_Status", "Final_Status"),
+        description_of_accident=_g(claim_info, "description_of_Accident", "Description_of_Accident"),
+
+        source_date=_g(spc, "Source_Date") or _g(claim_info, "source_Date"),
+
+        raw_json=json.dumps(claim_info, ensure_ascii=False),
+    )
+
+    async def _run():
+        db = DatabaseConnection()
+        await db.initialize()
+        try:
+            dao = ClaimInfoRawDAO(db)
+            await dao.upsert(record)
+        finally:
+            await db.close()
+
+    asyncio.run(_run())
+
 
 if __name__ == "__main__":
     # 兼容性：直接运行脚本时使用同步版本

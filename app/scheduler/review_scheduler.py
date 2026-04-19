@@ -68,11 +68,14 @@ class ReviewScheduler:
         error_message = None
 
         try:
-            # 1. 获取待审核案件
+            # 1. 获取待审核案件（只取已启用险种）
             pending_claims = await self.status_manager.get_pending_claims(
                 status_filter=[ClaimStatus.DOWNLOADED, ClaimStatus.REVIEW_PENDING],
                 limit=limit
             )
+            # 按 ENABLED_CLAIM_TYPES 过滤，未启用的险种跳过
+            enabled_types = config.ENABLED_CLAIM_TYPES
+            pending_claims = [c for c in pending_claims if c.get('claim_type') in enabled_types]
             queue_depth = len(pending_claims)
             LOGGER.info(f"review queue snapshot: pending={queue_depth}, limit={limit}, configured_batch_size={self.batch_size}")
 
@@ -227,6 +230,25 @@ class ReviewScheduler:
                         reviewer, claim_folder, policy_terms, 1, 1, session
                     )
                     if result:
+                        # 从 claim_info.json 注入被保险人/保单固定字段，避免依赖 AI 解析（可能乱码或缺失）
+                        ci_file = claim_folder / "claim_info.json"
+                        if ci_file.exists():
+                            try:
+                                ci = json.loads(ci_file.read_text(encoding="utf-8"))
+                                result["_ci_insured_name"] = (
+                                    ci.get("Insured_And_Policy") or ci.get("insured_And_Policy")
+                                    or ci.get("Applicant_Name") or ci.get("applicant_Name")
+                                )
+                                result["_ci_id_type"] = ci.get("ID_Type") or ci.get("iD_Type")
+                                result["_ci_id_number"] = ci.get("ID_Number") or ci.get("iD_Number")
+                                result["_ci_policy_no"] = ci.get("PolicyNo") or ci.get("policyNo")
+                                result["_ci_insurer"] = (
+                                    ci.get("Insurance_Company") or ci.get("insurance_Company")
+                                )
+                                result["_ci_insured_amount"] = ci.get("Insured_Amount") or ci.get("insured_Amount")
+                                result["_ci_remaining_coverage"] = ci.get("Remaining_Coverage") or ci.get("remaining_Coverage")
+                            except Exception:
+                                pass
                         return result
                 except Exception as e:
                     LOGGER.warning(f"审核失败 attempt={attempt}: {e}")

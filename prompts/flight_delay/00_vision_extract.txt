@@ -203,8 +203,9 @@
     "has_insurance_certificate": "true/false/unknown（判定口径：材料中出现 Policy/Card No. 且与 claim_info 的 PolicyNo 一致，同时 ID No. 与 ID_Number 一致，则为 true）",
     "has_id_proof": "true/false/unknown",
     "has_passport": "true/false/unknown（判定口径：材料中出现护照照片页，含本人照片、姓名、护照号码等信息，则为 true；若材料中根本没有护照照片页则为 false）",
-    "has_exit_entry_record": "true/false/unknown（判定口径：材料中出现中国海关出入境盖章页、电子出入境记录、或含有出入境时间戳的官方记录，则为 true；若材料中根本没有出入境记录则为 false）",
-    "exit_datetime": "出境时间，格式 YYYY-MM-DD HH:mm 或 YYYY-MM-DD（判定口径：从出入境盖章页/电子出入境记录中提取出境（出国）时间戳；若OCR文本中有出境时间也可采用；若材料中无出入境记录或无法识别则填 unknown）"
+    "has_exit_entry_record": "true/false/unknown（判定口径：以下任一情形均为 true：① 中国海关出入境盖章页；② 国家移民管理局出入境记录查询结果（电子文件，标题含"出入境记录查询结果"或"国家移民管理局"）；③ 任何含出入境时间戳的官方记录（含OCR识别出的出入境日期+航班号组合）。若材料中完全没有上述任一材料则为 false。**重要：只要能填出 exit_datetime（非 unknown），has_exit_entry_record 必须为 true，两个字段不得矛盾**）",
+    "exit_datetime": "出境时间，格式 YYYY-MM-DD HH:mm 或 YYYY-MM-DD（判定口径：从出入境盖章页/电子出入境记录中提取出境（出国）时间戳；若OCR文本中有出境时间也可采用；若材料中无出入境记录或无法识别则填 unknown）",
+    "boarding_pass_actual_dep": "登机牌上的出发时间 YYYY-MM-DD HH:MM/unknown。**重要约束**：(1) 日期必须来自登机牌原文（如'11APR'='2026-04-11'），绝对禁止用出入境记录的入境/出境日期替代或修正登机牌日期——出入境记录的日期是旅客到达/离境中国的日期，与航班起飞日期无关；(2) 若登机牌日期与出入境记录日期不同，以登机牌原文为准，并在extraction_notes中说明两者差异；(3) 若同一案件有多张登机牌（原航班+改签航班），boarding_pass_actual_dep 填与 alternate.alt_dep 对应的改签登机牌时间（即日期或航班号与行程单原航班不同的那张），不得填原航班的登机牌时间"
   }},
 
   "extraction_notes": "说明各航班号和日期的来源材料，以及哪些字段因材料不清晰/缺失而输出unknown。若材料中出现关键原文（如'原航班取消''保护航班MU760''missed their connecting flight''flight cancelled''due to weather'等），必须直接引用原文，不得用中文概括替代。特别说明：在多次调时场景下，旅客首次购票的计划时刻（schedule_revision_chain[0]）与飞常准当前显示的'计划'（aviation_scheduled）是否一致，以及延误时长应从哪个基准起算。"
@@ -216,7 +217,7 @@
 - **先枚举、再判断**：不要在看到第一个航班号时就直接填入 flight_no，必须先完成 all_flights_found 的枚举，再根据角色判定规则填写 flight_no 和 alternate
 - **多程行程**：itinerary_segments 按程次顺序列出，flight_no 取触发延误险的那一程（通常是取消/延误的那程）
 - **保护航班**：若材料中出现"保护航班""如需乘坐请及时致电航司确认座位"等字样，必须提取到 protection_flight，并执行 protection_check
-- **登机牌与行程单对比**：若登机牌航班号与行程单原航班号不同，登机牌对应的是实际乘坐的替代航班，填入 alternate.alt_flight_no
+- **登机牌与行程单对比**：若登机牌航班号与行程单原航班号不同，或航班号相同但日期不同（如 CA446 4月8日原航班 → CA446 4月11日改签航班），登机牌对应的是实际乘坐的替代航班，填入 alternate.alt_flight_no。**同号不同日期 = 改签**，必须正确识别并填入 alternate
 - **alt_dep / alt_arr 是计算延误"取长原则"的关键**：若航班取消/延误后客户乘坐了替代航班，请务必从改签通知、新登机牌、新行程单中提取替代航班时间
 - 航班查询截图（飞常准APP/航旅纵横/Flightradar24/机场官网等）中的航班号和日期同样有效，请正常提取
 - **混合案件材料处理**：同一案件可能同时提交了多种险种的材料（如随身财产损失险 + 航班延误险）。请**忽略**行李损坏报告（Damage Report）、行李标签、财产损失证明等与航班延误无关的材料，**专注**从延误通知邮件、购票行程单、登机牌、改签通知等材料中提取航班延误字段。

@@ -378,22 +378,63 @@ class ProductionWorkflow:
             schedule = parse.get("schedule_local", {})
             actual = parse.get("actual_local", {})
             alt = parse.get("alternate_local", {})
+            # 原航班：首次购票计划时刻（schedule_local）
             fields["planned_dep_time"] = self._parse_dt(schedule.get("planned_dep"))
             fields["planned_arr_time"] = self._parse_dt(schedule.get("planned_arr"))
+            # 原航班：飞常准实际时刻（actual_local，已在pipeline中以飞常准为优先写入）
             fields["actual_dep_time"] = self._parse_dt(actual.get("actual_dep"))
             fields["actual_arr_time"] = self._parse_dt(actual.get("actual_arr"))
+            # 被保险人实际乘坐航班时刻（改签/替代航班）
             fields["alt_dep_time"] = self._parse_dt(alt.get("alt_dep"))
             fields["alt_arr_time"] = self._parse_dt(alt.get("alt_arr"))
+            # 实际乘坐航班号和路由
+            alt_fn = str(alt.get("alt_flight_no") or "").strip()
+            if alt_fn and alt_fn.lower() not in ("unknown", "null", "none", ""):
+                fields["alt_flight_no"] = alt_fn
+            alt_dep_iata = str(alt.get("alt_dep_iata") or "").strip()
+            alt_arr_iata = str(alt.get("alt_arr_iata") or "").strip()
+            if alt_dep_iata and alt_dep_iata.lower() != "unknown":
+                fields["alt_dep_iata"] = alt_dep_iata
+            if alt_arr_iata and alt_arr_iata.lower() != "unknown":
+                fields["alt_arr_iata"] = alt_arr_iata
 
-        # flight_delay_aviation_lookup - 航班数据补充
+            # 航班场景标签
+            is_connecting = parse.get("is_connecting_flight")
+            has_alt = bool(fields.get("alt_flight_no") or fields.get("alt_dep_time"))
+            rebooking_cnt = parse.get("rebooking_count") or 0
+            if not has_alt and not is_connecting:
+                fields["flight_scenario"] = "direct"
+            elif is_connecting and not has_alt:
+                fields["flight_scenario"] = "connecting"
+            elif has_alt and int(rebooking_cnt) <= 1:
+                fields["flight_scenario"] = "rebooking"
+            elif has_alt and int(rebooking_cnt) > 1:
+                fields["flight_scenario"] = "multi_rebooking"
+            fields["rebooking_count"] = int(rebooking_cnt)
+
+            # 延误计算追溯
+            delay_meta = parse.get("delay_calculation_meta", {})
+            if delay_meta:
+                fields["delay_calc_from"] = delay_meta.get("from_field", "")
+                fields["delay_calc_to"] = delay_meta.get("to_field", "")
+
+        # flight_delay_aviation_lookup - 飞常准原航班独立字段（不再混入 planned/actual）
         lookup = debug_info.get("flight_delay_aviation_lookup", {})
-        if lookup:
+        if lookup and lookup.get("success"):
+            # 飞常准原航班独立存储
+            fields["avi_status"] = lookup.get("status", "")
+            fields["avi_planned_dep"] = self._parse_dt(lookup.get("planned_dep"))
+            fields["avi_planned_arr"] = self._parse_dt(lookup.get("planned_arr"))
+            fields["avi_actual_dep"] = self._parse_dt(lookup.get("actual_dep"))
+            fields["avi_actual_arr"] = self._parse_dt(lookup.get("actual_arr"))
+            # 基础路由信息补填（只填空）
             if not fields.get("flight_no"):
                 fields["flight_no"] = lookup.get("flight_no", "")
             if not fields.get("dep_iata"):
                 fields["dep_iata"] = lookup.get("dep_iata", "")
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = lookup.get("arr_iata", "")
+            # planned/actual 仍做兜底（若 parse 未填）
             if not fields.get("planned_dep_time"):
                 fields["planned_dep_time"] = self._parse_dt(lookup.get("planned_dep"))
             if not fields.get("planned_arr_time"):
@@ -402,10 +443,21 @@ class ProductionWorkflow:
                 fields["actual_dep_time"] = self._parse_dt(lookup.get("actual_dep"))
             if not fields.get("actual_arr_time"):
                 fields["actual_arr_time"] = self._parse_dt(lookup.get("actual_arr"))
-            if not fields.get("delay_duration_minutes"):
-                fields["delay_duration_minutes"] = lookup.get("delay_minutes")
             if lookup.get("status") == "取消":
                 fields["delay_type"] = "cancelled"
+            if not fields.get("delay_duration_minutes"):
+                fields["delay_duration_minutes"] = lookup.get("delay_minutes")
+
+        # flight_delay_aviation_lookup - 飞常准替代航班（若有 alt_lookup 子键）
+        alt_lookup = debug_info.get("flight_delay_alt_aviation_lookup", {})
+        if not alt_lookup:
+            # 兼容：从 lookup 本身取 alt 字段
+            alt_lookup = lookup.get("alt_flight_lookup", {}) if lookup else {}
+        if alt_lookup and alt_lookup.get("success"):
+            fields["avi_alt_flight_no"] = alt_lookup.get("flight_no", "")
+            fields["avi_alt_planned_dep"] = self._parse_dt(alt_lookup.get("planned_dep"))
+            fields["avi_alt_actual_dep"] = self._parse_dt(alt_lookup.get("actual_dep"))
+            fields["avi_alt_actual_arr"] = self._parse_dt(alt_lookup.get("actual_arr"))
 
         # flight_delay_vision_extract - 视觉提取补充
         vision = debug_info.get("flight_delay_vision_extract", {})
@@ -418,6 +470,20 @@ class ProductionWorkflow:
                     fields["dep_iata"] = first.get("dep_iata", "")
                 if not fields.get("arr_iata"):
                     fields["arr_iata"] = first.get("arr_iata", "")
+            # 替代航班路由（vision alternate）
+            v_alt = vision.get("alternate") or {}
+            if not fields.get("alt_flight_no"):
+                v_alt_fn = str(v_alt.get("alt_flight_no") or "").strip()
+                if v_alt_fn and v_alt_fn.lower() not in ("unknown", "null", "none", ""):
+                    fields["alt_flight_no"] = v_alt_fn
+            if not fields.get("alt_dep_iata"):
+                v_alt_dep = str(vision.get("dep_iata") or v_alt.get("alt_dep_iata") or "").strip()
+                if v_alt_dep and v_alt_dep.lower() != "unknown":
+                    fields["alt_dep_iata"] = v_alt_dep
+            if not fields.get("alt_arr_iata"):
+                v_alt_arr = str(vision.get("arr_iata") or v_alt.get("alt_arr_iata") or "").strip()
+                if v_alt_arr and v_alt_arr.lower() != "unknown":
+                    fields["alt_arr_iata"] = v_alt_arr
 
         # flight_delay_payout - 赔付信息补充
         payout_info = debug_info.get("flight_delay_payout", {})
@@ -438,7 +504,11 @@ class ProductionWorkflow:
             if not fields.get("insurer"):
                 fields["insurer"] = claim_info.get("Insurance_Company", "")
             if not fields.get("passenger_name"):
-                fields["passenger_name"] = claim_info.get("Applicant_Name", "")
+                fields["passenger_name"] = (
+                    claim_info.get("Insured_And_Policy")
+                    or claim_info.get("Insured_Name")
+                    or claim_info.get("Applicant_Name", "")
+                )
 
         # 基础字段
         fields["remark"] = (data.get("Remark") or "")[:2000]

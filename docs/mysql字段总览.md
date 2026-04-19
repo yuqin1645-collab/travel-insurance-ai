@@ -10,6 +10,7 @@
 3. **ai_supplementary_records** - 补件记录表
 4. **ai_scheduler_logs** - 定时任务日志表
 5. **ai_status_history** - 状态变更历史表
+6. **ai_claim_info_raw** - 案件原始下载信息存档表（数据追溯备份）
 
 ### 视图
 1. **v_claim_audit_summary** - 案件审核汇总视图
@@ -81,24 +82,54 @@
 #### 航班信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| flight_no | VARCHAR(32) | NULL | 航班号 |
+| flight_no | VARCHAR(32) | NULL | 原航班号 |
 | operating_carrier | VARCHAR(128) | NULL | 承运人 |
-| dep_iata | VARCHAR(8) | NULL | 出发地IATA |
-| arr_iata | VARCHAR(8) | NULL | 目的地IATA |
+| dep_iata | VARCHAR(8) | NULL | 原航班出发IATA |
+| arr_iata | VARCHAR(8) | NULL | 原航班到达IATA |
 | dep_city | VARCHAR(64) | NULL | 出发城市 |
 | arr_city | VARCHAR(64) | NULL | 目的城市 |
 | dep_country | VARCHAR(32) | NULL | 出发国家 |
 | arr_country | VARCHAR(32) | NULL | 目的国家 |
 
-#### 航班时间
+#### 原航班时间（来自 schedule_local / actual_local）
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| planned_dep_time | DATETIME | NULL | 计划起飞时间 |
-| actual_dep_time | DATETIME | NULL | 实际起飞时间 |
-| planned_arr_time | DATETIME | NULL | 计划到达时间 |
-| actual_arr_time | DATETIME | NULL | 实际到达时间 |
-| alt_dep_time | DATETIME | NULL | 替代航班起飞时间 |
-| alt_arr_time | DATETIME | NULL | 替代航班到达时间 |
+| planned_dep_time | DATETIME | NULL | 原航班首次购票计划起飞（schedule_local，延误计算基准） |
+| planned_arr_time | DATETIME | NULL | 原航班首次购票计划到达 |
+| actual_dep_time | DATETIME | NULL | 原航班实际起飞（飞常准优先） |
+| actual_arr_time | DATETIME | NULL | 原航班实际到达（飞常准优先） |
+
+#### 实际乘坐航班（改签/替代，来自 alternate_local）
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| alt_dep_time | DATETIME | NULL | 被保险人最终乘坐航班实际起飞 |
+| alt_arr_time | DATETIME | NULL | 被保险人最终乘坐航班实际到达 |
+| alt_flight_no | VARCHAR(32) | NULL | 被保险人实际乘坐的改签航班号 |
+| alt_dep_iata | VARCHAR(8) | NULL | 实际乘坐航班出发IATA |
+| alt_arr_iata | VARCHAR(8) | NULL | 实际乘坐航班到达IATA |
+
+#### 航班场景
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| flight_scenario | VARCHAR(32) | NULL | 航班场景：direct/connecting/rebooking/multi_rebooking/cancelled_nofly |
+| rebooking_count | TINYINT | 0 | 改签次数（0=无改签） |
+
+#### 飞常准原航班独立字段
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| avi_status | VARCHAR(32) | NULL | 飞常准原航班状态（正常/延误/取消） |
+| avi_planned_dep | DATETIME | NULL | 飞常准：原航班计划起飞 |
+| avi_planned_arr | DATETIME | NULL | 飞常准：原航班计划到达 |
+| avi_actual_dep | DATETIME | NULL | 飞常准：原航班实际起飞 |
+| avi_actual_arr | DATETIME | NULL | 飞常准：原航班实际到达 |
+
+#### 飞常准替代航班独立字段
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| avi_alt_flight_no | VARCHAR(32) | NULL | 飞常准查到的替代航班号 |
+| avi_alt_planned_dep | DATETIME | NULL | 飞常准：替代航班计划起飞 |
+| avi_alt_actual_dep | DATETIME | NULL | 飞常准：替代航班实际起飞 |
+| avi_alt_actual_arr | DATETIME | NULL | 飞常准：替代航班实际到达 |
 
 #### 延误计算
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -106,6 +137,8 @@
 | delay_duration_minutes | INT | NULL | 延误时长(分钟) |
 | delay_reason | VARCHAR(128) | NULL | 延误原因 |
 | delay_type | VARCHAR(32) | NULL | 延误类型 |
+| delay_calc_from | VARCHAR(64) | NULL | 延误起算时间点来源字段名（如 avi_planned_dep） |
+| delay_calc_to | VARCHAR(64) | NULL | 延误终止时间点来源字段名（如 alt_arr_time） |
 
 #### 审核结果
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -286,6 +319,59 @@
 
 ---
 
+### 6. ai_claim_info_raw（案件原始下载信息存档表）
+
+下载 `claim_info.json` 时同步写入，用于数据丢失时追溯。`raw_json` 字段保留完整原始内容。
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | BIGINT UNSIGNED | 主键 |
+| forceid | VARCHAR(64) | 案件唯一ID（唯一键） |
+| claim_id | VARCHAR(64) | 理赔单号 (ClaimId) |
+| benefit_name | VARCHAR(64) | 险种名称 (BenefitName) |
+| applicant_name | VARCHAR(128) | 申请人姓名 |
+| insured_name | VARCHAR(128) | 被保险人姓名（来自 samePolicyClaim.Insured_And_Policy） |
+| id_type | VARCHAR(32) | 证件类型 (ID_Type) |
+| id_number | VARCHAR(64) | 证件号码 (ID_Number) |
+| birthday | DATE | 出生日期 |
+| gender | VARCHAR(8) | 性别 |
+| policy_no | VARCHAR(64) | 保单号 (PolicyNo) |
+| insurance_company | VARCHAR(128) | 保险公司 |
+| product_name | VARCHAR(128) | 产品名称 |
+| plan_name | VARCHAR(128) | 计划名称 |
+| effective_date | VARCHAR(32) | 保单生效日期（原始字符串） |
+| expiry_date | VARCHAR(32) | 保单到期日期（原始字符串） |
+| date_of_insurance | VARCHAR(32) | 投保日期 |
+| case_insured_name | VARCHAR(128) | 本案被保险人姓名（camelCase字段） |
+| case_policy_no | VARCHAR(64) | 本案保单号 |
+| case_insurance_company | VARCHAR(128) | 本案保险公司 |
+| case_effective_date | VARCHAR(32) | 本案保单生效 |
+| case_expiry_date | VARCHAR(32) | 本案保单到期 |
+| case_id_type | VARCHAR(32) | 本案证件类型 |
+| case_id_number | VARCHAR(64) | 本案证件号码 |
+| insured_amount | DECIMAL(10,2) | 保额 |
+| reserved_amount | DECIMAL(10,2) | 核定金额 |
+| remaining_coverage | DECIMAL(10,2) | 剩余保额 |
+| claim_amount | DECIMAL(10,2) | 申请金额 |
+| date_of_accident | DATE | 事故日期 |
+| final_status | VARCHAR(64) | 案件状态 |
+| description_of_accident | TEXT | 事故经过描述 |
+| source_date | VARCHAR(128) | 来源渠道 (Source_Date) |
+| raw_json | LONGTEXT | 完整 claim_info.json 原始内容 |
+| downloaded_at | DATETIME | 首次下载写入时间 |
+| updated_at | DATETIME | 最后更新时间 |
+
+**索引**：
+- UNIQUE KEY uk_forceid (forceid)
+- KEY idx_claim_id (claim_id)
+- KEY idx_policy_no (policy_no)
+- KEY idx_insured_name (insured_name)
+- KEY idx_benefit_name (benefit_name)
+- KEY idx_final_status (final_status)
+- KEY idx_date_of_accident (date_of_accident)
+
+---
+
 ## 字段统计
 
 ### 按表统计字段数量
@@ -294,6 +380,7 @@
 - ai_supplementary_records: **13个字段**
 - ai_scheduler_logs: **10个字段**
 - ai_status_history: **8个字段**
+- ai_claim_info_raw: **34个字段**（含 raw_json 完整备份）
 
 ### 按类别统计
 1. **基础标识字段**: 5个（id, forceid, claim_id等）
@@ -321,4 +408,4 @@
 - DATE: 2个（日期）
 
 ---
-*更新时间: 2026-04-02*
+*更新时间: 2026-04-19*
