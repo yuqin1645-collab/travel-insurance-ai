@@ -492,15 +492,17 @@ async def main():
     """主函数"""
     import signal
 
-    # 配置日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('scheduler.log', encoding='utf-8', delay=False)
-        ]
-    )
+    # 配置日志（仅在未配置时添加handler，避免重复）
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.StreamHandler(sys.stdout),
+                logging.FileHandler('scheduler.log', encoding='utf-8', delay=False)
+            ]
+        )
 
     LOGGER.info("=" * 80)
     LOGGER.info("航班延误AI审核系统 - 定时任务调度器")

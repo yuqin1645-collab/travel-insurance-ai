@@ -883,15 +883,17 @@ async def main():
 
     args = parser.parse_args()
 
-    # 配置日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('production.log', encoding='utf-8', delay=False)
-        ]
-    )
+    # 配置日志（仅在未配置时添加handler，避免重复）
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.StreamHandler(sys.stdout),
+                logging.FileHandler('production.log', encoding='utf-8', delay=False)
+            ]
+        )
 
     # 创建工作流
     workflow = get_production_workflow()

@@ -405,7 +405,7 @@ class ClaimDownloader:
     @staticmethod
     def _get_file_id(file_info: Dict) -> str:
         """从 file_info 中提取可靠的唯一标识（避免使用完整 URL 作为 ID）。
-        优先级：FileId > fileId > Id > id > url路径末段 > 空字符串"""
+        优先级：FileId > fileId > Id > id > url路径末段(解码后) > 空字符串"""
         explicit = (
             file_info.get("FileId") or file_info.get("fileId") or
             file_info.get("Id") or file_info.get("id") or ""
@@ -413,17 +413,18 @@ class ClaimDownloader:
         if explicit:
             return explicit
 
-        # 用 URL 路径末尾（不含参数）作为兜底标识
+        # 用 URL 路径末尾（不含参数）作为兜底标识，并做 URL 解码
+        # 重要：需要解码以匹配磁盘上的文件名（_get_file_name 会解码）
         url = (
             file_info.get("FileUrl") or file_info.get("fileUrl") or
             file_info.get("url") or ""
         ).strip()
         if url:
-            from urllib.parse import urlparse
+            from urllib.parse import urlparse, unquote
             parsed = urlparse(url)
             path = parsed.path.rstrip("/")
             if path:
-                return path.split("/")[-1]
+                return unquote(path.split("/")[-1])
         return ""
 
     @staticmethod
@@ -863,7 +864,11 @@ class AsyncClaimDownloader:
                 await asyncio.sleep(0.1)  # 限速保护
 
             # ---------- 更新进度 ----------
-            existing_record["downloadedFiles"] = downloaded_files + newly_downloaded
+            # 合并后去重（以 stem 为唯一键），防止补件重新下载时文件名重复累积
+            merged = {Path(f).stem: f for f in downloaded_files}
+            for f in newly_downloaded:
+                merged[Path(f).stem] = f
+            existing_record["downloadedFiles"] = list(merged.values())
             existing_record["failedFiles"] = list(set(failed_files + newly_failed))
 
             all_done = len(existing_record["downloadedFiles"]) >= len(files) and not existing_record["failedFiles"]
@@ -917,16 +922,17 @@ class AsyncClaimDownloader:
         ).strip()
         if explicit:
             return explicit
+        # 重要：需要解码以匹配磁盘上的文件名（_get_file_name 会解码）
         url = (
             file_info.get("FileUrl") or file_info.get("fileUrl") or
             file_info.get("url") or ""
         ).strip()
         if url:
-            from urllib.parse import urlparse
+            from urllib.parse import urlparse, unquote
             parsed = urlparse(url)
             path = parsed.path.rstrip("/")
             if path:
-                return path.split("/")[-1]
+                return unquote(path.split("/")[-1])
         return ""
 
     @staticmethod
