@@ -173,6 +173,14 @@ class ReviewResult:
     alt_dep_iata: Optional[str] = None           # 实际乘坐航班出发机场
     alt_arr_iata: Optional[str] = None           # 实际乘坐航班到达机场
 
+    # 联程信息（汇总标量，详情见 ai_review_segments 子表）
+    # flight_no/dep_iata/arr_iata 始终记录"触发延误的那段"
+    is_connecting: Optional[bool] = None         # 是否联程（True=联程，False=直飞）
+    total_segments: Optional[int] = None         # 联程总段数（直飞=1）
+    origin_iata: Optional[str] = None            # 整个行程出发机场（联程首段起飞地）
+    destination_iata: Optional[str] = None       # 整个行程最终目的地（联程末段落地）
+    missed_connection: Optional[bool] = None     # 是否因前段延误导致误机（联程接驳失误）
+
     # 飞常准查原航班
     avi_status: Optional[str] = None             # 飞常准原航班状态（正常/延误/取消）
     avi_planned_dep: Optional[datetime] = None   # 飞常准原航班计划起飞
@@ -507,9 +515,69 @@ class ClaimInfoRaw:
         return data
 
 
+@dataclass
+class ReviewSegment:
+    """联程航段记录（ai_review_segments 子表，通过 forceid 关联 ai_review_result）"""
+    id: Optional[int] = None
+    forceid: str = ""                            # 关联主表 forceid
+
+    # 票号与航段序号
+    ticket_no: Optional[str] = None             # 票号（同一份行程单可能多票）
+    segment_no: int = 1                          # 航段序号（1起算）
+
+    # 航班号与航线
+    flight_no: Optional[str] = None             # 本段航班号
+    dep_iata: Optional[str] = None              # 本段起飞机场
+    arr_iata: Optional[str] = None              # 本段到达机场
+    origin_iata: Optional[str] = None           # 全程始发地（冗余，方便查询）
+    destination_iata: Optional[str] = None      # 全程目的地（冗余，方便查询）
+
+    # 计划时间（材料/保单）
+    planned_dep: Optional[datetime] = None      # 计划起飞
+    planned_arr: Optional[datetime] = None      # 计划到达
+
+    # 实际时间（飞常准）
+    actual_dep: Optional[datetime] = None       # 飞常准实际起飞
+    actual_arr: Optional[datetime] = None       # 飞常准实际到达
+
+    # 延误计算
+    delay_min: Optional[int] = None             # 本段延误分钟（actual_dep - planned_dep）
+    avi_status: Optional[str] = None            # 飞常准航班状态（正常/延误/取消）
+
+    # 标志位
+    is_triggered: Optional[bool] = None         # 是否为触发延误险赔付的那段（1=是）
+    is_connecting: Optional[bool] = None        # 是否联程（与主表一致，冗余方便按段查询）
+    missed_connect: Optional[bool] = None       # 本段是否因前段延误而误机
+
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ReviewSegment':
+        datetime_fields = ['planned_dep', 'planned_arr', 'actual_dep', 'actual_arr', 'created_at']
+        for field_name in datetime_fields:
+            if field_name in data and data[field_name]:
+                if isinstance(data[field_name], str):
+                    try:
+                        data[field_name] = datetime.fromisoformat(data[field_name].replace('Z', '+00:00'))
+                    except ValueError:
+                        data[field_name] = None
+        import dataclasses
+        known = {f.name for f in dataclasses.fields(cls)}
+        data = {k: v for k, v in data.items() if k in known}
+        return cls(**data)
+
+
 # 数据库表名常量
 TABLE_CLAIM_STATUS = "ai_claim_status"
 TABLE_REVIEW_RESULT = "ai_review_result"
+TABLE_REVIEW_SEGMENTS = "ai_review_segments"
 TABLE_SUPPLEMENTARY_RECORDS = "ai_supplementary_records"
 TABLE_SCHEDULER_LOGS = "ai_scheduler_logs"
 TABLE_STATUS_HISTORY = "ai_status_history"

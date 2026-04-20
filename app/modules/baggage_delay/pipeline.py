@@ -7,6 +7,7 @@ from urllib.parse import unquote, urlparse
 import aiohttp
 
 from app.engine.workflow import StageRunner
+from app.engine.material_extractor import ExtractionStrategy, MaterialExtractor
 from app.logging_utils import LOGGER, log_extra
 from app.skills.flight_lookup import get_flight_lookup_skill
 from app.rules.common.policy_validity import check as _rules_check_policy_validity
@@ -74,7 +75,9 @@ def _parse_dt_flexible(value: Any) -> Optional[datetime]:
     if not s or s.lower() == "unknown":
         return None
     try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        # 去掉时区信息，统一用 naive datetime 计算延误时长
+        return dt.replace(tzinfo=None)
     except Exception:
         pass
     for fmt in (
@@ -334,12 +337,19 @@ def _material_gate(text_blob: str, file_names: List[str]) -> List[str]:
 
 
 def _result(forceid: str, remark: str, is_additional: str, conclusions: List[Dict[str, str]], debug: Dict[str, Any]) -> Dict[str, Any]:
+    if remark.startswith("审核通过") or remark.startswith("赔付"):
+        audit_result = "通过"
+    elif is_additional == "Y" or remark.startswith("需补件") or remark.startswith("转人工"):
+        audit_result = "需补件"
+    else:
+        audit_result = "拒绝"
     return {
         "forceid": forceid,
         "claim_type": "baggage_delay",
         "Remark": remark,
         "IsAdditional": is_additional,
         "KeyConclusions": conclusions,
+        "baggage_delay_audit": {"audit_result": audit_result, "explanation": remark},
         "DebugInfo": debug,
     }
 
@@ -375,7 +385,36 @@ async def review_baggage_delay_async(
     )
     conclusions: List[Dict[str, str]] = []
 
-    # 0) AI结构化抽取（失败时降级到规则解析）
+    # 0) 视觉识别：读取本地图片/PDF，提取材料中的关键字段（登机牌、PIR单、签收证明等）
+    vision_extract: Dict[str, Any] = {}
+    try:
+        extractor = MaterialExtractor(reviewer=reviewer, forceid=forceid)
+        extraction = await extractor.extract(
+            claim_folder=claim_folder,
+            claim_info=claim_info,
+            strategy=ExtractionStrategy.VISION_DIRECT,
+            prompt_name="00_vision_extract",
+            session=session,
+        )
+        raw_vision = extraction.vision_data
+        if isinstance(raw_vision, dict):
+            vision_extract = raw_vision
+        elif isinstance(raw_vision, list) and raw_vision and isinstance(raw_vision[0], dict):
+            vision_extract = raw_vision[0]
+        LOGGER.info(
+            f"[{index}/{total}] 视觉识别完成: has_boarding={vision_extract.get('has_boarding_or_ticket')} "
+            f"has_delay_proof={vision_extract.get('has_baggage_delay_proof')} "
+            f"has_receipt_proof={vision_extract.get('has_baggage_receipt_time_proof')}",
+            extra=log_extra(forceid=forceid, stage="baggage_delay_vision", attempt=0),
+        )
+    except Exception as _ve:
+        LOGGER.warning(
+            f"[{index}/{total}] 视觉识别失败（降级到纯文本）: {_ve}",
+            extra=log_extra(forceid=forceid, stage="baggage_delay_vision", attempt=0),
+        )
+    debug["vision_extract"] = vision_extract
+
+    # 0.5) AI结构化抽取（纯文本兜底，补充视觉识别未覆盖的字段）
     ai_parsed, parse_err = await runner.run(
         "baggage_delay_parse",
         reviewer._ai_baggage_delay_parse_async,
@@ -389,6 +428,29 @@ async def review_baggage_delay_async(
         debug["parse_warning"] = str(parse_err)[:200]
     if isinstance(ai_parsed, dict):
         debug["ai_parsed"] = ai_parsed
+
+    # 合并视觉识别结果到 ai_parsed（视觉结果优先，文本解析兜底）
+    if vision_extract and isinstance(ai_parsed, dict):
+        for key in (
+            "has_boarding_or_ticket", "has_baggage_delay_proof", "has_baggage_receipt_time_proof",
+            "flight_actual_arrival_time", "baggage_receipt_time", "receipt_times", "delay_hours",
+            "has_id_proof", "has_passport", "has_exit_entry_record", "exit_datetime",
+            "has_bank_card_proof", "risk_flags",
+        ):
+            vision_val = vision_extract.get(key)
+            parsed_val = ai_parsed.get(key)
+            # 视觉结果非 unknown 时覆盖文本结果
+            if vision_val is not None and str(vision_val).lower() not in ("unknown", "", "[]"):
+                ai_parsed[key] = vision_val
+            elif parsed_val is None:
+                ai_parsed[key] = vision_val
+        # 同步基础航班字段
+        for key in ("flight_no", "flight_date", "dep_iata", "arr_iata"):
+            vision_val = vision_extract.get(key)
+            if vision_val and str(vision_val).lower() not in ("unknown", ""):
+                ai_parsed.setdefault(key, vision_val)
+    elif vision_extract and not isinstance(ai_parsed, dict):
+        ai_parsed = dict(vision_extract)
 
     # 前置准入校验（保单有效性、有效期、身份匹配）
     policy_violation = _check_policy_validity(claim_info, debug)
@@ -472,20 +534,62 @@ async def review_baggage_delay_async(
         )
     conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "未发现行李丢失单独触发，继续按行李延误审核"})
 
-    # 3) 材料门禁（含必备材料、特殊场景）
-    missing_materials = _material_gate(text_blob, file_names)
+    # 3) 材料门禁：优先使用视觉识别的 has_* 字段判断，true=通过，false=缺件，unknown=降级到文件名扫描
+    missing_materials: List[str] = []
     if isinstance(ai_parsed, dict):
-        if str(ai_parsed.get("has_boarding_or_ticket") or "").lower() == "false":
+        def _has_flag(key: str) -> str:
+            return str(ai_parsed.get(key) or "unknown").strip().lower()
+
+        # 登机牌/行程单
+        flag = _has_flag("has_boarding_or_ticket")
+        if flag == "false":
             missing_materials.append("交通票据（机票/登机牌/行程单）")
-        if str(ai_parsed.get("has_baggage_delay_proof") or "").lower() == "false":
+        elif flag == "unknown":
+            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
+                       for w in ["机票", "登机牌", "行程单", "ticket", "boarding", "itinerary"]):
+                missing_materials.append("交通票据（机票/登机牌/行程单）")
+
+        # 行李延误证明
+        flag = _has_flag("has_baggage_delay_proof")
+        if flag == "false":
             missing_materials.append("行李延误证明（含航班及原因）")
-        if str(ai_parsed.get("has_baggage_receipt_time_proof") or "").lower() == "false":
+        elif flag == "unknown":
+            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
+                       for w in ["行李延误", "行李不正常", "pir", "baggage delay", "delay proof"]):
+                missing_materials.append("行李延误证明（含航班及原因）")
+
+        # 行李签收时间证明
+        flag = _has_flag("has_baggage_receipt_time_proof")
+        if flag == "false":
             missing_materials.append("行李签收时间证明")
+        elif flag == "unknown":
+            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
+                       for w in ["签收", "领取", "receipt", "delivered", "delivery"]):
+                missing_materials.append("行李签收时间证明")
+
+        # 身份证（可用视觉 has_id_proof 或 has_passport 替代，两者有一即可）
+        id_flag = _has_flag("has_id_proof")
+        passport_flag = _has_flag("has_passport")
+        if id_flag == "false" and passport_flag == "false":
+            missing_materials.append("被保险人身份证正反面或护照")
+
+        # 护照（视觉明确识别为缺失时才要求补件）
+        if passport_flag == "false" and id_flag in ("false", "unknown"):
+            missing_materials.append("护照照片页、签证页、出入境盖章页")
+
+        # 银行卡（非阻断性材料，仅在视觉明确识别为缺失时记录，不触发补件）
+        bank_flag = _has_flag("has_bank_card_proof")
+        if bank_flag == "false":
+            debug["bank_card_warning"] = "视觉识别未见银行卡信息，建议人工确认打款账号"
+
         # 特殊场景材料校验
         special_needs = _check_special_materials(claim_info, text_blob, file_names)
         missing_materials.extend(special_needs)
-        if missing_materials:
-            missing_materials = sorted(set(missing_materials))
+        missing_materials = sorted(set(missing_materials))
+    else:
+        # ai_parsed 解析失败时降级到文件名关键词扫描
+        missing_materials = _material_gate(text_blob, file_names)
+
     debug["missing_materials"] = missing_materials
     if missing_materials:
         conclusions.append({"checkpoint": "材料完整性", "Eligible": "需补件", "Remark": "；".join(missing_materials)})
@@ -496,7 +600,7 @@ async def review_baggage_delay_async(
             conclusions,
             debug,
         )
-    conclusions.append({"checkpoint": "材料完整性", "Eligible": "是", "Remark": "关键材料关键词已覆盖（基于文本与附件文件名）"})
+    conclusions.append({"checkpoint": "材料完整性", "Eligible": "是", "Remark": "视觉识别确认关键材料已提供"})
 
     # 4) 人工复核触发
     manual_flags = []

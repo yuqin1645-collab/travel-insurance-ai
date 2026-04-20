@@ -19,7 +19,8 @@ from app.db.models import (
     ClaimStatus, DownloadStatus, ReviewStatus, SupplementaryStatus, TaskType, TaskStatus,
     TABLE_CLAIM_STATUS, TABLE_REVIEW_RESULT, TABLE_SUPPLEMENTARY_RECORDS,
     TABLE_SCHEDULER_LOGS, TABLE_STATUS_HISTORY,
-    ClaimInfoRaw, TABLE_CLAIM_INFO_RAW
+    ClaimInfoRaw, TABLE_CLAIM_INFO_RAW,
+    ReviewSegment, TABLE_REVIEW_SEGMENTS,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -530,6 +531,70 @@ class SchedulerLogDAO:
 _db_connection = DatabaseConnection()
 
 
+class ReviewSegmentDAO:
+    """联程航段子表 DAO（ai_review_segments）"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def upsert_segments(self, forceid: str, segments: list[ReviewSegment]) -> int:
+        """先删除该 forceid 的旧行，再批量插入新行。返回插入行数。"""
+        if not segments:
+            return 0
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    f"DELETE FROM {TABLE_REVIEW_SEGMENTS} WHERE forceid = %s", (forceid,)
+                )
+                cols = [
+                    "forceid", "ticket_no", "segment_no",
+                    "flight_no", "dep_iata", "arr_iata", "origin_iata", "destination_iata",
+                    "planned_dep", "planned_arr", "actual_dep", "actual_arr",
+                    "delay_min", "avi_status",
+                    "is_triggered", "is_connecting", "missed_connect",
+                ]
+                placeholders = ", ".join(["%s"] * len(cols))
+                sql = (
+                    f"INSERT INTO {TABLE_REVIEW_SEGMENTS} ({', '.join(cols)}) "
+                    f"VALUES ({placeholders})"
+                )
+
+                def _bool(v):
+                    if v is None:
+                        return None
+                    return 1 if v else 0
+
+                def _dt(v):
+                    if v is None:
+                        return None
+                    if hasattr(v, "strftime"):
+                        return v.strftime("%Y-%m-%d %H:%M:%S")
+                    return str(v)
+
+                rows = []
+                for s in segments:
+                    rows.append((
+                        s.forceid, s.ticket_no, s.segment_no,
+                        s.flight_no, s.dep_iata, s.arr_iata, s.origin_iata, s.destination_iata,
+                        _dt(s.planned_dep), _dt(s.planned_arr),
+                        _dt(s.actual_dep), _dt(s.actual_arr),
+                        s.delay_min, s.avi_status,
+                        _bool(s.is_triggered), _bool(s.is_connecting), _bool(s.missed_connect),
+                    ))
+                await cursor.executemany(sql, rows)
+                return len(rows)
+
+    async def get_segments(self, forceid: str) -> list[ReviewSegment]:
+        """查询某案件的所有航段，按 segment_no 升序返回。"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT * FROM {TABLE_REVIEW_SEGMENTS} WHERE forceid = %s ORDER BY segment_no",
+                    (forceid,)
+                )
+                return [ReviewSegment.from_dict(row) for row in await cursor.fetchall()]
+
+
 def get_db_connection() -> DatabaseConnection:
     """获取数据库连接实例"""
     return _db_connection
@@ -543,6 +608,11 @@ def get_claim_status_dao() -> ClaimStatusDAO:
 def get_review_result_dao() -> ReviewResultDAO:
     """获取审核结果DAO"""
     return ReviewResultDAO(_db_connection)
+
+
+def get_review_segment_dao() -> ReviewSegmentDAO:
+    """获取联程航段DAO"""
+    return ReviewSegmentDAO(_db_connection)
 
 
 def get_supplementary_dao() -> SupplementaryDAO:

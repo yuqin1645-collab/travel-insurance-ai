@@ -7,10 +7,11 @@
 ### 主表
 1. **ai_claim_status** - 案件状态管理表
 2. **ai_review_result** - AI审核结果主表（核心）
-3. **ai_supplementary_records** - 补件记录表
-4. **ai_scheduler_logs** - 定时任务日志表
-5. **ai_status_history** - 状态变更历史表
-6. **ai_claim_info_raw** - 案件原始下载信息存档表（数据追溯备份）
+3. **ai_review_segments** - 联程航段子表（一对多，forceid 关联）
+4. **ai_supplementary_records** - 补件记录表
+5. **ai_scheduler_logs** - 定时任务日志表
+6. **ai_status_history** - 状态变更历史表
+7. **ai_claim_info_raw** - 案件原始下载信息存档表（数据追溯备份）
 
 ### 视图
 1. **v_claim_audit_summary** - 案件审核汇总视图
@@ -113,6 +114,17 @@
 |--------|------|---------|------|
 | flight_scenario | VARCHAR(32) | NULL | 航班场景：direct/connecting/rebooking/multi_rebooking/cancelled_nofly |
 | rebooking_count | TINYINT | 0 | 改签次数（0=无改签） |
+
+#### 联程信息（汇总标量，详情见 ai_review_segments 子表）
+> `flight_no` / `dep_iata` / `arr_iata` 始终记录**触发延误的那段**；行程首尾用 `origin_iata` / `destination_iata` 表示。
+
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| is_connecting | TINYINT(1) | NULL | 是否联程（1=联程，0=直飞，NULL=未判断） |
+| total_segments | TINYINT | NULL | 联程总段数（直飞=1，两段联程=2） |
+| origin_iata | VARCHAR(8) | NULL | 全程出发机场IATA（联程首段起飞地） |
+| destination_iata | VARCHAR(8) | NULL | 全程目的地IATA（联程末段落地） |
+| missed_connection | TINYINT(1) | NULL | 是否联程接驳失误（前段延误导致错过后段，1=是） |
 
 #### 飞常准原航班独立字段
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -219,6 +231,45 @@
 - KEY idx_audit_time (audit_time)
 - KEY idx_forwarded_to_frontend (forwarded_to_frontend)
 - KEY idx_created_at (created_at)
+- KEY idx_is_connecting (is_connecting)
+- KEY idx_origin_dest (origin_iata, destination_iata)
+- KEY idx_missed_connection (missed_connection)
+
+---
+
+### 3. ai_review_segments（联程航段子表）
+
+与 `ai_review_result` 通过 `forceid` 关联，一条主记录对应多行（每段一行）。直飞案件不写入本表。
+
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| id | BIGINT UNSIGNED | AUTO_INCREMENT | 主键 |
+| forceid | VARCHAR(64) | | 关联 ai_review_result.forceid（外键） |
+| ticket_no | VARCHAR(64) | NULL | 票号 |
+| segment_no | TINYINT | 1 | 航段序号（1起算） |
+| flight_no | VARCHAR(32) | NULL | 本段航班号 |
+| dep_iata | VARCHAR(8) | NULL | 本段起飞机场IATA |
+| arr_iata | VARCHAR(8) | NULL | 本段到达机场IATA |
+| origin_iata | VARCHAR(8) | NULL | 全程始发地IATA（冗余，方便按段查询） |
+| destination_iata | VARCHAR(8) | NULL | 全程目的地IATA（冗余） |
+| planned_dep | DATETIME | NULL | 计划起飞时间（材料/保单） |
+| planned_arr | DATETIME | NULL | 计划到达时间（材料/保单） |
+| actual_dep | DATETIME | NULL | 飞常准实际起飞 |
+| actual_arr | DATETIME | NULL | 飞常准实际到达 |
+| delay_min | INT | NULL | 本段延误分钟（actual_dep - planned_dep） |
+| avi_status | VARCHAR(32) | NULL | 飞常准航班状态（正常/延误/取消） |
+| is_triggered | TINYINT(1) | NULL | 是否触发延误险赔付的那段（1=是） |
+| is_connecting | TINYINT(1) | NULL | 是否联程（与主表一致，冗余） |
+| missed_connect | TINYINT(1) | NULL | 本段是否因前段延误而误机 |
+| created_at | DATETIME | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引**：
+- KEY idx_seg_forceid (forceid)
+- KEY idx_seg_flight_no (flight_no)
+- KEY idx_seg_is_triggered (is_triggered)
+- KEY idx_seg_dep_iata (dep_iata)
+- KEY idx_seg_arr_iata (arr_iata)
+- FOREIGN KEY fk_seg_forceid → ai_review_result(forceid) ON DELETE CASCADE
 
 ---
 
@@ -376,7 +427,8 @@
 
 ### 按表统计字段数量
 - ai_claim_status: **18个字段**
-- ai_review_result: **45个字段**（核心表）
+- ai_review_result: **50个字段**（核心表，含联程汇总字段）
+- ai_review_segments: **19个字段**（联程航段子表）
 - ai_supplementary_records: **13个字段**
 - ai_scheduler_logs: **10个字段**
 - ai_status_history: **8个字段**
@@ -408,4 +460,4 @@
 - DATE: 2个（日期）
 
 ---
-*更新时间: 2026-04-19*
+*更新时间: 2026-04-20*

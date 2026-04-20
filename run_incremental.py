@@ -74,6 +74,8 @@ def detect_claim_type(claim_info: Dict) -> str:
     benefit = str(claim_info.get("BenefitName") or "")
     if "航班延误" in benefit:
         return "flight_delay"
+    if "行李延误" in benefit:
+        return "baggage_delay"
     return "baggage_damage"
 
 

@@ -516,10 +516,11 @@ class ClaimDownloader:
             self.process_claim(claim)
             print()
 
-        # 汇总
-        total = len(self.progress)
-        completed = sum(1 for v in self.progress.values() if v.get("status") == "completed")
-        partial = sum(1 for v in self.progress.values() if v.get("status") == "partial")
+        # 汇总（过滤进度文件中非字典的旧格式残留条目）
+        dict_vals = [v for v in self.progress.values() if isinstance(v, dict)]
+        total = len(dict_vals)
+        completed = sum(1 for v in dict_vals if v.get("status") == "completed")
+        partial = sum(1 for v in dict_vals if v.get("status") == "partial")
         LOGGER.info(f"[汇总] 总案件: {total}，完成: {completed}，部分失败: {partial}")
         LOGGER.info(f"[结束] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -1109,6 +1110,11 @@ def _save_claim_info_to_db(claim_info: dict):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
     # 兼容性：直接运行脚本时使用同步版本
     API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim"
     REQUEST_PAYLOAD = {}
