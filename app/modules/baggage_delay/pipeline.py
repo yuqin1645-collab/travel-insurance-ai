@@ -440,6 +440,7 @@ async def review_baggage_delay_async(
     if vision_extract and isinstance(ai_parsed, dict):
         for key in (
             "has_boarding_or_ticket", "has_baggage_delay_proof", "has_baggage_receipt_time_proof",
+            "has_baggage_tag_proof",  # 行李牌只有 vision_extract 能看到，必须合并
             "flight_actual_arrival_time", "baggage_receipt_time", "receipt_times", "delay_hours",
             "has_id_proof", "has_passport", "has_exit_entry_record", "exit_datetime",
             "has_bank_card_proof", "risk_flags",
@@ -579,7 +580,13 @@ async def review_baggage_delay_async(
             missing_materials.append("行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）")
 
         # 托运行李牌（必须有：含姓名、航班信息、行李牌号码）
+        # 优先读合并后的 ai_parsed，vision_extract 已在上方合并进来
         tag_flag = _has_flag("has_baggage_tag_proof")
+        # 双重保险：vision_extract 原始值直接再读一次，防止合并遗漏
+        if tag_flag == "unknown":
+            v_tag = str(vision_extract.get("has_baggage_tag_proof") or "unknown").strip().lower()
+            if v_tag not in ("unknown", ""):
+                tag_flag = v_tag
         if tag_flag == "false":
             missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
         elif tag_flag == "unknown":
@@ -662,11 +669,10 @@ async def review_baggage_delay_async(
     conclusions.append({"checkpoint": "赔付门槛", "Eligible": "是", "Remark": f"延误时长{delay_hours:.2f}小时，达到赔付门槛"})
 
     # 信息一致性校验
-    consistency_flags = _check_info_consistency(claim_info, ai_parsed or {})
-    for flag in consistency_flags:
-        conclusions.append(flag)
-    if any(f.get("Eligible") == "否" for f in consistency_flags):
-        return _result(forceid, "拒赔：信息一致性校验失败（航班号/行李牌号/姓名不匹配）", "N", conclusions, debug)
+    consistency_violation = _check_info_consistency(claim_info, ai_parsed or {})
+    if consistency_violation:
+        conclusions.append({"checkpoint": "信息一致性", "Eligible": "否", "Remark": consistency_violation})
+        return _result(forceid, consistency_violation, "N", conclusions, debug)
 
     # 5.5) AI审核意见（可选，失败不影响主流程）
     ai_audit, audit_err = await runner.run(
@@ -689,6 +695,32 @@ async def review_baggage_delay_async(
         debug["audit_warning"] = str(audit_err)[:200]
     elif isinstance(ai_audit, dict):
         debug["ai_audit"] = ai_audit
+        # 合并 AI 审计的补件列表：ai_audit 可能发现材料门禁未识别到的缺项
+        ai_audit_result = str(ai_audit.get("audit_result") or "").strip()
+        ai_missing = [m for m in (ai_audit.get("missing_materials") or []) if m and str(m).strip()]
+        if ai_missing:
+            # 去重合并：只追加 ai_audit 额外发现的缺项
+            existing_set = set(missing_materials)
+            for item in ai_missing:
+                if item not in existing_set:
+                    missing_materials.append(item)
+                    existing_set.add(item)
+            missing_materials = sorted(set(missing_materials))
+            debug["missing_materials"] = missing_materials
+        # 若 ai_audit 判断需补件但材料门禁已通过，仍触发补件流程
+        if ai_audit_result == "需补齐资料" and missing_materials:
+            conclusions.append({"checkpoint": "AI审计补件", "Eligible": "需补件", "Remark": "；".join(missing_materials)})
+            return _result(
+                forceid,
+                "需补件：" + "；".join(missing_materials),
+                "Y",
+                conclusions,
+                debug,
+            )
+        elif ai_audit_result == "拒绝":
+            reason = str(ai_audit.get("reason") or ai_audit.get("explanation") or "AI审核拒赔")
+            conclusions.append({"checkpoint": "AI审计", "Eligible": "否", "Remark": reason})
+            return _result(forceid, f"拒赔：{reason}", "N", conclusions, debug)
 
     # 6) 赔付核算
     claim_amount = _safe_float(claim_info.get("Amount"))

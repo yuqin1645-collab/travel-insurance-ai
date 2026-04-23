@@ -43,7 +43,11 @@ def find_claim_folder(forceid: str) -> Path:
 
 def detect_claim_type(claim_info: dict) -> str:
     benefit = str(claim_info.get("BenefitName") or "")
-    if "航班延误" in benefit:
+    folder_hint = str(claim_info.get("_claim_folder_path") or "")
+    combined = f"{benefit} {folder_hint}"
+    if "行李延误" in combined:
+        return "baggage_delay"
+    if "航班延误" in combined or "flight_delay" in combined.lower():
         return "flight_delay"
     return "baggage_damage"
 
@@ -95,7 +99,8 @@ async def rerun(forceids: list, dry_run: bool = False):
             result_file = output_dir / f"{result['forceid']}_ai_review.json"
             result_file.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
             print(f"  审核结果已保存: {result_file.name}")
-            print(f"  audit_result: {result.get('flight_delay_audit', {}).get('audit_result', '')}")
+            audit_block = result.get("baggage_delay_audit") or result.get("flight_delay_audit") or {}
+            print(f"  audit_result: {audit_block.get('audit_result', '')}")
 
             if dry_run:
                 print(f"  [dry-run] 跳过推送和数据库同步")
