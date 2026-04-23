@@ -87,6 +87,17 @@ def find_claim_path(query, absolute=False):
                         matched_by = "ClaimId"
                 break
 
+    # === 第四步：根据 matched_forceid 在 claims_data 中查找案件目录 ===
+    if claims_path is None and matched_forceid:
+        for info_file in CLAIMS_DIR.rglob("claim_info.json"):
+            try:
+                data = json.loads(info_file.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if str(data.get("forceid") or "").strip() == matched_forceid:
+                claims_path = info_file.parent
+                break
+
     # OCR cache：只做"是否存在缓存记录"的辅助定位（缓存按 hash 命名，forceid 不直接关联）
     cache_dir = str(CACHE_DIR.resolve()) if absolute else str(CACHE_DIR)
 

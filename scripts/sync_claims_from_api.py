@@ -6,8 +6,9 @@
 - 将接口返回的 ClaimId 写入每个案件目录下的 claim_info.json
 
 用法:
-  py scripts/sync_claims_from_api.py
-  py scripts/sync_claims_from_api.py --dry-run   # 只打印将要做的操作，不删不改
+  py scripts/sync_claims_from_api.py                # 同步（可能删除本地多余目录，超20个需确认）
+  py scripts/sync_claims_from_api.py --no-delete    # 只新增/更新，不删除任何本地目录
+  py scripts/sync_claims_from_api.py --dry-run      # 只打印将要做的操作，不删不改
   py scripts/sync_claims_from_api.py --api-url "https://custom-url/..."
 """
 
@@ -164,6 +165,7 @@ def read_claim_info(folder: Path) -> Optional[Dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="按 Rest_AI_CLaim 接口结果同步本地案件并写入 ClaimId")
     parser.add_argument("--dry-run", action="store_true", help="仅打印将要执行的操作，不删除、不写入")
+    parser.add_argument("--no-delete", action="store_true", help="只新增/更新 ClaimId，不删除任何本地目录")
     parser.add_argument("--api-url", default="", help="接口地址，默认从环境变量 REST_AI_CLAIM_URL 或内置默认值")
     parser.add_argument(
         "--claim-type",
@@ -230,20 +232,32 @@ def main() -> int:
 
     # 3) 删除不在接口中的案件目录
     if to_delete:
-        print(f"\n将删除 {len(to_delete)} 个不在接口列表中的案件目录。")
-        for folder in to_delete[:10]:
-            print(f"  - {folder.name}")
-        if len(to_delete) > 10:
-            print(f"  ... 共 {len(to_delete)} 个")
-        if not args.dry_run:
-            for folder in to_delete:
-                import shutil
-                try:
-                    # 安全护栏：只允许删除 scope_dir 下的内容
-                    folder.resolve().relative_to(scope_dir.resolve())
-                    shutil.rmtree(folder)
-                except Exception as e:
-                    print(f"  删除失败 {folder.name}: {e}")
+        if args.no_delete:
+            print(f"\n[--no-delete] 跳过删除，{len(to_delete)} 个本地目录不在接口列表中但予以保留。")
+        else:
+            print(f"\n将删除 {len(to_delete)} 个不在接口列表中的案件目录。")
+            for folder in to_delete[:10]:
+                print(f"  - {folder.name}")
+            if len(to_delete) > 10:
+                print(f"  ... 共 {len(to_delete)} 个")
+            if not args.dry_run:
+                # 安全护栏：超过 20 个目录时必须手动确认，防止误删大量历史数据
+                if len(to_delete) > 20:
+                    print(f"\n[安全警告] 即将删除 {len(to_delete)} 个目录，数量较多。")
+                    print("  本脚本设计用途是同步「接口当前队列」，不应删除历史已处理案件。")
+                    print("  如果你只是想新增案件，请改用 --no-delete 参数，或用 restore_claims_from_db.py 恢复历史数据。")
+                    confirm = input("  确认继续删除？输入 yes 继续，其他任意键取消: ").strip().lower()
+                    if confirm != "yes":
+                        print("已取消，未做任何删除。")
+                        return 0
+                for folder in to_delete:
+                    import shutil
+                    try:
+                        # 安全护栏：只允许删除 scope_dir 下的内容
+                        folder.resolve().relative_to(scope_dir.resolve())
+                        shutil.rmtree(folder)
+                    except Exception as e:
+                        print(f"  删除失败 {folder.name}: {e}")
     else:
         print("\n无需删除任何目录。")
 

@@ -6,8 +6,14 @@ Vision API客户端
 """
 
 import os
+import sys
 import asyncio
 import base64
+
+if sys.stdout.encoding and sys.stdout.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr.encoding and sys.stderr.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import aiohttp

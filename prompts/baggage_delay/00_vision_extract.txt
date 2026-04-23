@@ -27,6 +27,8 @@
   "has_baggage_delay_proof": "true/false/unknown（是否存在承运人出具的行李延误证明或PIR不正常行李报告）",
   "baggage_delay_proof_source": "证明材料的原文描述（PIR编号/航司出具函件等）/unknown",
   "has_baggage_receipt_time_proof": "true/false/unknown（是否存在行李签收时间证明：如航司签收单、快递签收记录、酒店代收签收单等）",
+  "has_baggage_tag_proof": "true/false/unknown（材料中是否存在托运行李牌照片，需含姓名、航班信息、行李牌号码三要素）",
+  "accident_date_in_materials": "YYYY-MM-DD/unknown（从材料中提取的真实事故发生日期，见下方提取规则）",
   "flight_actual_arrival_time": "YYYY-MM-DD HH:MM/unknown（首次乘坐航班的实际到达时间，行李延误时长起算点）",
   "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点）",
   "receipt_times": ["YYYY-MM-DD HH:MM（若识别到多份签收证明，列出全部签收时间，最晚者写入 baggage_receipt_time）"],
@@ -35,6 +37,7 @@
   "has_passport": "true/false/unknown（材料中是否出现护照照片页，含本人照片、姓名、护照号码）",
   "has_exit_entry_record": "true/false/unknown（材料中是否出现中国海关出入境盖章页或电子出入境记录）",
   "exit_datetime": "YYYY-MM-DD HH:MM/unknown（出境时间，从出入境记录中提取）",
+  "insured_name_in_materials": "被保险人姓名（从材料中提取，见下方认定规则）/unknown",
   "has_bank_card_proof": "true/false/unknown（是否存在银行卡/借记卡信息，用于赔款打款验证）",
   "risk_flags": ["handwritten/multilang/conflict/fraud_suspect（如有多语言材料、手写涂改、时间冲突或疑似伪造，在此列出）"],
   "notes": "识别依据及特殊说明（多份签收证明时需说明各份来源；材料不清晰时注明）"
@@ -57,6 +60,8 @@
   "has_baggage_delay_proof": "...",
   "baggage_delay_proof_source": "...",
   "has_baggage_receipt_time_proof": "...",
+  "has_baggage_tag_proof": "...",
+  "accident_date_in_materials": "...",
   "flight_actual_arrival_time": "...",
   "baggage_receipt_time": "...",
   "receipt_times": [],
@@ -65,13 +70,37 @@
   "has_passport": "...",
   "has_exit_entry_record": "...",
   "exit_datetime": "...",
+  "insured_name_in_materials": "...",
   "has_bank_card_proof": "...",
   "risk_flags": [],
   "notes": "..."
 }}
 
 ## 说明
+- **航班日期（flight_date）提取规则（重要）**：flight_date 是**原航班的计划起飞日期**（即行程单上的出发日期，非登机牌上的实际出发时间），用于保单有效期校验，必须是含完整年份的 YYYY-MM-DD 格式。来源优先级：
+  1 行程单/电子客票（最权威，直接读取原航班计划起飞日期，含完整年月日）
+  2 出入境记录（含出境时间戳，出境日期通常即为乘机日，含完整年份）
+  3 航司出具的行李延误时数及原因书面证明（如延误证明信、航司邮件，正文通常含完整航班日期）
+  4 行李签收单（含具体签收时间，从签收日期反推航班日期，须逐字核对年份）
+  5 行李运输事故单/PIR（DATE/MONTH/YEAR 字段，必须逐字识别手写体年份，尤其注意后两位如 24 vs 26）
+  - **禁止将登机牌上的时间填入 flight_date**：登机牌只有月/日，不含年份，且登机牌显示的是实际起飞时间而非原计划起飞时间，不得单独作为 flight_date 的来源；若只有登机牌，须与行程单或其他含年份材料交叉确认原航班计划起飞日期后才可填写
+  - 若所有材料均无法提供含年份的完整原航班计划起飞日期，flight_date 填 unknown，并在 notes 中说明缺少含年份航班日期材料，建议补充行程单或行李延误证明
+- **事故日期提取规则（重要）**：`accident_date_in_materials` 必须从材料中交叉核验，不得直接采用案件基本信息中的 `Date_of_Accident` 字段。提取步骤：
+  * 步骤1：优先读 PIR 行李运输事故单或航司出具的行李延误书面证明/行李签收单中的日期字段（DATE/MONTH/YEAR）——这类材料有完整年份，**必须逐字识别手写体**，尤其是 YEAR 字段：
+    - YEAR 通常为 4 位数字，手写时必须看清每一位，尤其是后两位（如 24 vs 26）
+    - 若 YEAR 手写模糊，必须与其他材料（航司邮件、行程单）互相印证后再填写，不得假设与 `Date_of_Accident` 年份相同
+    - 若 OCR 和视觉识别结果不一致，在 notes 中说明并选取更可信的那个
+  * 步骤2：若有登机牌，用登机牌的航班日期交叉印证步骤1的结果（注意：登机牌通常只有月/日，无年份，仅作参考）
+  * 步骤3：若有航司客服邮件，从邮件正文中读取航班日期（如 "vuelo IB1651 de 14/02/2026" 中提取 2026-02-14）作为事故日期
+  * 步骤4：把从材料提取的事故日期与案件基本信息的 `Date_of_Accident`（值为: 案件基本信息中 Date_of_Accident 字段的值）对比：
+    - 不一致（尤其是年份相差超过 30 天）时，以材料为准，并在 `risk_flags` 中添加 `date_conflict`，在 notes 中说明具体差异
+    - 一致时正常填写
 - **先枚举、再判断**：不要在看到第一个航班号时就直接填入 flight_no，必须先完成 all_flights_found 的枚举，再根据角色判定规则填写 flight_no。
+- **被保险人身份识别规则（重要）**：材料中可能出现多个人的身份证件或护照（如申请人为家属代办时，会同时提交申请人与被保险人的证件）。`insured_name_in_materials` 必须只填写**被保险人**的姓名，认定方法如下：
+  * 登机牌/行程单上的乘客姓名即为被保险人姓名——以此为基准定位被保险人证件
+  * 若有多张证件，核对证件姓名与登机牌乘客姓名一致的，才是被保险人证件；其他证件属于申请人或随行人，`has_id_proof`/`has_passport` 只记录被保险人那份
+  * 若无法从登机牌确认，则对照案件基本信息（案件基本信息中的 `Insured_And_Policy` 字段）识别被保险人姓名，并在 notes 中注明"依据案件基本信息确认被保险人"
+  * 若材料中确实没有被保险人的证件（只有申请人证件），`has_id_proof` 和 `has_passport` 均填 false，并在 notes 中注明"材料中仅见申请人证件，未见被保险人证件"
 - **行李延误时长起算口径**：行李延误时长 = 最晚行李签收时间（baggage_receipt_time） - 首次乘坐航班的实际到达时间（flight_actual_arrival_time），两个时间必须换算为同一时区。
 - **多份签收证明**：将全部签收时间写入 receipt_times，最晚时间写入 baggage_receipt_time，以最晚时间计算延误时长。
 - **不确定时输出 unknown**，不要猜测。

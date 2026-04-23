@@ -1161,14 +1161,17 @@ def _run_hardcheck(
             if planned_dep_raw and planned_dep_raw.lower() not in ("unknown", "null", "none", ""):
                 time_points.append(("计划起飞时间", planned_dep_raw))
 
-            # 4. vision_extract.all_flights_found 中的原航班日期
+            # 4. vision_extract.all_flights_found 中的原航班日期（必须含完整4位年份）
             _all_flights = (vision_extract or {}).get("all_flights_found") or []
             for _fl in _all_flights:
                 _role = str(_fl.get("role_hint") or "").strip()
                 if "原航班" in _role:
                     _fl_date = str(_fl.get("date") or "").strip()
                     if _fl_date and _fl_date.lower() not in ("unknown", "null", "none", ""):
-                        time_points.append(("航班日期", _fl_date))
+                        # 只接受含完整年份的日期（首段为4位数字）
+                        _fl_date_first = _fl_date.replace("/", "-").replace(" ", "-").split("-")[0]
+                        if len(_fl_date_first) == 4 and _fl_date_first.isdigit():
+                            time_points.append(("航班日期", _fl_date))
                     break
 
             # 5. Date_of_Accident（事故发生时间）

@@ -1,0 +1,16 @@
+2026-04-22 09:55:13,464 INFO forceid=a0nC800000K35VuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000005880035】
+2026-04-22 09:55:13,465 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-22 09:55:13,465 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-22 09:55:26,262 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-22 09:56:00,456 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-22 09:56:17,201 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 29 个字段
+2026-04-22 09:56:17,204 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-22 09:57:23,206 WARNING forceid=a0nC800000K35VuIAJ stage=baggage_delay_parse attempt=1 baggage_delay_parse 失败（一般错误），等待 2.0s 后重试 (attempt 1/2)
+Vision API request start(provider=dashscope, inflight=1/6)
+Vision API request start(provider=dashscope, inflight=1/6)
+[attempt=1] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence
+[attempt=2] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence
+[attempt=3] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence
+[attempt=1] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence
+[attempt=2] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence
+[attempt=3] API调用异常: 'gbk' codec can't encode character '\U0001f4dd' in position 40: illegal multibyte sequence

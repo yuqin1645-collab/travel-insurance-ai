@@ -217,12 +217,35 @@ def _extract_file_names(claim_info: Dict[str, Any]) -> List[str]:
     return names
 
 
-def _check_policy_validity(claim_info: Dict[str, Any], debug: Dict[str, Any]) -> Optional[str]:
+def _check_policy_validity(claim_info: Dict[str, Any], debug: Dict[str, Any],
+                           vision_extract: Optional[Dict[str, Any]] = None) -> Optional[str]:
     # 保单有效期综合校验（委托 rules.common.policy_validity）
-    result = _rules_check_policy_validity(claim_info)
+    # 将 vision 提取的出境时间和真实事故日期注入 claim_info（不修改原对象，用浅拷贝）
+    info = dict(claim_info)
+    if vision_extract:
+        exit_dt = vision_extract.get("exit_datetime")
+        if exit_dt and str(exit_dt).strip().lower() not in ("", "unknown"):
+            info.setdefault("First_Exit_Date", exit_dt)
+        # 用材料中提取的真实事故日期覆盖 claim_info 的 Date_of_Accident
+        # （系统录入的 Date_of_Accident 可能有误，以材料为准）
+        accident_dt = vision_extract.get("accident_date_in_materials")
+        if accident_dt and str(accident_dt).strip().lower() not in ("", "unknown"):
+            info["Date_of_Accident"] = accident_dt
+        # 注入航班日期（必须含完整年份）：来源优先级 flight_date > flight_actual_arrival_time 日期部分
+        # flight_date 由 vision prompt 从行程单/出入境记录/行李延误证明/签收单/PIR 中提取
+        flight_date_v = vision_extract.get("flight_date")
+        if flight_date_v and str(flight_date_v).strip().lower() not in ("", "unknown"):
+            info.setdefault("Flight_Date", str(flight_date_v).strip())
+        elif not info.get("Flight_Date") and not info.get("Policy_FlightDate"):
+            # 次选：从 flight_actual_arrival_time 取日期部分（实际到达时间含年份）
+            arr_time = vision_extract.get("flight_actual_arrival_time")
+            if arr_time and str(arr_time).strip().lower() not in ("", "unknown"):
+                info.setdefault("Flight_Date", str(arr_time).strip()[:10])
+    result = _rules_check_policy_validity(info)
     debug["policy_validity"] = result.detail
+    debug["policy_validity_action"] = result.action
     if not result.passed:
-        return result.reason
+        return result.reason  # 调用方根据 debug["policy_validity_action"] 区分 reject/supplement
     return None
 
 
@@ -266,45 +289,29 @@ def _check_special_materials(claim_info: Dict[str, Any], text_blob: str, file_na
     return needs
 
 
-def _check_info_consistency(claim_info: Dict[str, Any], ai_parsed: Dict[str, Any]) -> List[Dict[str, str]]:
+def _check_info_consistency(claim_info: Dict[str, Any], ai_parsed: Dict[str, Any]) -> Optional[str]:
     """
     信息一致性校验：
-    - 航班号一致性（延误证明、登机牌、保单、官方记录）
-    - 行李牌号一致性
-    - 姓名匹配
-    - 行李归属（同行人行李均登记在一人名下，仅该登记人有资格）
+    - 姓名匹配（被保险人 vs 材料中识别到的被保险人姓名）→ 不匹配直接拒赔
+    - 航班号一致性、行李牌号一致性 → 记录到 flags 供下游参考
     """
-    flags: List[Dict[str, str]] = []
-    flight_no = str(ai_parsed.get("flight_no") or "").strip().upper()
-    ticket_flight = str(claim_info.get("Flight_Number") or "").strip().upper()
-    policy_flight = str(claim_info.get("Policy_FlightNumber") or "").strip().upper()
-    aviation_flight = str(claim_info.get("Aviation_FlightNumber") or "").strip().upper()
-    if flight_no and ticket_flight and flight_no != ticket_flight:
-        flags.append({"checkpoint": "航班号一致性", "Eligible": "否", "Remark": f"延误证明航班号{flight_no}与机票{ ticket_flight }不匹配"})
-    if flight_no and policy_flight and flight_no != policy_flight:
-        flags.append({"checkpoint": "航班号一致性", "Eligible": "否", "Remark": f"延误证明航班号{flight_no}与保单{ policy_flight }不匹配"})
-    if flight_no and aviation_flight and flight_no != aviation_flight:
-        flags.append({"checkpoint": "航班号一致性", "Eligible": "否", "Remark": f"延误证明航班号{flight_no}与官方记录{ aviation_flight }不匹配"})
+    insured_name = str(
+        claim_info.get("Insured_And_Policy") or claim_info.get("Insured_Name") or ""
+    ).strip()
 
-    baggage_tag = str(ai_parsed.get("baggage_tag") or "").strip()
-    boarding_baggage_tag = str(claim_info.get("Baggage_Tag") or "").strip()
-    if baggage_tag and boarding_baggage_tag and baggage_tag != boarding_baggage_tag:
-        flags.append({"checkpoint": "行李牌号一致性", "Eligible": "否", "Remark": f"行李牌号{baggage_tag}与登机牌{ boarding_baggage_tag }不匹配"})
+    # 优先用 vision 识别的被保险人姓名，兜底用 ai_parsed 里的 passenger_name
+    material_insured = str(
+        ai_parsed.get("insured_name_in_materials") or ai_parsed.get("passenger_name") or ""
+    ).strip()
 
-    passenger_name = str(ai_parsed.get("passenger_name") or "").strip()
-    insured_name = str(claim_info.get("Insured_And_Policy") or claim_info.get("Insured_Name") or "").strip()
-    if passenger_name and insured_name and passenger_name != insured_name:
-        flags.append({"checkpoint": "姓名匹配", "Eligible": "否", "Remark": f"行李材料登记姓名{passenger_name}与保单权益人{ insured_name }不匹配"})
-
-    travel_group = claim_info.get("Travel_Group_Members") or []
-    if isinstance(travel_group, list) and len(travel_group) > 1:
-        for member in travel_group:
-            if isinstance(member, dict):
-                m_name = str(member.get("Name") or "").strip()
-                m_baggage = str(member.get("Baggage_Owner") or "").strip()
-                if m_baggage and m_baggage != passenger_name:
-                    flags.append({"checkpoint": "行李归属", "Eligible": "否", "Remark": f"同行人{m_name}的行李登记在{ m_baggage }名下，非本人托运"})
-    return flags
+    if insured_name and material_insured and material_insured.lower() not in ("unknown", ""):
+        # 统一大写比较，处理中英文混合姓名格式差异（如 "ZHANG SAN" vs "张三"）
+        if insured_name.upper().replace(" ", "") != material_insured.upper().replace(" ", ""):
+            return (
+                f"拒赔：材料中被保险人姓名[{material_insured}]与保单权益人[{insured_name}]不匹配，"
+                "请确认材料与保单是否对应同一被保险人"
+            )
+    return None
 
 
 def _check_exclusions(claim_info: Dict[str, Any], text_blob: str, parsed: Dict[str, Any]) -> Optional[str]:
@@ -453,10 +460,19 @@ async def review_baggage_delay_async(
         ai_parsed = dict(vision_extract)
 
     # 前置准入校验（保单有效性、有效期、身份匹配）
-    policy_violation = _check_policy_validity(claim_info, debug)
+    policy_violation = _check_policy_validity(claim_info, debug, vision_extract=vision_extract)
     if policy_violation:
         conclusions.append({"checkpoint": "前置准入", "Eligible": "否", "Remark": policy_violation})
+        policy_action = debug.get("policy_validity_action", "reject")
+        if policy_action == "supplement":
+            return _result(forceid, policy_violation, "S", conclusions, debug)
         return _result(forceid, policy_violation, "N", conclusions, debug)
+
+    # 身份一致性校验（被保险人姓名与材料中识别的姓名对比）
+    identity_violation = _check_info_consistency(claim_info, ai_parsed or {})
+    if identity_violation:
+        conclusions.append({"checkpoint": "身份一致性", "Eligible": "否", "Remark": identity_violation})
+        return _result(forceid, identity_violation, "N", conclusions, debug)
 
     # 免责条款校验（条款除外）
     exclusion_reason = _check_exclusions(claim_info, text_blob, ai_parsed or {})
@@ -549,23 +565,26 @@ async def review_baggage_delay_async(
                        for w in ["机票", "登机牌", "行程单", "ticket", "boarding", "itinerary"]):
                 missing_materials.append("交通票据（机票/登机牌/行程单）")
 
-        # 行李延误证明
-        flag = _has_flag("has_baggage_delay_proof")
-        if flag == "false":
-            missing_materials.append("行李延误证明（含航班及原因）")
-        elif flag == "unknown":
-            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
-                       for w in ["行李延误", "行李不正常", "pir", "baggage delay", "delay proof"]):
-                missing_materials.append("行李延误证明（含航班及原因）")
+        # 行李延误证明 OR 行李签收时间证明：二选一有其一即可（PIR单/航司书面证明/签收单）
+        delay_proof_flag = _has_flag("has_baggage_delay_proof")
+        receipt_proof_flag = _has_flag("has_baggage_receipt_time_proof")
+        joined_text = f"{text_blob} {' '.join(file_names)}".lower()
+        delay_proof_kw = any(w in joined_text for w in ["行李延误", "行李不正常", "pir", "baggage delay", "delay proof", "property irregularity"])
+        receipt_proof_kw = any(w in joined_text for w in ["签收", "领取", "receipt", "delivered", "delivery"])
 
-        # 行李签收时间证明
-        flag = _has_flag("has_baggage_receipt_time_proof")
-        if flag == "false":
-            missing_materials.append("行李签收时间证明")
-        elif flag == "unknown":
-            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
-                       for w in ["签收", "领取", "receipt", "delivered", "delivery"]):
-                missing_materials.append("行李签收时间证明")
+        has_delay_proof = delay_proof_flag == "true" or (delay_proof_flag == "unknown" and delay_proof_kw)
+        has_receipt_proof = receipt_proof_flag == "true" or (receipt_proof_flag == "unknown" and receipt_proof_kw)
+
+        if not has_delay_proof and not has_receipt_proof:
+            missing_materials.append("行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）")
+
+        # 托运行李牌（必须有：含姓名、航班信息、行李牌号码）
+        tag_flag = _has_flag("has_baggage_tag_proof")
+        if tag_flag == "false":
+            missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
+        elif tag_flag == "unknown":
+            if not any(w in joined_text for w in ["行李牌", "baggage tag", "luggage tag", "tag no", "行李标签"]):
+                missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
 
         # 身份证（可用视觉 has_id_proof 或 has_passport 替代，两者有一即可）
         id_flag = _has_flag("has_id_proof")

@@ -1,0 +1,204 @@
+2026-04-21 11:31:22,078 INFO forceid=a0nC800000MHnEEIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-04-21 11:32:03,308 INFO forceid=a0nC800000MHnEEIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-04-21 11:32:27,085 INFO forceid=a0nC800000MHnEEIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-04-21 11:32:44,329 WARNING forceid=a0nC800000MHnEEIA1 stage=material_extractor attempt=0 material extract [Vision] failed(batch 3/3, attempt 1/3, type=other): Expecting ',' delimiter: line 48 column 3 (char 1246)
+2026-04-21 11:32:44,330 INFO forceid=a0nC800000MHnEEIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 21 份附件（3 批），返回 26 个字段
+2026-04-21 11:32:44,332 INFO forceid=a0nC800000MHnEEIA1 stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:32:59,130 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:32:59,130 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-03-16
+2026-04-21 11:33:07,072 INFO forceid=a0nC800000L1SxSIAV stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006825905】
+2026-04-21 11:33:07,074 INFO forceid=a0nC800000L1SxSIAV stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:33:07,074 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:33:42,466 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/4, attempt 1/3)
+2026-04-21 11:34:29,722 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/4, attempt 1/3)
+2026-04-21 11:35:19,264 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/4, attempt 1/3)
+2026-04-21 11:35:47,362 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/4, attempt 1/3)
+2026-04-21 11:36:02,124 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 34 份附件（4 批），返回 26 个字段
+2026-04-21 11:36:02,125 INFO forceid=a0nC800000L1SxSIAV stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:36:16,658 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:36:16,659 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-03-27
+2026-04-21 11:36:16,665 INFO forceid=a0nC800000MktXtIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006832213】
+2026-04-21 11:36:16,666 INFO forceid=a0nC800000MktXtIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:36:16,666 INFO forceid=a0nC800000MktXtIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:36:48,574 INFO forceid=a0nC800000MktXtIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:37:09,616 INFO forceid=a0nC800000K35VuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000005880035】
+2026-04-21 11:37:09,617 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:37:09,617 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:37:22,121 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:37:36,371 INFO forceid=a0nC800000MktXtIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:37:51,108 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:37:52,849 INFO forceid=a0nC800000MktXtIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 15 份附件（2 批），返回 26 个字段
+2026-04-21 11:37:52,851 INFO forceid=a0nC800000MktXtIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:38:06,092 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 26 个字段
+2026-04-21 11:38:06,093 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-21 11:38:13,443 INFO forceid=a0nC800000MkUrNIAV stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006832246】
+2026-04-21 11:38:13,444 INFO forceid=a0nC800000MkUrNIAV stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:38:13,444 INFO forceid=a0nC800000MkUrNIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:38:25,832 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:38:25,833 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2025-02-04
+2026-04-21 11:38:50,996 INFO forceid=a0nC800000MkUrNIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:38:55,008 INFO forceid=a0nC800000J4j3eIAB stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006570802】
+2026-04-21 11:38:55,009 INFO forceid=a0nC800000J4j3eIAB stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:38:55,009 INFO forceid=a0nC800000J4j3eIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:39:20,959 INFO forceid=a0nC800000J4j3eIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:39:29,402 INFO forceid=a0nC800000MkUrNIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:39:55,908 INFO forceid=a0nC800000J4j3eIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:40:07,314 INFO forceid=a0nC800000MkUrNIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 26 个字段
+2026-04-21 11:40:07,314 INFO forceid=a0nC800000MkUrNIAV stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:40:17,611 INFO forceid=a0nC800000J4j3eIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 26 个字段
+2026-04-21 11:40:17,611 INFO forceid=a0nC800000J4j3eIAB stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:40:28,235 INFO forceid=a0nC800000Klf2bIAB stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006835462】
+2026-04-21 11:40:28,235 INFO forceid=a0nC800000Klf2bIAB stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:40:28,235 INFO forceid=a0nC800000Klf2bIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:40:34,649 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:40:34,650 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-02-09
+2026-04-21 11:41:00,649 INFO forceid=a0nC800000Klf2bIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:41:47,775 INFO forceid=a0nC800000Klf2bIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:42:04,883 INFO forceid=a0nC800000Klf2bIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 26 个字段
+2026-04-21 11:42:04,883 INFO forceid=a0nC800000Klf2bIAB stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=unknown
+2026-04-21 11:42:16,467 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:42:16,467 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-03-24
+2026-04-21 11:42:16,471 INFO forceid=a0nC800000LOHrdIAH stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006838560】
+2026-04-21 11:42:16,471 INFO forceid=a0nC800000LOHrdIAH stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:42:16,472 INFO forceid=a0nC800000LOHrdIAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:42:58,748 INFO forceid=a0nC800000LOHrdIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:43:39,342 INFO forceid=a0nC800000LOHrdIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:43:59,205 WARNING forceid=a0nC800000LOHrdIAH stage=material_extractor attempt=0 material extract [Vision] failed(batch 2/2, attempt 1/3, type=other): Expecting ',' delimiter: line 56 column 3 (char 1413)
+2026-04-21 11:43:59,207 INFO forceid=a0nC800000LOHrdIAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 26 个字段
+2026-04-21 11:43:59,209 INFO forceid=a0nC800000LOHrdIAH stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-21 11:44:09,286 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:44:09,286 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-04-02
+2026-04-21 11:44:17,191 INFO forceid=a0nC800000KS8gfIAD stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006838744】
+2026-04-21 11:44:17,192 INFO forceid=a0nC800000KS8gfIAD stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:44:17,192 INFO forceid=a0nC800000KS8gfIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:44:27,530 INFO forceid=a0nC800000KS8gfIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:45:04,535 INFO forceid=a0nC800000KS8gfIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:45:21,031 INFO forceid=a0nC800000KS8gfIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 26 个字段
+2026-04-21 11:45:21,032 INFO forceid=a0nC800000KS8gfIAD stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:45:31,278 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:45:31,278 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-03-21
+2026-04-21 11:45:39,972 INFO forceid=a0nC800000LjXdGIAV stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006865173】
+2026-04-21 11:45:39,974 INFO forceid=a0nC800000LjXdGIAV stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:45:39,975 INFO forceid=a0nC800000LjXdGIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:46:12,172 INFO forceid=a0nC800000LjXdGIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:46:57,386 INFO forceid=a0nC800000LjXdGIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:47:18,207 INFO forceid=a0nC800000LjXdGIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 26 个字段
+2026-04-21 11:47:18,208 INFO forceid=a0nC800000LjXdGIAV stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:47:31,334 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:47:31,334 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-04-07
+2026-04-21 11:47:39,078 INFO forceid=a0nC800000MEQ7mIAH stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006865262】
+2026-04-21 11:47:39,079 INFO forceid=a0nC800000MEQ7mIAH stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:47:39,079 INFO forceid=a0nC800000MEQ7mIAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:48:27,054 INFO forceid=a0nC800000MEQ7mIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:49:08,780 INFO forceid=a0nC800000MEQ7mIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:49:28,467 INFO forceid=a0nC800000MEQ7mIAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 26 个字段
+2026-04-21 11:49:28,467 INFO forceid=a0nC800000MEQ7mIAH stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-04-21 11:49:49,309 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:49:49,309 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-04-05
+2026-04-21 11:49:49,314 INFO forceid=a0nC800000MeDLGIA3 stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006868153】
+2026-04-21 11:49:49,314 INFO forceid=a0nC800000MeDLGIA3 stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:49:49,314 INFO forceid=a0nC800000MeDLGIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:50:21,029 INFO forceid=a0nC800000MeDLGIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:50:55,861 INFO forceid=a0nC800000MeDLGIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:51:09,209 INFO forceid=a0nC800000MeDLGIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 12 份附件（2 批），返回 26 个字段
+2026-04-21 11:51:09,210 INFO forceid=a0nC800000MeDLGIA3 stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:51:22,096 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:51:22,096 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-04-09
+2026-04-21 11:51:29,515 INFO forceid=a0nC800000ImW4rIAF stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【900000016138-00000085】
+2026-04-21 11:51:29,517 INFO forceid=a0nC800000ImW4rIAF stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 11:51:29,518 INFO forceid=a0nC800000ImW4rIAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 11:51:56,767 INFO forceid=a0nC800000ImW4rIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 11:52:51,055 INFO forceid=a0nC800000ImW4rIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 11:53:15,984 INFO forceid=a0nC800000ImW4rIAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 19 份附件（2 批），返回 26 个字段
+2026-04-21 11:53:15,984 INFO forceid=a0nC800000ImW4rIAF stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-04-21 11:53:33,831 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 11:53:33,831 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2026-02-12
+2026-04-21 14:23:20,542 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:20,543 INFO forceid=- stage=runner attempt=0 交互式测试指定案件（按 forceid）
+2026-04-21 14:23:20,543 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:20,543 INFO forceid=- stage=runner attempt=0 输入格式示例:
+2026-04-21 14:23:20,543 INFO forceid=- stage=runner attempt=0   单个: a0nC800000IehQTIAZ
+2026-04-21 14:23:20,543 INFO forceid=- stage=runner attempt=0   多个: a0nC800000IehQTIAZ,a0nC800000I93W4IAJ
+2026-04-21 14:23:20,544 INFO forceid=- stage=runner attempt=0   区间: a0nC800000I93W4IAJ~a0nC800000IehQTIAZ  (按 forceid 排序的闭区间)
+2026-04-21 14:23:20,544 INFO forceid=- stage=runner attempt=0 输入 q 或直接回车退出。
+2026-04-21 14:23:24,358 INFO forceid=- stage=runner attempt=0 本次将测试 1 个案件:
+2026-04-21 14:23:24,358 INFO forceid=- stage=runner attempt=0   - 行李延误-案件号【000005880035】
+2026-04-21 14:23:24,361 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:24,361 INFO forceid=- stage=runner attempt=0 开始执行 AI 审核
+2026-04-21 14:23:24,362 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:24,362 INFO forceid=- stage=runner attempt=0 使用代理: http://127.0.0.1:7897
+2026-04-21 14:23:24,958 INFO forceid=- stage=runner attempt=0 找到 1 个案件待审核:
+2026-04-21 14:23:24,959 INFO forceid=- stage=runner attempt=0   1. 行李延误-案件号【000005880035】 (有材料)
+2026-04-21 14:23:24,959 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:24,959 INFO forceid=- stage=runner attempt=0 处理案件 1/1: 行李延误-案件号【000005880035】
+2026-04-21 14:23:24,959 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:23:24,964 INFO forceid=a0nC800000K35VuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000005880035】
+2026-04-21 14:23:24,965 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 14:23:24,965 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 14:23:36,480 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 14:24:10,982 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 14:24:27,891 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 26 个字段
+2026-04-21 14:24:27,891 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-21 14:24:47,842 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 14:24:47,842 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2025-02-04
+2026-04-21 14:24:57,916 INFO forceid=a0nC800000K35VuIAJ stage=runner attempt=0 结果已保存: review_results\baggage_delay\a0nC800000K35VuIAJ_ai_review.json
+2026-04-21 14:24:57,924 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:24:57,925 INFO forceid=- stage=runner attempt=0 测试完成!
+2026-04-21 14:24:57,927 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 14:24:57,928 INFO forceid=- stage=runner attempt=0 总案件数: 1
+2026-04-21 14:24:57,928 INFO forceid=- stage=runner attempt=0 成功: 1
+2026-04-21 14:24:57,929 INFO forceid=- stage=runner attempt=0 失败: 0
+2026-04-21 14:24:57,929 INFO forceid=- stage=runner attempt=0 总耗时: 93.0秒
+2026-04-21 14:24:57,930 INFO forceid=- stage=runner attempt=0 平均速度: 93.0秒/案件
+2026-04-21 14:24:57,930 INFO forceid=- stage=runner attempt=0 汇总结果已保存: review_results\_runner\test_last_5_results.json
+2026-04-21 14:24:57,932 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:51,251 INFO forceid=- stage=runner attempt=0 再见
+2026-04-21 17:23:55,092 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:55,092 INFO forceid=- stage=runner attempt=0 交互式测试指定案件（按 forceid）
+2026-04-21 17:23:55,093 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:55,093 INFO forceid=- stage=runner attempt=0 输入格式示例:
+2026-04-21 17:23:55,094 INFO forceid=- stage=runner attempt=0   单个: a0nC800000IehQTIAZ
+2026-04-21 17:23:55,095 INFO forceid=- stage=runner attempt=0   多个: a0nC800000IehQTIAZ,a0nC800000I93W4IAJ
+2026-04-21 17:23:55,095 INFO forceid=- stage=runner attempt=0   区间: a0nC800000I93W4IAJ~a0nC800000IehQTIAZ  (按 forceid 排序的闭区间)
+2026-04-21 17:23:55,096 INFO forceid=- stage=runner attempt=0 输入 q 或直接回车退出。
+2026-04-21 17:23:56,971 INFO forceid=- stage=runner attempt=0 本次将测试 1 个案件:
+2026-04-21 17:23:56,972 INFO forceid=- stage=runner attempt=0   - 行李延误-案件号【000005880035】
+2026-04-21 17:23:56,973 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:56,974 INFO forceid=- stage=runner attempt=0 开始执行 AI 审核
+2026-04-21 17:23:56,975 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:56,975 INFO forceid=- stage=runner attempt=0 使用代理: http://127.0.0.1:7897
+2026-04-21 17:23:57,674 INFO forceid=- stage=runner attempt=0 找到 1 个案件待审核:
+2026-04-21 17:23:57,675 INFO forceid=- stage=runner attempt=0   1. 行李延误-案件号【000005880035】 (有材料)
+2026-04-21 17:23:57,675 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:57,675 INFO forceid=- stage=runner attempt=0 处理案件 1/1: 行李延误-案件号【000005880035】
+2026-04-21 17:23:57,676 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:23:57,677 INFO forceid=a0nC800000K35VuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000005880035】
+2026-04-21 17:23:57,678 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 17:23:57,678 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 17:24:10,373 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 17:24:31,779 WARNING forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] failed(batch 1/2, attempt 1/3, type=other): Expecting ',' delimiter: line 65 column 3 (char 1611)
+2026-04-21 17:24:41,685 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 17:25:02,181 WARNING forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] failed(batch 2/2, attempt 1/3, type=other): Expecting ',' delimiter: line 90 column 3 (char 2322)
+2026-04-21 17:25:02,186 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 1 个字段
+2026-04-21 17:25:02,187 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=None has_delay_proof=None has_receipt_proof=None
+2026-04-21 17:25:24,641 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-04-21 17:25:24,642 INFO forceid=- stage=- attempt=0 使用Mock数据: unknown 2025-02-04
+2026-04-21 17:25:24,648 INFO forceid=a0nC800000K35VuIAJ stage=runner attempt=0 结果已保存: review_results\baggage_delay\a0nC800000K35VuIAJ_ai_review.json
+2026-04-21 17:25:24,660 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:25:24,661 INFO forceid=- stage=runner attempt=0 测试完成!
+2026-04-21 17:25:24,662 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:25:24,663 INFO forceid=- stage=runner attempt=0 总案件数: 1
+2026-04-21 17:25:24,663 INFO forceid=- stage=runner attempt=0 成功: 1
+2026-04-21 17:25:24,664 INFO forceid=- stage=runner attempt=0 失败: 0
+2026-04-21 17:25:24,664 INFO forceid=- stage=runner attempt=0 总耗时: 87.0秒
+2026-04-21 17:25:24,664 INFO forceid=- stage=runner attempt=0 平均速度: 87.0秒/案件
+2026-04-21 17:25:24,665 INFO forceid=- stage=runner attempt=0 汇总结果已保存: review_results\_runner\test_last_5_results.json
+2026-04-21 17:25:24,665 INFO forceid=- stage=runner attempt=0 ============================================================
+2026-04-21 17:42:13,521 INFO forceid=a0nC800000K35VuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000005880035】
+2026-04-21 17:42:13,521 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-21 17:42:13,521 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-21 17:42:26,055 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-04-21 17:42:59,388 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-04-21 17:43:17,621 INFO forceid=a0nC800000K35VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 29 个字段
+2026-04-21 17:43:17,622 INFO forceid=a0nC800000K35VuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-21 17:44:24,824 WARNING forceid=a0nC800000K35VuIAJ stage=baggage_delay_parse attempt=1 baggage_delay_parse 失败（一般错误），等待 2.0s 后重试 (attempt 1/2)

@@ -8,6 +8,13 @@ OpenRouter API客户端
 
 import os
 import json
+import sys
+
+# Windows GBK stdout 无法打印 emoji，统一设置为 utf-8
+if sys.stdout.encoding and sys.stdout.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr.encoding and sys.stderr.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 import requests
 import asyncio
 import aiohttp

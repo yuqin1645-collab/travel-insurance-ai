@@ -164,6 +164,14 @@ class ReviewResult:
     alt_dep_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际起飞
     alt_arr_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际到达
 
+    # 行李延误专属字段
+    baggage_receipt_time: Optional[datetime] = None   # 行李签收时间（延误终止点）
+    baggage_delay_hours: Optional[float] = None       # 行李延误小时数
+    has_baggage_delay_proof: Optional[str] = None     # 是否有行李延误证明 Y/N
+    has_baggage_receipt_proof: Optional[str] = None   # 是否有签收时间证明 Y/N
+    has_baggage_tag_proof: Optional[str] = None       # 是否有行李牌 Y/N
+    pir_no: Optional[str] = None                      # PIR不正常行李报告编号
+
     # 航班场景
     flight_scenario: Optional[str] = None        # direct/connecting/rebooking/multi_rebooking/cancelled_nofly
     rebooking_count: Optional[int] = None        # 改签次数（0=无改签）
@@ -258,7 +266,7 @@ class ReviewResult:
         # 处理datetime字段
         datetime_fields = [
             'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time',
+            'alt_dep_time', 'alt_arr_time', 'baggage_receipt_time',
             'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
             'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
             'audit_time', 'supplementary_deadline',
@@ -285,7 +293,7 @@ class ReviewResult:
         # 处理datetime字段
         datetime_fields = [
             'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time',
+            'alt_dep_time', 'alt_arr_time', 'baggage_receipt_time',
             'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
             'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
             'audit_time', 'supplementary_deadline',

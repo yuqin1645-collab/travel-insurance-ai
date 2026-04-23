@@ -58,17 +58,21 @@
 
 ### 2. ai_review_result（AI审核结果主表）
 
+> 当前共 **87 个字段**，航班延误和行李延误共用此表，通过 `benefit_name` 区分险种。
+
 #### 基础信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
 | id | BIGINT UNSIGNED | AUTO_INCREMENT | 主键ID |
 | forceid | VARCHAR(64) | | 案件唯一ID |
 | claim_id | VARCHAR(64) | NULL | 上游案件ID |
+| benefit_name | VARCHAR(64) | NULL | 险种名称（如"航班延误"、"行李延误"） |
 
 #### 被保险人信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| passenger_name | VARCHAR(128) | NULL | 被保险人姓名 |
+| passenger_name | VARCHAR(128) | NULL | 被保险人姓名（来自材料/审核结果） |
+| insured_name | VARCHAR(128) | NULL | 被保险人姓名（来自 claim_info） |
 | passenger_id_type | VARCHAR(32) | NULL | 证件类型 |
 | passenger_id_number | VARCHAR(64) | NULL | 证件号码 |
 
@@ -98,7 +102,7 @@
 | planned_dep_time | DATETIME | NULL | 原航班首次购票计划起飞（schedule_local，延误计算基准） |
 | planned_arr_time | DATETIME | NULL | 原航班首次购票计划到达 |
 | actual_dep_time | DATETIME | NULL | 原航班实际起飞（飞常准优先） |
-| actual_arr_time | DATETIME | NULL | 原航班实际到达（飞常准优先） |
+| actual_arr_time | DATETIME | NULL | 原航班实际到达（飞常准优先；行李延误险亦用此字段存首次乘坐航班实际到达时间） |
 
 #### 实际乘坐航班（改签/替代，来自 alternate_local）
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -108,6 +112,16 @@
 | alt_flight_no | VARCHAR(32) | NULL | 被保险人实际乘坐的改签航班号 |
 | alt_dep_iata | VARCHAR(8) | NULL | 实际乘坐航班出发IATA |
 | alt_arr_iata | VARCHAR(8) | NULL | 实际乘坐航班到达IATA |
+
+#### 行李延误专属字段
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| baggage_receipt_time | DATETIME | NULL | 行李签收时间（延误终止点） |
+| baggage_delay_hours | DECIMAL(5,1) | NULL | 行李延误小时数 |
+| has_baggage_delay_proof | CHAR(1) | NULL | 是否有行李延误证明（Y/N） |
+| has_baggage_receipt_proof | CHAR(1) | NULL | 是否有签收时间证明（Y/N） |
+| has_baggage_tag_proof | CHAR(1) | NULL | 是否有行李牌（Y/N） |
+| pir_no | VARCHAR(64) | NULL | PIR 不正常行李报告编号/来源描述 |
 
 #### 航班场景
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -146,7 +160,7 @@
 #### 延误计算
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| delay_duration_minutes | INT | NULL | 延误时长(分钟) |
+| delay_duration_minutes | INT | NULL | 延误时长（分钟）；行李延误险由 baggage_delay_hours×60 换算写入 |
 | delay_reason | VARCHAR(128) | NULL | 延误原因 |
 | delay_type | VARCHAR(32) | NULL | 延误类型 |
 | delay_calc_from | VARCHAR(64) | NULL | 延误起算时间点来源字段名（如 avi_planned_dep） |
@@ -155,11 +169,17 @@
 #### 审核结果
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| audit_result | VARCHAR(32) | NULL | 审核结果: 通过/拒绝/需补件 |
-| audit_status | VARCHAR(32) | 'pending' | 审核状态 |
-| confidence_score | DECIMAL(5,2) | NULL | 置信度(%) |
+| audit_result | VARCHAR(32) | NULL | AI 审核结果（通过/拒绝/需补件） |
+| audit_status | VARCHAR(32) | 'pending' | 审核流程状态 |
+| confidence_score | DECIMAL(5,2) | NULL | 置信度（%） |
 | audit_time | DATETIME | NULL | 审核时间 |
 | auditor | VARCHAR(64) | 'AI系统' | 审核员 |
+
+#### 人工审核结果（从接口同步）
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| manual_status | VARCHAR(32) | NULL | 人工处理状态（支付成功/拒绝/补件等） |
+| manual_conclusion | TEXT | NULL | 人工审核结论文本 |
 
 #### 赔付信息
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -173,7 +193,7 @@
 #### 补件信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| is_additional | CHAR(1) | 'N' | 是否需要补件: Y/N |
+| is_additional | CHAR(1) | 'N' | 是否需要补件（Y/N） |
 | supplementary_count | INT | 0 | 补件次数 |
 | supplementary_reason | TEXT | NULL | 补件原因 |
 | supplementary_deadline | DATETIME | NULL | 补件截止时间 |
@@ -181,34 +201,31 @@
 #### 审核结论
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| remark | VARCHAR(2000) | NULL | 审核备注 |
-| key_conclusions | LONGTEXT | NULL | 各核对点结论(JSON) |
-| decision_reason | TEXT | NULL | 核赔意见 |
+| remark | VARCHAR(2000) | '' | 审核备注（对外展示的结论文本） |
+| key_conclusions | LONGTEXT | NULL | 各核对点结论（JSON 数组） |
+| decision_reason | TEXT | NULL | 核赔意见（AI 详细说明） |
+| final_decision | VARCHAR(32) | NULL | 最终决定（approve/reject/supplement） |
 
 #### 逻辑校验
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| identity_match | CHAR(1) | NULL | 身份是否匹配 |
-| threshold_met | CHAR(1) | NULL | 是否达到赔付门槛 |
-| exclusion_triggered | CHAR(1) | NULL | 是否有免责情形 |
+| identity_match | CHAR(1) | NULL | 身份是否匹配（Y/N） |
+| threshold_met | CHAR(1) | NULL | 是否达到赔付门槛（Y/N） |
+| exclusion_triggered | CHAR(1) | NULL | 是否有免责情形（Y/N） |
 | exclusion_reason | VARCHAR(256) | NULL | 免责原因 |
 
 #### 前端推送状态
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| forwarded_to_frontend | BOOLEAN | FALSE | 是否已推送到前端 |
+| forwarded_to_frontend | TINYINT(1) | 0 | 是否已推送到前端（0/1） |
 | forwarded_at | DATETIME | NULL | 推送时间 |
-| frontend_response | TEXT | NULL | 前端响应 |
+| frontend_response | TEXT | NULL | 前端响应内容 |
 
-#### 原始数据
+#### 原始数据 & 元数据
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| raw_result | LONGTEXT | NULL | 完整原始JSON |
-
-#### 元数据
-| 字段名 | 类型 | 默认值 | 说明 |
-|--------|------|---------|------|
-| metadata | JSON | NULL | 扩展元数据 |
+| raw_result | LONGTEXT | NULL | 完整审核结果原始 JSON |
+| metadata | TEXT | NULL | 扩展元数据（JSON 字符串） |
 
 #### 时间戳
 | 字段名 | 类型 | 默认值 | 说明 |
@@ -273,7 +290,7 @@
 
 ---
 
-### 3. ai_supplementary_records（补件记录表）
+### 4. ai_supplementary_records（补件记录表）
 
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
@@ -299,7 +316,7 @@
 
 ---
 
-### 4. ai_scheduler_logs（定时任务日志表）
+### 5. ai_scheduler_logs（定时任务日志表）
 
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
@@ -312,7 +329,7 @@
 | success_count | INT | 0 | 成功数量 |
 | failed_count | INT | 0 | 失败数量 |
 | error_message | TEXT | NULL | 错误信息 |
-| duration_seconds | INT | NULL | 耗时(秒) |
+| duration_seconds | INT | NULL | 耗时（秒） |
 | created_at | DATETIME | CURRENT_TIMESTAMP | 创建时间 |
 
 **索引**：
@@ -322,7 +339,7 @@
 
 ---
 
-### 5. ai_status_history（状态变更历史表）
+### 6. ai_status_history（状态变更历史表）
 
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
@@ -342,35 +359,7 @@
 
 ---
 
-### 6. v_claim_audit_summary（案件审核汇总视图）
-
-这个视图包含以下字段：
-- 案件ID、案件编号
-- 被保险人、证件号
-- 航班号、出发/目的城市
-- 计划/实际起飞时间
-- 延误(分钟)、延误原因
-- 保险公司、保单号
-- 审核结果、赔付金额、币种
-- 需补件、补件原因
-- 审核时间、审核员
-- 流程状态、下载状态、审核状态
-- 创建时间
-
-### 7. v_audit_statistics（审核统计视图）
-
-这个视图包含以下统计字段：
-- 日期
-- 总审核数
-- 通过数
-- 拒绝数
-- 需补件数
-- 平均延误(分钟)
-- 总赔付金额
-
----
-
-### 6. ai_claim_info_raw（案件原始下载信息存档表）
+### 7. ai_claim_info_raw（案件原始下载信息存档表）
 
 下载 `claim_info.json` 时同步写入，用于数据丢失时追溯。`raw_json` 字段保留完整原始内容。
 
@@ -423,41 +412,43 @@
 
 ---
 
+### 8. v_claim_audit_summary（案件审核汇总视图）
+
+包含字段：案件ID、案件编号、被保险人、证件号、航班号、出发/目的城市、计划/实际起飞时间、延误（分钟）、延误原因、保险公司、保单号、审核结果、赔付金额、币种、需补件、补件原因、审核时间、审核员、流程状态、下载状态、审核状态、创建时间。
+
+### 9. v_audit_statistics（审核统计视图）
+
+包含字段：日期、总审核数、通过数、拒绝数、需补件数、平均延误（分钟）、总赔付金额。
+
+---
+
 ## 字段统计
 
 ### 按表统计字段数量
-- ai_claim_status: **18个字段**
-- ai_review_result: **50个字段**（核心表，含联程汇总字段）
-- ai_review_segments: **19个字段**（联程航段子表）
-- ai_supplementary_records: **13个字段**
-- ai_scheduler_logs: **10个字段**
-- ai_status_history: **8个字段**
-- ai_claim_info_raw: **34个字段**（含 raw_json 完整备份）
+- ai_claim_status: **19 个字段**
+- ai_review_result: **87 个字段**（核心表，航班延误与行李延误共用）
+- ai_review_segments: **19 个字段**（联程航段子表）
+- ai_supplementary_records: **13 个字段**
+- ai_scheduler_logs: **11 个字段**
+- ai_status_history: **8 个字段**
+- ai_claim_info_raw: **35 个字段**（含 raw_json 完整备份）
 
-### 按类别统计
-1. **基础标识字段**: 5个（id, forceid, claim_id等）
-2. **被保险人信息**: 3个
-3. **保单信息**: 4个
-4. **航班信息**: 8个
-5. **时间信息**: 8个
-6. **审核结果**: 5个
-7. **赔付信息**: 5个
-8. **补件信息**: 4个
-9. **审核结论**: 3个
-10. **逻辑校验**: 4个
-11. **推送状态**: 3个
-12. **原始数据**: 2个
-13. **元数据**: 1个
+### ai_review_result 相较原始版本新增字段（2026-04 迭代）
 
-### 数据类型分布
-- VARCHAR: 27个（字符串类型）
-- DATETIME: 18个（日期时间）
-- INT: 12个（整数）
-- TEXT/LONGTEXT: 5个（长文本）
-- DECIMAL: 5个（小数）
-- BOOLEAN: 1个（布尔值）
-- JSON: 2个（JSON类型）
-- DATE: 2个（日期）
+| 字段名 | 新增时间 | 说明 |
+|--------|---------|------|
+| benefit_name | 2026-04 | 险种名称，区分航班延误/行李延误 |
+| insured_name | 2026-04 | 被保险人姓名（来自 claim_info） |
+| manual_status | 2026-04 | 人工处理状态（从接口同步） |
+| manual_conclusion | 2026-04 | 人工审核结论文本 |
+| final_decision | 2026-04 | 最终决定（approve/reject/supplement） |
+| baggage_receipt_time | 2026-04 | 行李签收时间（行李延误险专属） |
+| baggage_delay_hours | 2026-04 | 行李延误小时数（行李延误险专属） |
+| has_baggage_delay_proof | 2026-04 | 是否有行李延误证明（行李延误险专属） |
+| has_baggage_receipt_proof | 2026-04 | 是否有签收时间证明（行李延误险专属） |
+| has_baggage_tag_proof | 2026-04 | 是否有行李牌（行李延误险专属） |
+| pir_no | 2026-04 | PIR 报告编号/来源描述（行李延误险专属） |
 
 ---
-*更新时间: 2026-04-20*
+
+*更新时间: 2026-04-22*

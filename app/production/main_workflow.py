@@ -490,6 +490,96 @@ class ProductionWorkflow:
                 if v_alt_arr and v_alt_arr.lower() != "unknown":
                     fields["alt_arr_iata"] = v_alt_arr
 
+        # ── 行李延误专属字段 ────────────────────────────────────────────────
+        baggage_audit = data.get("baggage_delay_audit") or debug_info.get("baggage_delay_audit") or {}
+        if baggage_audit:
+            fields["audit_result"] = baggage_audit.get("audit_result", "")
+            fields["audit_status"] = "completed" if baggage_audit.get("audit_result") else "pending"
+            fields["audit_time"] = _dt.now()
+            fields["auditor"] = "AI系统"
+            fields["decision_reason"] = baggage_audit.get("explanation", "")
+
+        # delay_calc — 延误时长计算结果
+        delay_calc = debug_info.get("delay_calc") or {}
+        if delay_calc:
+            dc_hours = delay_calc.get("delay_hours")
+            if dc_hours is not None:
+                try:
+                    fields["baggage_delay_hours"] = float(dc_hours)
+                    fields["delay_duration_minutes"] = int(float(dc_hours) * 60)
+                except (ValueError, TypeError):
+                    pass
+            rt = delay_calc.get("baggage_receipt_time")
+            if rt and str(rt).lower() not in ("unknown", "null", "none", ""):
+                fields["baggage_receipt_time"] = self._parse_dt(rt)
+
+        # amounts — 赔付金额
+        amounts = debug_info.get("amounts") or {}
+        if amounts:
+            if not fields.get("payout_amount"):
+                fields["payout_amount"] = amounts.get("payout")
+            if not fields.get("insured_amount"):
+                fields["insured_amount"] = amounts.get("insured_amount")
+            if not fields.get("remaining_coverage"):
+                fields["remaining_coverage"] = amounts.get("remaining_coverage")
+
+        # ai_parsed — 材料识别字段
+        ai_parsed = debug_info.get("ai_parsed") or {}
+        if ai_parsed:
+            if not fields.get("passenger_name"):
+                fields["passenger_name"] = ""  # ai_parsed 无乘客名，留空由 claim_info 兜底
+            # 行李延误材料有无
+            bdp = ai_parsed.get("has_baggage_delay_proof")
+            if bdp is not None:
+                fields["has_baggage_delay_proof"] = "Y" if str(bdp).lower() in ("true", "1", "y") else "N"
+            brt = ai_parsed.get("has_baggage_receipt_time_proof")
+            if brt is not None:
+                fields["has_baggage_receipt_proof"] = "Y" if str(brt).lower() in ("true", "1", "y") else "N"
+            # baggage_receipt_time 由 delay_calc 填，此处兜底
+            if not fields.get("baggage_receipt_time"):
+                ai_rt = ai_parsed.get("baggage_receipt_time")
+                if ai_rt and str(ai_rt).lower() not in ("unknown", "null", "none", ""):
+                    fields["baggage_receipt_time"] = self._parse_dt(ai_rt)
+            # delay_hours 由 delay_calc 填，此处兜底
+            if not fields.get("baggage_delay_hours"):
+                ai_dh = ai_parsed.get("delay_hours")
+                if ai_dh is not None and str(ai_dh).lower() not in ("unknown", "null", "none", ""):
+                    try:
+                        fields["baggage_delay_hours"] = float(ai_dh)
+                    except (ValueError, TypeError):
+                        pass
+            # 航班信息兜底
+            if not fields.get("flight_no"):
+                fields["flight_no"] = str(ai_parsed.get("flight_no") or "")
+            if not fields.get("dep_iata"):
+                fields["dep_iata"] = str(ai_parsed.get("dep_iata") or "")
+            if not fields.get("arr_iata"):
+                fields["arr_iata"] = str(ai_parsed.get("arr_iata") or "")
+
+        # vision_extract (行李延误) — has_baggage_tag_proof / pir_no
+        vision_baggage = debug_info.get("vision_extract") or {}
+        if vision_baggage:
+            btag = vision_baggage.get("has_baggage_tag_proof")
+            if btag is not None:
+                fields["has_baggage_tag_proof"] = "Y" if str(btag).lower() in ("true", "1", "y") else "N"
+            pir_src = str(vision_baggage.get("baggage_delay_proof_source") or "")
+            # 从 PIR 编号格式中提取编号（如 "XXXPIR12345"）
+            if pir_src and pir_src.lower() not in ("unknown", "null", "none", ""):
+                fields["pir_no"] = pir_src[:64]
+            # 航班信息兜底
+            if not fields.get("flight_no"):
+                fields["flight_no"] = str(vision_baggage.get("flight_no") or "")
+            if not fields.get("dep_iata"):
+                fields["dep_iata"] = str(vision_baggage.get("dep_iata") or "")
+            if not fields.get("arr_iata"):
+                fields["arr_iata"] = str(vision_baggage.get("arr_iata") or "")
+            # 航班到达时间（延误起算点）
+            if not fields.get("actual_arr_time"):
+                fa_arr = vision_baggage.get("flight_actual_arrival_time")
+                if fa_arr and str(fa_arr).lower() not in ("unknown", "null", "none", ""):
+                    fields["actual_arr_time"] = self._parse_dt(fa_arr)
+        # ── 行李延误专属字段 END ─────────────────────────────────────────────
+
         # flight_delay_payout - 赔付信息补充
         payout_info = debug_info.get("flight_delay_payout", {})
         if payout_info:
