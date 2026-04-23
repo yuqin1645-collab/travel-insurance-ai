@@ -304,6 +304,12 @@ class ProductionWorkflow:
             claim_info.get("BenefitName") or claim_info.get("benefit_name") or ""
         )
 
+        # insured_name：始终从 claim_info 填被保险人（权威来源），不依赖 AI 解析
+        fields["insured_name"] = (
+            claim_info.get("Insured_And_Policy") or claim_info.get("insured_And_Policy")
+            or claim_info.get("Insured_Name") or claim_info.get("Applicant_Name") or ""
+        )
+
         # flight_delay_audit 部分
         audit = (
             data.get("flight_delay_audit")
@@ -527,7 +533,7 @@ class ProductionWorkflow:
         ai_parsed = debug_info.get("ai_parsed") or {}
         if ai_parsed:
             if not fields.get("passenger_name"):
-                fields["passenger_name"] = ""  # ai_parsed 无乘客名，留空由 claim_info 兜底
+                pass  # 行李延误 ai_parsed 无乘机人，由 vision_extract 补充
             # 行李延误材料有无
             bdp = ai_parsed.get("has_baggage_delay_proof")
             if bdp is not None:
@@ -556,9 +562,13 @@ class ProductionWorkflow:
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = str(ai_parsed.get("arr_iata") or "")
 
-        # vision_extract (行李延误) — has_baggage_tag_proof / pir_no
+        # vision_extract (行李延误) — has_baggage_tag_proof / pir_no / passenger_name
         vision_baggage = debug_info.get("vision_extract") or {}
         if vision_baggage:
+            # 乘机人姓名：登机牌/行程单上的实际乘客（prompt 里叫 insured_name_in_materials）
+            vp_name = str(vision_baggage.get("insured_name_in_materials") or "").strip()
+            if vp_name and vp_name.lower() not in ("unknown", "null", "none", ""):
+                fields["passenger_name"] = vp_name
             btag = vision_baggage.get("has_baggage_tag_proof")
             if btag is not None:
                 fields["has_baggage_tag_proof"] = "Y" if str(btag).lower() in ("true", "1", "y") else "N"
@@ -598,12 +608,6 @@ class ProductionWorkflow:
                 fields["policy_no"] = claim_info.get("PolicyNo", "")
             if not fields.get("insurer"):
                 fields["insurer"] = claim_info.get("Insurance_Company", "")
-            if not fields.get("passenger_name"):
-                fields["passenger_name"] = (
-                    claim_info.get("Insured_And_Policy")
-                    or claim_info.get("Insured_Name")
-                    or claim_info.get("Applicant_Name", "")
-                )
 
         # 基础字段
         fields["remark"] = (data.get("Remark") or "")[:2000]
@@ -615,7 +619,7 @@ class ProductionWorkflow:
 
         # 去掉 None 键（避免向不存在的列写数据），但保���空字符串
         fields = {k: v for k, v in fields.items() if v is not None or k in (
-            "passenger_name", "flight_no", "dep_iata", "arr_iata",
+            "passenger_name", "insured_name", "flight_no", "dep_iata", "arr_iata",
             "audit_result", "remark", "is_additional",
         )}
 

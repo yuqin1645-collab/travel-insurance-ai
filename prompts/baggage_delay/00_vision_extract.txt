@@ -37,7 +37,7 @@
   "has_passport": "true/false/unknown（材料中是否出现护照照片页，含本人照片、姓名、护照号码）",
   "has_exit_entry_record": "true/false/unknown（材料中是否出现中国海关出入境盖章页或电子出入境记录）",
   "exit_datetime": "YYYY-MM-DD HH:MM/unknown（出境时间，从出入境记录中提取）",
-  "insured_name_in_materials": "被保险人姓名（从材料中提取，见下方认定规则）/unknown",
+  "insured_name_in_materials": "乘机人姓名（从登机牌/行程单上提取的实际乘客姓名，即被保险人，见下方认定规则）/unknown",
   "has_bank_card_proof": "true/false/unknown（是否存在银行卡/借记卡信息，用于赔款打款验证）",
   "risk_flags": ["handwritten/multilang/conflict/fraud_suspect（如有多语言材料、手写涂改、时间冲突或疑似伪造，在此列出）"],
   "notes": "识别依据及特殊说明（多份签收证明时需说明各份来源；材料不清晰时注明）"

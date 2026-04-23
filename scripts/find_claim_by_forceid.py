@@ -98,11 +98,26 @@ def find_claim_path(query, absolute=False):
                 claims_path = info_file.parent
                 break
 
+    # === 第五步：若仍未匹配，直接在 claims_data 里按 forceid/ClaimId 扫描 claim_info.json ===
+    if review_file is None and claims_path is None:
+        for info_file in CLAIMS_DIR.rglob("claim_info.json"):
+            try:
+                data = json.loads(info_file.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            fid = str(data.get("forceid") or "").strip()
+            cid = str(data.get("ClaimId") or "").strip()
+            if fid == query or cid == query:
+                claims_path = info_file.parent
+                matched_forceid = fid or query
+                matched_by = "forceid" if fid == query else "ClaimId"
+                break
+
     # OCR cache：只做"是否存在缓存记录"的辅助定位（缓存按 hash 命名，forceid 不直接关联）
     cache_dir = str(CACHE_DIR.resolve()) if absolute else str(CACHE_DIR)
 
-    # 只要找到审核结果就返回（不要求必须找到案件材料）
-    if review_file is None:
+    # 找到案件目录或审核结果任意一个即可返回
+    if review_file is None and claims_path is None:
         return None
 
     def to_str(p):
