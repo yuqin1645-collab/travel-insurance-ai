@@ -88,7 +88,11 @@ claim_info:
   }},
   "route": {{
     "dep_iata": "PEK/unknown",
-    "arr_iata": "NKG/unknown"
+    "arr_iata": "NKG/unknown",
+    "dep_city": "出发城市（中文）/unknown",
+    "dep_country": "出发国家（中文）/unknown",
+    "arr_city": "到达城市（中文）/unknown",
+    "arr_country": "到达国家（中文）/unknown"
   }},
   "schedule_local": {{
     "planned_dep": "YYYY-MM-DD HH:MM/unknown",

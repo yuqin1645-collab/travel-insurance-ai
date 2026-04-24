@@ -29,7 +29,7 @@
 - `evidence.aviation_delay_proof = true` → 飞常准已确认原航班延误/取消，时间数据可信
 - `evidence.aviation_delay_proof = false` → 飞常准未返回数据（网络/数据缺失），降级为材料证明
 - `alternate_local.alt_dep/alt_arr` → 最终登机牌航班的实际起降时间（已由飞常准校准）
-- 延误时长计算：`max(alt_dep - planned_dep, alt_arr - planned_arr)`（取长原则），时间均已换算为同一时区
+- **延误时长已由代码按"取长原则"计算完毕，LLM 不得自行重新计算。若 parsed.computed_delay 存在，直接使用其 final_minutes 值；若不存在，参考 alternate_local 与 schedule_local 的时间差。**
 
 ## 赔付金额使用规则（重要）
 - 若输入中存在 payout_json 且其 status="calculated"，则 payout_suggestion.amount **必须直接使用 payout_json.final_amount**，不得自行推算
@@ -176,3 +176,5 @@
   }},
   "explanation": "按上述规则填写，通过则如：延误5小时10分钟，赔付金额：300元；补件则如：需补充：1.延误证明 2.登机牌；拒绝则如：拒赔原因：纯国内航班不在承保范围内"
 }}
+
+**注意**：`delay_duration_minutes` 使用 parsed_json 中 computed_delay.final_minutes 或 alternate_local 与 schedule_local 的时间差，LLM 不得自行重新计算。赔付金额以 payout_json.final_amount 为准。

@@ -286,6 +286,107 @@ class ProductionWorkflow:
         except Exception:
             return None
 
+    @staticmethod
+    def _iata_to_city(iata_code: str) -> tuple:
+        """IATA机场码 → (dep_city, dep_country) 中文映射"""
+        if not iata_code or iata_code.upper() in ("UNKNOWN", "NULL", "NONE", ""):
+            return None, None
+        # 高频机场 IATA → (城市, 国家)
+        iata_map = {
+            # 中国大陆
+            "PEK": ("北京", "中国"), "PKX": ("北京", "中国"),
+            "PVG": ("上海", "中国"), "SHA": ("上海", "中国"),
+            "CAN": ("广州", "中国"), "SZX": ("深圳", "中国"),
+            "CTU": ("成都", "中国"), "TFU": ("成都", "中国"),
+            "HGH": ("杭州", "中国"), "NKG": ("南京", "中国"),
+            "WUH": ("武汉", "中国"), "XIY": ("西安", "中国"),
+            "CKG": ("重庆", "中国"), "TAO": ("青岛", "中国"),
+            "DLC": ("大连", "中国"), "XMN": ("厦门", "中国"),
+            "CSX": ("长沙", "中国"), "KMG": ("昆明", "中国"),
+            "FOC": ("福州", "中国"), "HAK": ("海口", "中国"),
+            "URC": ("乌鲁木齐", "中国"), "CGO": ("郑州", "中国"),
+            "TSN": ("天津", "中国"), "SYX": ("三亚", "中国"),
+            "TNA": ("济南", "中国"), "LHW": ("兰州", "中国"),
+            "KWL": ("桂林", "中国"), "INC": ("银川", "中国"),
+            "XNN": ("西宁", "中国"), "JHG": ("西双版纳", "中国"),
+            "HFE": ("合肥", "中国"), "WNZ": ("温州", "中国"),
+            # 东南亚
+            "BKK": ("曼谷", "泰国"), "DMK": ("曼谷", "泰国"),
+            "CNX": ("清迈", "泰国"), "HKT": ("普吉", "泰国"),
+            "SGN": ("胡志明市", "越南"), "HAN": ("河内", "越南"),
+            "CGK": ("雅加达", "印度尼西亚"), "DPS": ("巴厘岛", "印度尼西亚"),
+            "MNL": ("马尼拉", "菲律宾"), "CEB": ("宿务", "菲律宾"),
+            "KUL": ("吉隆坡", "马来西亚"), "SIN": ("新加坡", "新加坡"),
+            "RGN": ("仰光", "缅甸"), "PNH": ("金边", "柬埔寨"),
+            "REP": ("暹粒", "柬埔寨"), "VTE": ("万象", "老挝"),
+            "DAC": ("达卡", "孟加拉国"), "CCU": ("加尔各答", "印度"),
+            "DEL": ("新德里", "印度"), "BOM": ("孟买", "印度"),
+            "MLE": ("马累", "马尔代夫"),
+            # 东亚/东北亚
+            "NRT": ("东京", "日本"), "HND": ("东京", "日本"),
+            "KIX": ("大阪", "日本"), "NGO": ("名古屋", "日本"),
+            "CTS": ("札幌", "日本"), "FUK": ("福冈", "日本"),
+            "OKA": ("冲绳", "日本"), "ICN": ("首尔", "韩国"),
+            "GMP": ("首尔", "韩国"), "PUS": ("釜山", "韩国"),
+            "TPE": ("台北", "台湾"), "KHH": ("高雄", "台湾"),
+            "MFM": ("澳门", "澳门"), "HKG": ("香港", "香港"),
+            # 欧洲
+            "LHR": ("伦敦", "英国"), "LGW": ("伦敦", "英国"),
+            "CDG": ("巴黎", "法国"), "ORY": ("巴黎", "法国"),
+            "FRA": ("法兰克福", "德国"), "MUC": ("慕尼黑", "德国"),
+            "AMS": ("阿姆斯特丹", "荷兰"), "FCO": ("罗马", "意大利"),
+            "MXP": ("米兰", "意大利"), "VCE": ("威尼斯", "意大利"),
+            "MAD": ("马德里", "西班牙"), "BCN": ("巴塞罗那", "西班牙"),
+            "IST": ("伊斯坦布尔", "土耳其"), "SAW": ("伊斯坦布尔", "土耳其"),
+            "SVO": ("莫斯科", "俄罗斯"), "DME": ("莫斯科", "俄罗斯"),
+            "VKO": ("莫斯科", "俄罗斯"), "LED": ("圣彼得堡", "俄罗斯"),
+            "ZUR": ("苏黎世", "瑞士"), "ZRH": ("苏黎世", "瑞士"),
+            "VIE": ("维也纳", "奥地利"), "CPH": ("哥本哈根", "丹麦"),
+            "ARN": ("斯德哥尔摩", "瑞典"), "OSL": ("奥斯陆", "挪威"),
+            "HEL": ("赫尔辛基", "芬兰"), "BRU": ("布鲁塞尔", "比利时"),
+            "LIS": ("里斯本", "葡萄牙"), "ATH": ("雅典", "希腊"),
+            "DUB": ("都柏林", "爱尔兰"), "PRG": ("布拉格", "捷克"),
+            "WAW": ("华沙", "波兰"), "BUD": ("布达佩斯", "匈牙利"),
+            # 中东
+            "DXB": ("迪拜", "阿联酋"), "AUH": ("阿布扎比", "阿联酋"),
+            "DOH": ("多哈", "卡塔尔"), "BAH": ("巴林", "巴林"),
+            "KWI": ("科威特城", "科威特"), "RUH": ("利雅得", "沙特阿拉伯"),
+            "JED": ("吉达", "沙特阿拉伯"), "AMM": ("安曼", "约旦"),
+            "BEY": ("贝鲁特", "黎巴嫩"), "TLV": ("特拉维夫", "以色列"),
+            "IKA": ("德黑兰", "伊朗"),
+            # 北美
+            "JFK": ("纽约", "美国"), "EWR": ("纽约", "美国"),
+            "LAX": ("洛杉矶", "美国"), "SFO": ("旧金山", "美国"),
+            "ORD": ("芝加哥", "美国"), "DFW": ("达拉斯", "美国"),
+            "ATL": ("亚特兰大", "美国"), "SEA": ("西雅图", "美国"),
+            "IAH": ("休斯顿", "美国"), "BOS": ("波士顿", "美国"),
+            "MIA": ("迈阿密", "美国"), "LAS": ("拉斯维加斯", "美国"),
+            "DTW": ("底特律", "美国"), "PHL": ("费城", "美国"),
+            "IAD": ("华盛顿", "美国"), "DEN": ("丹佛", "美国"),
+            "YVR": ("温哥华", "加拿大"), "YYZ": ("多伦多", "加拿大"),
+            "YUL": ("蒙特利尔", "加拿大"), "YOW": ("渥太华", "加拿大"),
+            # 南美
+            "GRU": ("圣保罗", "巴西"), "GIG": ("里约热内卢", "巴西"),
+            "EZE": ("布宜诺斯艾利斯", "阿根廷"), "SCL": ("圣地亚哥", "智利"),
+            "LIM": ("利马", "秘鲁"), "BOG": ("波哥大", "哥伦比亚"),
+            # 大洋洲
+            "SYD": ("悉尼", "澳大利亚"), "MEL": ("墨尔本", "澳大利亚"),
+            "BNE": ("布里斯班", "澳大利亚"), "PER": ("珀斯", "澳大利亚"),
+            "AKL": ("奥克兰", "新西兰"), "CHC": ("基督城", "新西兰"),
+            # 非洲
+            "JNB": ("约翰内斯堡", "南非"), "CPT": ("开普敦", "南非"),
+            "CAI": ("开罗", "埃及"), "ADD": ("亚的斯亚贝巴", "埃塞俄比亚"),
+            "NBO": ("内罗毕", "肯尼亚"),
+            # 其他
+            "KTM": ("加德满都", "尼泊尔"), "CMB": ("科伦坡", "斯里兰卡"),
+            "TAS": ("塔什干", "乌兹别克斯坦"),
+        }
+        iata_upper = iata_code.upper().strip()
+        entry = iata_map.get(iata_upper)
+        if entry:
+            return entry[0], entry[1]
+        return None, None
+
     def _extract_review_fields(self, data: dict, claim_info: dict) -> dict:
         """从审核结果JSON提取所有数据库字段"""
         import json
@@ -380,10 +481,14 @@ class ProductionWorkflow:
                 fields["dep_iata"] = route.get("dep_iata", "")
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = route.get("arr_iata", "")
-            fields["dep_city"] = route.get("dep_city", "")
-            fields["arr_city"] = route.get("arr_city", "")
-            fields["dep_country"] = route.get("dep_country", "")
-            fields["arr_country"] = route.get("arr_country", "")
+            if not fields.get("dep_city"):
+                fields["dep_city"] = route.get("dep_city", "")
+            if not fields.get("arr_city"):
+                fields["arr_city"] = route.get("arr_city", "")
+            if not fields.get("dep_country"):
+                fields["dep_country"] = route.get("dep_country", "")
+            if not fields.get("arr_country"):
+                fields["arr_country"] = route.get("arr_country", "")
 
             # 时间信息
             schedule = parse.get("schedule_local", {})
@@ -430,7 +535,7 @@ class ProductionWorkflow:
                 fields["delay_calc_to"] = delay_meta.get("to_field", "")
 
         # flight_delay_aviation_lookup - 飞常准原航班独立字段（不再混入 planned/actual）
-        lookup = debug_info.get("flight_delay_aviation_lookup", {})
+        lookup = debug_info.get("flight_delay_aviation_lookup") or debug_info.get("aviation_lookup") or {}
         if lookup and lookup.get("success"):
             # 飞常准原航班独立存储
             fields["avi_status"] = lookup.get("status", "")
@@ -454,10 +559,24 @@ class ProductionWorkflow:
                 fields["actual_dep_time"] = self._parse_dt(lookup.get("actual_dep"))
             if not fields.get("actual_arr_time"):
                 fields["actual_arr_time"] = self._parse_dt(lookup.get("actual_arr"))
+            if not fields.get("operating_carrier"):
+                fields["operating_carrier"] = lookup.get("operating_carrier", "")
             if lookup.get("status") == "取消":
                 fields["delay_type"] = "cancelled"
             if not fields.get("delay_duration_minutes"):
                 fields["delay_duration_minutes"] = lookup.get("delay_minutes")
+
+        # 行李延误：policy_validity 保单有效期提取（航班延误从 flight_delay_parse 取，行李延误独立）
+        policy_validity = debug_info.get("policy_validity") or {}
+        if policy_validity:
+            if not fields.get("policy_effective_date"):
+                pe = policy_validity.get("effective_date")
+                if pe:
+                    fields["policy_effective_date"] = self._parse_dt(pe)
+            if not fields.get("policy_expiry_date"):
+                px = policy_validity.get("expiry_date")
+                if px:
+                    fields["policy_expiry_date"] = self._parse_dt(px)
 
         # flight_delay_aviation_lookup - 飞常准替代航班（若有 alt_lookup 子键）
         alt_lookup = debug_info.get("flight_delay_alt_aviation_lookup", {})
@@ -481,6 +600,15 @@ class ProductionWorkflow:
                     fields["dep_iata"] = first.get("dep_iata", "")
                 if not fields.get("arr_iata"):
                     fields["arr_iata"] = first.get("arr_iata", "")
+            # 城市/国家
+            if not fields.get("dep_city"):
+                fields["dep_city"] = str(vision.get("dep_city") or "")
+            if not fields.get("arr_city"):
+                fields["arr_city"] = str(vision.get("arr_city") or "")
+            if not fields.get("dep_country"):
+                fields["dep_country"] = str(vision.get("dep_country") or "")
+            if not fields.get("arr_country"):
+                fields["arr_country"] = str(vision.get("arr_country") or "")
             # 替代航班路由（vision alternate）
             v_alt = vision.get("alternate") or {}
             if not fields.get("alt_flight_no"):
@@ -583,6 +711,15 @@ class ProductionWorkflow:
                 fields["dep_iata"] = str(vision_baggage.get("dep_iata") or "")
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = str(vision_baggage.get("arr_iata") or "")
+            # 城市/国家
+            if not fields.get("dep_city"):
+                fields["dep_city"] = str(vision_baggage.get("dep_city") or "")
+            if not fields.get("arr_city"):
+                fields["arr_city"] = str(vision_baggage.get("arr_city") or "")
+            if not fields.get("dep_country"):
+                fields["dep_country"] = str(vision_baggage.get("dep_country") or "")
+            if not fields.get("arr_country"):
+                fields["arr_country"] = str(vision_baggage.get("arr_country") or "")
             # 航班到达时间（延误起算点）
             if not fields.get("actual_arr_time"):
                 fa_arr = vision_baggage.get("flight_actual_arrival_time")
@@ -608,6 +745,19 @@ class ProductionWorkflow:
                 fields["policy_no"] = claim_info.get("PolicyNo", "")
             if not fields.get("insurer"):
                 fields["insurer"] = claim_info.get("Insurance_Company", "")
+            # 保单日期兜底（claim_info 可能有 Coverage_Period / Policy_Start_Date 等）
+            if not fields.get("policy_effective_date"):
+                for k in ("Coverage_Period", "Policy_Start_Date", "policy_effective_date", "Date_of_Accident"):
+                    val = claim_info.get(k)
+                    if val:
+                        fields["policy_effective_date"] = self._parse_dt(val)
+                        break
+            if not fields.get("policy_expiry_date"):
+                for k in ("Coverage_End_Date", "Policy_End_Date", "policy_expiry_date"):
+                    val = claim_info.get(k)
+                    if val:
+                        fields["policy_expiry_date"] = self._parse_dt(val)
+                        break
 
         # 基础字段
         fields["remark"] = (data.get("Remark") or "")[:2000]
@@ -617,9 +767,24 @@ class ProductionWorkflow:
         fields["key_conclusions"] = json.dumps(data.get("KeyConclusions", []), ensure_ascii=False)
         fields["raw_result"] = json.dumps(data, ensure_ascii=False)
 
+        # IATA→城市/国家 兜底（AI 未提取时用代码映射）
+        if not fields.get("dep_city") and fields.get("dep_iata"):
+            dc, dcountry = self._iata_to_city(fields["dep_iata"])
+            if dc:
+                fields["dep_city"] = dc
+            if dcountry:
+                fields["dep_country"] = dcountry
+        if not fields.get("arr_city") and fields.get("arr_iata"):
+            ac, acountry = self._iata_to_city(fields["arr_iata"])
+            if ac:
+                fields["arr_city"] = ac
+            if acountry:
+                fields["arr_country"] = acountry
+
         # 去掉 None 键（避免向不存在的列写数据），但保���空字符串
         fields = {k: v for k, v in fields.items() if v is not None or k in (
-            "passenger_name", "insured_name", "flight_no", "dep_iata", "arr_iata",
+            "passenger_name", "insured_name", "flight_no",
+            "dep_iata", "arr_iata", "dep_city", "arr_city", "dep_country", "arr_country",
             "audit_result", "remark", "is_additional",
         )}
 

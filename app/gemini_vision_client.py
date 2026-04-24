@@ -104,7 +104,7 @@ class GeminiVisionClient:
             "model": vision_model,
             "messages": messages,
             "temperature": 0.1,
-            "max_tokens": 8000,
+            "max_tokens": 8100,
         }
         if self.provider == 'openrouter':
             payload["response_format"] = {"type": "json_object"}

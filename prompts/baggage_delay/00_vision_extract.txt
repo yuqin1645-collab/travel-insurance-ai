@@ -23,11 +23,15 @@
 
 在上述航班字段基础上，额外抽取以下行李延误相关信息：
 
-  "has_boarding_or_ticket": "true/false/unknown（材料中是否存在登机牌或电子客票行程单）",
-  "has_baggage_delay_proof": "true/false/unknown（是否存在承运人出具的行李延误证明或PIR不正常行李报告）",
-  "baggage_delay_proof_source": "证明材料的原文描述（PIR编号/航司出具函件等）/unknown",
-  "has_baggage_receipt_time_proof": "true/false/unknown（是否存在行李签收时间证明：如航司签收单、快递签收记录、酒店代收签收单等）",
-  "has_baggage_tag_proof": "true/false/unknown（材料中是否存在托运行李牌照片，需含姓名、航班信息、行李牌号码三要素）",
+  "has_boarding_or_ticket": "true/false/unknown（材料中是否存在登机牌或电子客票行程单，见下方登机牌识别规则）",
+  "has_baggage_delay_proof": "true/false/unknown（材料中是否存在**承运人出具的行李延误/不正常行李证明文件**——判断依据是文件功能和结构，而非语言关键词。典型特征：①航司官方抬头/格式（logo或公司名）；②含旅客姓名/联系方式；③含航班信息（航班号/航段/日期）；④含行李信息（行李件数/行李牌号/行李特征描述如颜色材质）；⑤有PIR编号或异常记录编号（格式通常为机场三字码+航司代码+数字，如CWBLA31684）；⑥有日期戳。满足以上多数特征即为行李延误证明。此类文件可能以任何语言出具（英语/葡萄牙语/西班牙语/法语/德语/阿拉伯语/日语等均可），**不要被非中文/英文材料误导为不是证明文件**）",
+  "baggage_delay_proof_source": "证明材料的原文描述（PIR编号/航司出具函件/文件标题等）/unknown",
+  "has_baggage_receipt_time_proof": "true/false/unknown（材料中是否存在**行李签收/交付/领取的时间证明**——判断依据是文件功能，而非语言。典型特征：①航司/机场/快递出具的签收单或交付单；②含旅客姓名和联系方式；③含行李件数或描述；④含签收/交付的日期和时间（或至少日期）；⑤有签收人签名栏（ASSINATURA/Signature/签字）或签收动作确认字样；⑥有日期戳或条形码。满足以上多数特征即为行李签收时间证明。此类文件可能以任何语言出具，**重点识别日期时间字段和签收确认动作，不要被语言差异误导**）",
+  "has_baggage_tag_proof": "true/false/unknown（材料中是否存在托运行李牌照片，需含姓名、航班信息、行李牌号码三要素，见下方识别规则）",
+  "has_airline_baggage_record": "true/false/unknown（是否存在航空公司官方出具的行李运输记录/行李查询单/行李追踪报告，见下方替代凭证规则）",
+  "airline_baggage_record_name": "行李记录上的旅客姓名/unknown",
+  "airline_baggage_record_flight": "行李记录上的航班号/unknown",
+  "airline_baggage_record_pieces": "行李记录上的行李件数（数字）/unknown",
   "accident_date_in_materials": "YYYY-MM-DD/unknown（从材料中提取的真实事故发生日期，见下方提取规则）",
   "flight_actual_arrival_time": "YYYY-MM-DD HH:MM/unknown（首次乘坐航班的实际到达时间，行李延误时长起算点）",
   "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点）",
@@ -51,6 +55,10 @@
   "flight_date": "...",
   "dep_iata": "...",
   "arr_iata": "...",
+  "dep_city": "出发城市（中文）/unknown",
+  "dep_country": "出发国家（中文）/unknown",
+  "arr_city": "到达城市（中文）/unknown",
+  "arr_country": "到达国家（中文）/unknown",
   "protection_flight": {{...}},
   "protection_check": {{...}},
   "alternate": {{...}},
@@ -61,6 +69,10 @@
   "baggage_delay_proof_source": "...",
   "has_baggage_receipt_time_proof": "...",
   "has_baggage_tag_proof": "...",
+  "has_airline_baggage_record": "...",
+  "airline_baggage_record_name": "...",
+  "airline_baggage_record_flight": "...",
+  "airline_baggage_record_pieces": "...",
   "accident_date_in_materials": "...",
   "flight_actual_arrival_time": "...",
   "baggage_receipt_time": "...",
@@ -77,6 +89,35 @@
 }}
 
 ## 说明
+
+### ⚠️ 关键布尔字段填写规则（必读）
+
+以下是材料识别与布尔字段的对应关系，**必须严格执行**：
+
+| 材料类型 | 对应字段 | 判定标准 |
+|---------|---------|---------|
+| **PIR 报告**（含 RELATORIO DE IRREGULARIDADE、PIR编号/行李参考号、航司抬头、旅客姓名、航班信息、行李件数） | `has_baggage_delay_proof = true` | PIR 报告即为承运人出具的行李延误证明，识别到即填 true |
+| **行李签收/交付单**（含 RECEIPT OF、SIGNATURE FOR RECEIPT、签收日期、旅客姓名、行李件数，可能有英文/葡萄牙语/其他语言） | `has_baggage_receipt_time_proof = true` | 此类单据即为行李签收时间证明，识别到即填 true |
+| **行李牌贴纸**（窄条状，含航司 logo + 航班号 + 三字码 + 行李牌号 O 开头的数字串 + SEQ + 乘客姓名） | `has_baggage_tag_proof = true` | 贴纸可能贴在 PIR 报告上、行李箱上、护照上、登机牌背面等任意位置，只要画面中存在即填 true |
+| **PIR 报告**（同上） | `has_baggage_tag_proof = true` | PIR 报告含旅客姓名 + 航班号 + 行李件数 + PIR 编号，等同于行李牌，识别到即填 true |
+
+**重要提醒**：
+- 如果 `baggage_delay_proof_source` 填写了 PIR 编号/航司名称等内容，则 `has_baggage_delay_proof` **必须**为 true，不得为 false
+- 如果识别到含"RECEIPT"或"SIGNATURE FOR RECEIPT"的交付单据，则 `has_baggage_receipt_time_proof` **必须**为 true，不得为 false
+- 如果画面中存在行李牌贴纸（含航班号+行李牌号），则 `has_baggage_tag_proof` **必须**为 true，不得为 false
+- **不要**因为材料是葡萄牙语、西班牙语等非英语/中文就填 false —— 判断依据是文件结构特征，不是语言
+
+---
+
+- **登机牌识别规则（重要）**：以下任一特征出现即可判定为登机牌，`has_boarding_or_ticket = true`：
+  * 含"BOARDING PASS"或"登机牌"字样——这是最直接的标识
+  * 含以下关键字段组合：**座位号（SEAT/SEAT NO）** + **登机口（GATE）** + **登机时间（BOARDING TIME/BDT）** 中的任意两项
+  * 含 **BAG / BAGS / 行李件数** + **舱位（CLASS/CABIN）** + **序号（SEQ/序号）** 等登机牌特有字段
+  * 含条形码/二维码 + 航班号 + 日期 + 座位号的组合——这是典型登机牌版面结构
+  * 电子登机牌（手机截图/邮件附件）：含航司 logo + 二维码 + 航班信息 + 乘客姓名
+  * **国外航司登机牌识别**：不要只认中文"登机牌"三字。SAS（北欧）、Lufthansa、Air France、KLM 等国外航司的登机牌通常为英文格式，特征包括 BOARDING PASS 抬头、FROM/TO 机场对、FLT/FLT NO、GATE、SEAT、BAG、ZONE/GROUP 等字段。即使是非标准版面（如手机 APP 内的电子登机牌截图），只要含上述关键字段组合即视为登机牌
+  * 行程单/电子客票（e-ticket itinerary receipt）：含票号（Tkt No）、PNR/订座编码、运价明细、航段行程等，与登机牌是不同材料，但同样满足 `has_boarding_or_ticket = true`
+  * 若材料中只有航班信息截图（如飞常准、航旅纵横、携程行程详情）但无登机牌/行程单原件，`has_boarding_or_ticket = false`
 - **航班日期（flight_date）提取规则（重要）**：flight_date 是**原航班的计划起飞日期**（即行程单上的出发日期，非登机牌上的实际出发时间），用于保单有效期校验，必须是含完整年份的 YYYY-MM-DD 格式。来源优先级：
   1 行程单/电子客票（最权威，直接读取原航班计划起飞日期，含完整年月日）
   2 出入境记录（含出境时间戳，出境日期通常即为乘机日，含完整年份）
@@ -101,7 +142,22 @@
   * 若有多张证件，核对证件姓名与登机牌乘客姓名一致的，才是被保险人证件；其他证件属于申请人或随行人，`has_id_proof`/`has_passport` 只记录被保险人那份
   * 若无法从登机牌确认，则对照案件基本信息（案件基本信息中的 `Insured_And_Policy` 字段）识别被保险人姓名，并在 notes 中注明"依据案件基本信息确认被保险人"
   * 若材料中确实没有被保险人的证件（只有申请人证件），`has_id_proof` 和 `has_passport` 均填 false，并在 notes 中注明"材料中仅见申请人证件，未见被保险人证件"
+- **托运行李牌识别规则（重要）**：以下任一格式出现且含姓名 + 航班信息 + 行李牌号，即 `has_baggage_tag_proof = true`：
+  * **行李牌贴纸（最高频场景）**：贴在行李箱上或乘客撕下保存的条形/二维码贴纸，特征：窄条状贴纸 + 航司 logo（如 QATAR AIRWAYS）+ 航班号（如 QR817）+ 出发/到达三字码（如 DOH→GRU）+ 行李牌号（以 O 或 0 开头的长数字串，如 O 157 587635）+ SEQ/序号 + 乘客姓名（如 LIEXIN/YAN MR）。**注意：贴纸可能贴在行李箱上、PIR报告上、护照本上、登机牌背面或其他材料的空白区域，不要只盯着"独立照片"，只要页面中存在这种贴纸即判定为存在**
+  * **标准行李牌（贴在行李箱上或撕下的存根）**：含航司 logo + 航班号 + 出发/到达三字码 + 行李牌号（长数字串）+ 乘客姓名 + 日期，即使图片不完整、有折痕、被遮挡或只拍到局部，只要三要素齐全即判定为存在
+  * **行李牌存根（乘客持有的撕下联）**：与贴在行李箱上的行李牌内容相同，通常被乘客撕下保存，是理赔常用凭证
+  * **行李牌照片/截图**：手机拍摄的行李牌照片、行李箱上贴着的行李牌照片，即使角度倾斜、光线不佳、手指部分遮挡，只要能辨认出三要素即判定为存在
+  * **电子行李牌（少见）**：航司 APP 内生成的电子行李牌截图，含行李牌号码、航班信息、乘客姓名
+  * **PIR 不正常行李报告（行李延误案件中的等效替代凭证）**：在行李延误案件中，托运牌通常已随行李运走，乘客无法提供原件。此时**航空公司出具的 PIR 报告（含 PIR 编号/行李参考号 + 航班信息 + 旅客姓名 + 行李件数/描述）等同于托运行李牌**。典型特征：航司官方抬头（如 LATAM AIRLINES GROUP）、PIR 编号（如 CWBLA31684/RELATORIO DE IRREGULARIDADE）、航班信息（FD/VOO 行）、旅客信息（NOME/GIVEN NAME）、行李描述（NUMERO DE VOLUMES/COR/TIPO）、条形码 + 追踪号。满足上述特征即 `has_baggage_tag_proof = true`，不要因为没有"标准行李牌贴纸"就填 false
+  * 若只有登机牌上的行李件数（BAG 1/01/7）但无独立行李牌号码，`has_baggage_tag_proof = false`
+  * 若材料中行李牌被严重遮挡导致无法辨认姓名或航班或行李牌号任一要素，`has_baggage_tag_proof = false`
+  * **航空公司官方行李记录/行李查询单（替代凭证）**：若材料中出现航空公司官方出具的行李运输记录、行李查询单、行李追踪报告等，且包含**旅客姓名 + 航班号 + 行李件数/行李牌号**，即 `has_baggage_tag_proof = true`。这类材料可间接证明行李归属，等同于托运行李牌。典型特征：航司官方抬头/格式、含乘客姓名、航班号、行李件数、行李参考号。若信息完整匹配登机牌/机票信息，视为有效替代凭证
 - **行李延误时长起算口径**：行李延误时长 = 最晚行李签收时间（baggage_receipt_time） - 首次乘坐航班的实际到达时间（flight_actual_arrival_time），两个时间必须换算为同一时区。
 - **多份签收证明**：将全部签收时间写入 receipt_times，最晚时间写入 baggage_receipt_time，以最晚时间计算延误时长。
 - **不确定时输出 unknown**，不要猜测。
+- **多语言材料识别（重要）**：行李延误案件的材料可能由境外航司以**任何语言**出具（英语/葡萄牙语/西班牙语/法语/德语/阿拉伯语/日语/韩语/俄语等均可）。**不要依赖关键词匹配来判断文件类型**。正确方法是：
+  * 先借助 **OCR 预识别文本**（上方已提供）逐字符读取文件内容
+  * 根据**文件结构特征**（航司抬头、航班信息栏、旅客信息栏、日期戳、签名栏、条形码等）判断文件的功能和用途
+  * 根据**字段组合**判断文件类型：含"航班号+旅客姓名+行李件数+PIR编号"=行李延误证明；含"旅客姓名+签收日期+签收动作确认"=行李签收证明
+  * 即使整份文件都是你不熟悉的语言，只要能识别出上述结构特征，就应正确归类
 - 仅抽取与本案件相关信息，忽略与行李延误无关的材料（如随身财产损失证明等）。

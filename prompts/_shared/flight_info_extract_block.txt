@@ -39,7 +39,15 @@
       "date": "YYYY-MM-DD 或 YYYY-MM-DD HH:MM/unknown",
       "dep_iata": "出发机场三字码/unknown",
       "arr_iata": "到达机场三字码/unknown",
-      "source": "来源材料（行程单/登机牌/改签通知/保护航班提示/飞常准截图等）",
+      "source": "来源材料类型，必须从以下固定选项中选择最准确的一个：
+        - boarding_pass：登机牌（特征：有座位号/登机口/登机时间/BAG NO/BAGS、"登机牌"字样）
+        - itinerary：行程单/电子客票（特征：有票号/客票状态/PNR/订座编码/运价明细）
+        - pir_report：PIR不正常行李报告/行李运输事故单（特征：有PIR编号/DATE/MONTH/YEAR字段）
+        - airline_email：航司邮件/延误证明函（特征：航司抬头/官方格式/邮件格式）
+        - app_screenshot：航旅APP截图（特征：携程/飞猪/去哪儿等APP界面截图）
+        - variflight_screenshot：飞常准截图
+        - other：其他（需在notes中说明具体是什么材料）
+        注意：行程单（itinerary）和登机牌（boarding_pass）是两类不同材料，严禁混为一谈；若同时存在行程单和登机牌，必须分别标注各自的 source",
       "role_hint": "材料中对该航班的描述原文（如'原航班取消''保护航班''改签''第1程''第2程'等，直接引用原文）"
     }
   ]
@@ -108,6 +116,10 @@
   "flight_date": "触发航班计划起飞时间 YYYY-MM-DD HH:MM/unknown",
   "dep_iata": "触发航班出发机场三字码/unknown",
   "arr_iata": "触发航班到达机场三字码/unknown",
+  "dep_city": "触发航班出发城市（中文），如 广州/伊斯坦布尔/unknown",
+  "dep_country": "触发航班出发国家（中文），如 中国/土耳其/unknown",
+  "arr_city": "触发航班到达城市（中文）/unknown",
+  "arr_country": "触发航班到达国家（中文）/unknown",
 
   "protection_flight": {
     "flight_no": "保护航班号/unknown（若材料中出现'保护航班''protection flight'字样）",

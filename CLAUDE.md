@@ -124,35 +124,24 @@ class RuleResult:
 
 执行前确保已激活虚拟环境：`venv\Scripts\python.exe` (Windows) 或 `python`（已激活 venv）。
 
-### AI 审核
+### 统一入口脚本（推荐）
 
 | 脚本 | 用途 | 典型用法 |
 |------|------|---------|
-| `scripts/batch_review_flight.py` | 对 `claims_data/航班延误/` 下所有案件跑 AI 审核，结果写到 `review_results/flight_delay/` | `python scripts/batch_review_flight.py` |
-| `scripts/batch_review_baggage.py` | 对 `claims_data/行李延误/` 下所有案件跑 AI 审核，结果写到 `review_results/baggage_delay/` | `python scripts/batch_review_baggage.py` |
-| `scripts/rerun_claims.py` | 强制重跑指定 forceid 的 AI 审核（忽略 Final_Status 过滤） | `python scripts/rerun_claims.py <forceid1> <forceid2> ...` |
+| `scripts/review.py` | 统一审核入口（批量/重跑/统计） | `python review.py`（全量）<br>`python review.py --type baggage`（只行李）<br>`python review.py --forceid xxx`（重跑指定）<br>`python review.py --redownloaded`（重审未审核）<br>`python review.py --analyze`（统计分布） |
+| `scripts/push.py` | 统一推送入口（前端+数据库） | `python push.py --forceid xxx`（推单个）<br>`python push.py --all --type baggage`（批量）<br>`python push.py --sync-db`（同步数据库）<br>`python push.py --sync-db --dry-run`（预览） |
+| `scripts/report.py` | 统一报表入口 | `python report.py --type flight`（航班报表）<br>`python report.py --type baggage`（行李报表）<br>`python report.py --type compare`（AI vs 人工） |
+| `scripts/query.py` | 统一查询入口 | `python query.py forceid xxx`（查案件）<br>`python query.py status`（数据库状态）<br>`python query.py count`（统计数量） |
+| `scripts/data.py` | 统一数据管理入口 | `python data.py download`（全量下载）<br>`python data.py sync --no-delete`（API同步）<br>`python data.py restore --skip-existing`（从数据库恢复） |
 
-### 推送前端 & 数据库同步
+### 独立脚本
 
 | 脚本 | 用途 | 典型用法 |
 |------|------|---------|
-| `scripts/push_existing_results.py` | 推送**指定** forceid 的已有审核结果到前端 + 数据库（不重新审核，适用于航班/行李任意险种） | `python scripts/push_existing_results.py <forceid1> <forceid2> ...` |
-| `scripts/push_baggage_all.py` | 批量推送 `review_results/baggage_delay/` 下**全部**行李延误审核结果到前端 + 数据库 | `python scripts/push_baggage_all.py` |
+| `scripts/download_claims.py` | 下载理赔材料（核心库，被 scheduler 等模块直接 import，**不要删除或改名**） | `python scripts/download_claims.py` |
 | `scripts/sync_manual_status.py` | 从接口拉取人工处理状态，更新数据库 `benefit_name / manual_status / manual_conclusion` | `python scripts/sync_manual_status.py` |
-
-### 报表 & 查询
-
-| 脚本 | 用途 | 典型用法 |
-|------|------|---------|
-| `scripts/export_flight_delay_ai_report.py` | 导出航班延误 AI 审核结果到 Excel（ClaimId / PolicyNo / 状态 / 结论） | `python scripts/export_flight_delay_ai_report.py` |
-| `scripts/generate_baggage_report.py` | 生成行李延误审核结果 Excel 报告 | `python scripts/generate_baggage_report.py` |
-| `scripts/export_ai_vs_manual_report.py` | 生成 AI vs 人工审核对比报表 xlsx | `python scripts/export_ai_vs_manual_report.py` |
-| `scripts/find_claim_by_forceid.py` | 交互式查询 forceid/ClaimId 对应的本地案件路径 | `python scripts/find_claim_by_forceid.py` |
-
-### 数据下载 & 同步
-
-| 脚本 | 用途 | 典型用法 |
-|------|------|---------|
-| `scripts/download_claims.py` | 下载理赔材料（支持断点续传、自动文件类型检测） | `python scripts/download_claims.py` |
-| `scripts/sync_claims_from_api.py` | 从接口拉取案件列表并更新 ClaimId。**日常增量用 `--no-delete`**；直接运行会删除本地不在接口中的目录（超20个需手动确认） | `python scripts/sync_claims_from_api.py --no-delete` |
+| `scripts/upload_ai_conclusion.py` | 上传 AI 结论到 Salesforce | `python scripts/upload_ai_conclusion.py` |
+| `scripts/import_segments_from_local.py` | 导入联程航段数据到数据库 | `python scripts/import_segments_from_local.py` |
+| `scripts/find_claim_by_forceid.py` | 根据 forceid/ClaimId 查找案件路径；也可作为模块导入 `fetch_by_forceid()` | `python scripts/find_claim_by_forceid.py`（交互）<br>`python scripts/find_claim_by_forceid.py xxx`（直接查询） |
 | `scripts/restore_claims_from_db.py` | 从数据库 `ai_claim_info_raw` 恢复 `claims_data` 目录并重新下载材料文件（误删后恢复用） | `python scripts/restore_claims_from_db.py --skip-existing` |
+| `scripts/sync_claims_from_api.py` | 从接口拉取案件列表并更新 ClaimId。**日常增量用 `--no-delete`**；直接运行会删除本地不在接口中的目录（超20个需手动确认） | `python scripts/sync_claims_from_api.py --no-delete` |

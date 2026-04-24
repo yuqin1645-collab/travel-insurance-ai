@@ -314,6 +314,66 @@ def _check_info_consistency(claim_info: Dict[str, Any], ai_parsed: Dict[str, Any
     return None
 
 
+def _check_airline_baggage_record_exception(
+    vision_extract: Dict[str, Any],
+    ai_parsed: Dict[str, Any],
+    claim_info: Dict[str, Any],
+    text_blob: str,
+) -> bool:
+    """
+    航空公司官方行李记录替代托运行李牌的例外检查。
+
+    当同时满足以下条件时，可用官方行李记录替代行李牌：
+    1. 单人申请，无同行人
+    2. 行李记录姓名、航班、日期与登机牌/机票100%匹配
+    3. 行李件数为1件，与理赔件数一致
+    """
+    # 1) 检查是否存在航空公司官方行李记录
+    has_airline_record = False
+    baggage_record_info = {}
+
+    # 读 ai_parsed 中的行李记录标识
+    if ai_parsed.get("has_airline_baggage_record") == "true":
+        has_airline_record = True
+        baggage_record_info = {
+            "name": ai_parsed.get("airline_baggage_record_name", ""),
+            "flight": ai_parsed.get("airline_baggage_record_flight", ""),
+            "pieces": ai_parsed.get("airline_baggage_record_pieces", ""),
+        }
+
+    # 双重保险：vision_extract 也读
+    if not has_airline_record and vision_extract.get("has_airline_baggage_record") == "true":
+        has_airline_record = True
+        baggage_record_info = {
+            "name": vision_extract.get("airline_baggage_record_name", ""),
+            "flight": vision_extract.get("airline_baggage_record_flight", ""),
+            "pieces": vision_extract.get("airline_baggage_record_pieces", ""),
+        }
+
+    if not has_airline_record:
+        return False
+
+    # 2) 检查是否单人申请（无同行人）
+    fellow_travelers = claim_info.get("Fellow_Travelers") or claim_info.get("Co_Applicants") or ""
+    if str(fellow_travelers).strip().lower() not in ("", "none", "null", "无"):
+        return False  # 有同行人，不适用例外
+
+    # 3) 检查行李件数是否为1件
+    pieces = str(baggage_record_info.get("pieces") or "").strip().lower()
+    if pieces not in ("1", "one", "壹", "1件"):
+        return False  # 多件行李，不适用例外
+
+    # 4) 检查姓名/航班匹配（宽松匹配，有识别到即可）
+    record_name = str(baggage_record_info.get("name") or "").strip()
+    insured_name = str(claim_info.get("Insured_And_Policy") or claim_info.get("Insured_Name") or "").strip()
+
+    if record_name and insured_name:
+        if record_name.upper().replace(" ", "") != insured_name.upper().replace(" ", ""):
+            return False  # 姓名不匹配
+
+    return True
+
+
 def _check_exclusions(claim_info: Dict[str, Any], text_blob: str, parsed: Dict[str, Any]) -> Optional[str]:
     """条款除外责任校验（委托 rules.flight.exclusions）"""
     content = f"{str(claim_info.get('Description_of_Accident') or '')} {str(claim_info.get('Assessment_Remark') or '')} {text_blob}"
@@ -335,6 +395,17 @@ def _compute_payout_with_rules(
     personal_claim = _safe_float(claim_info.get("Personal_Effect_Claim_Amount"))
     result = _rules_compute_payout(delay_hours, claim_amount, cap, personal_claim)
     return result.detail.get("payout", 0.0)
+
+
+def _compute_tier_amount(delay_hours: float) -> int:
+    """根据延误时长计算档位金额（纯代码逻辑，不调 LLM）"""
+    if delay_hours >= 18:
+        return 1500
+    elif delay_hours >= 12:
+        return 1000
+    elif delay_hours >= 6:
+        return 500
+    return 0
 
 
 def _material_gate(text_blob: str, file_names: List[str]) -> List[str]:
@@ -441,6 +512,8 @@ async def review_baggage_delay_async(
         for key in (
             "has_boarding_or_ticket", "has_baggage_delay_proof", "has_baggage_receipt_time_proof",
             "has_baggage_tag_proof",  # 行李牌只有 vision_extract 能看到，必须合并
+            "has_airline_baggage_record", "airline_baggage_record_name",  # 航空公司行李记录（替代凭证）
+            "airline_baggage_record_flight", "airline_baggage_record_pieces",
             "flight_actual_arrival_time", "baggage_receipt_time", "receipt_times", "delay_hours",
             "has_id_proof", "has_passport", "has_exit_entry_record", "exit_datetime",
             "has_bank_card_proof", "risk_flags",
@@ -452,11 +525,31 @@ async def review_baggage_delay_async(
                 ai_parsed[key] = vision_val
             elif parsed_val is None:
                 ai_parsed[key] = vision_val
-        # 同步基础航班字段
+        # 同步基础航班字段（vision 非 unknown 时覆盖 ai_parsed 的 unknown）
         for key in ("flight_no", "flight_date", "dep_iata", "arr_iata"):
             vision_val = vision_extract.get(key)
             if vision_val and str(vision_val).lower() not in ("unknown", ""):
-                ai_parsed.setdefault(key, vision_val)
+                existing = ai_parsed.get(key)
+                if existing is None or str(existing).lower() in ("unknown", ""):
+                    ai_parsed[key] = vision_val
+
+        # 安全网：交叉校验材料识别的一致性
+        # 如果 vision 找到了 PIR 报告（baggage_delay_proof_source 有内容），但 has_baggage_delay_proof 为 false，自动纠正
+        proof_source = vision_extract.get("baggage_delay_proof_source") or ""
+        if proof_source and str(proof_source).lower() not in ("unknown", ""):
+            if not ai_parsed.get("has_baggage_delay_proof"):
+                ai_parsed["has_baggage_delay_proof"] = True
+                debug.setdefault("auto_corrected", []).append("has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正")
+            # PIR 报告含旅客姓名+航班号+行李件数+PIR编号，按规则等同于行李牌
+            if not ai_parsed.get("has_baggage_tag_proof"):
+                ai_parsed["has_baggage_tag_proof"] = True
+                debug.setdefault("auto_corrected", []).append("has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正")
+        # 如果 vision 识别到签收证明的时间（baggage_receipt_time 有具体值），但 has_baggage_receipt_time_proof 为 false，自动纠正
+        receipt_time = vision_extract.get("baggage_receipt_time") or ""
+        if receipt_time and str(receipt_time).lower() not in ("unknown", ""):
+            if not ai_parsed.get("has_baggage_receipt_time_proof"):
+                ai_parsed["has_baggage_receipt_time_proof"] = True
+                debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
     elif vision_extract and not isinstance(ai_parsed, dict):
         ai_parsed = dict(vision_extract)
 
@@ -587,10 +680,16 @@ async def review_baggage_delay_async(
             v_tag = str(vision_extract.get("has_baggage_tag_proof") or "unknown").strip().lower()
             if v_tag not in ("unknown", ""):
                 tag_flag = v_tag
-        if tag_flag == "false":
-            missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
-        elif tag_flag == "unknown":
-            if not any(w in joined_text for w in ["行李牌", "baggage tag", "luggage tag", "tag no", "行李标签"]):
+
+        # 例外规则：航空公司官方行李记录可替代托运行李牌
+        # 适用条件：单人申请 + 行李记录姓名/航班与登机牌匹配 + 仅1件行李
+        if tag_flag in ("false", "unknown"):
+            exception_met = _check_airline_baggage_record_exception(
+                vision_extract, ai_parsed or {}, claim_info, joined_text
+            )
+            if exception_met:
+                debug["baggage_tag_exception"] = "航空公司官方行李记录满足替代条件，视同行李牌已提供"
+            else:
                 missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
 
         # 身份证（可用视觉 has_id_proof 或 has_passport 替代，两者有一即可）
@@ -694,6 +793,10 @@ async def review_baggage_delay_async(
     if audit_err:
         debug["audit_warning"] = str(audit_err)[:200]
     elif isinstance(ai_audit, dict):
+        # 延误时长和档位以代码计算为准，覆盖 LLM 自算的结果（防止模型计算漂移）
+        ai_audit["delay_hours"] = delay_hours
+        # 根据代码计算的时长重新核算档位
+        ai_audit["tier_amount"] = _compute_tier_amount(delay_hours)
         debug["ai_audit"] = ai_audit
         # 合并 AI 审计的补件列表：ai_audit 可能发现材料门禁未识别到的缺项
         ai_audit_result = str(ai_audit.get("audit_result") or "").strip()

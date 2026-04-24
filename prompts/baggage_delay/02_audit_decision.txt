@@ -17,8 +17,8 @@ claim_info:
 {{
   "audit_result": "通过/拒绝/需补齐资料/人工复核",
   "reason": "一句话结论原因",
-  "delay_hours": "number/unknown",
-  "tier_amount": "number/unknown",
+  "delay_hours": "number（直接使用 parsed_json 中的 delay_hours 字段值，不要自行重新计算）",
+  "tier_amount": "number（按 delay_hours 查档位：>=18h=1500，>=12h=1000，>=6h=500，<6h=0）",
   "missing_materials": ["..."],
   "manual_review_reason": "string/none",
   "notes": "补充说明"
@@ -27,24 +27,40 @@ claim_info:
 判定规则：
 - 若事故类型为行李丢失（非延误）：拒绝。
 - 若命中免责条款（海关没收、未通知承运人、非托运行李、留置行李、战争/罢工等六类）：拒绝，原因在 reason 中注明。
-- 若关键材料缺失（票据/延误证明/签收时间证明）：需补齐资料。
+  - **除外责任命中必须基于 parsed_json 中的 has_* 字段事实，不得基于 ai_parsed.notes 中的文字推断。** ai_parsed 是纯文本解析阶段，无法看到图片，其 notes 字段可能包含错误推断。当 has_baggage_delay_proof=true 时，即使 ai_parsed.notes 中写有"未通知承运人""未及时领取""留置行李"等文字，也必须以 has_baggage_delay_proof=true 为准——PIR 即证明已通知+已取得书面证明，行李签收时间以 baggage_receipt_time 字段为准。
+- 若关键材料缺失（票据/登机牌/身份证）：需补齐资料。
+  - **注意：书面延误证明由 PIR 单满足（`has_baggage_delay_proof=true` 即满足），不得以"无延误证明"为由补件。**
 - 若存在手写、多语言、疑似伪造、时间冲突：人工复核。
 - 延误时长 < 6 小时：拒绝。
 - 6-12 小时：500；12-18 小时：1000；>=18 小时：1500。
 - 责任竞合（同时申请行李延误+随身财产损失）：按较高额度赔付，不重复理赔。
+- **延误时长已由代码计算并传入 parsed_json.delay_hours，LLM 不得自行重新计算，直接引用即可。**
 
-## 材料认定规则（重要）
+## 材料认定规则（极重要——优先级高于一切其他判定）
 
-**已由视觉识别确认存在的材料，不得列入 missing_materials**：解析结果中 `has_*` 字段为 `true` 的，代表视觉 AI 已在图片中识别到该材料，审核时直接认定材料存在，禁止重复要求补件。
+**解析结果中的 `has_*` 字段已由视觉 AI 从材料图片中直接识别，是材料存在与否的唯一权威依据。** 审核时必须无条件信任这些字段，**绝对禁止**以 notes 中的文字描述、claim_info 中的事故描述或其他任何来源否定视觉识别结果。
 
-- `has_boarding_or_ticket: true` → 登机牌/行程单已确认，无需补交
-- `has_baggage_delay_proof: true` → 行李延误书面证明已确认（含 PIR 不正常行李报告、航司出具的行李延误证明函、Property Irregularity Report 等均视为有效书面证明），无需补交
-- `has_baggage_receipt_time_proof: true` → 行李签收时间证明已确认，无需补交
-- `has_baggage_tag_proof: true` → 托运行李牌已确认，无需补交
-- `has_id_proof: true` 或 `has_passport: true` → 身份证明已确认，无需补交
-- `has_exit_entry_record: true` → 出入境记录已确认，无需补交
-- `has_bank_card_proof: true` → 银行卡信息已确认，无需补交
+具体约束：
+- `has_baggage_delay_proof: true` → **PIR 单（Property Irregularity Report）/航司延误证明已确认。** 这已完全满足条款第四条第(4)款「承运人或其代理人出具的延误时间及原因的书面证明」要求。**同时，PIR 单的存在本身就证明被保险人已在目的地机场向承运人/地勤申报了行李延误，条款第二条第(2)款「未通知承运人并取得书面证明」的除外责任不触发。** PIR 即等同于该书面证明，不再要求其他「延误时长证明」或「延误原因证明」。绝对禁止在 missing_materials 中列出与"延误证明"/"书面证明"/"延误时长证明"/"延误原因证明"相关的补件，绝对禁止以"未通知承运人"或"未取得书面证明"为由拒赔。
+- `has_baggage_receipt_time_proof: true` → 行李实际签收时间证明已确认（如签收单/快递签收记录），禁止要求补件。
+- `has_baggage_delay_proof: true` 且 `has_baggage_receipt_time_proof: false` → **这不是缺失材料**，只是延误时长的终止点（签收时间）来自其他材料（如航司邮件通知/系统记录）而非签收单。延误时长由代码按 `baggage_receipt_time - flight_actual_arrival_time` 计算，LLM 无需质疑。不得以"无签收时间证明"或"无法核实延误时长"为由拒赔。
+- `has_boarding_or_ticket: true` → 登机牌/行程单已确认，禁止要求补件。
+- `has_baggage_tag_proof: true` → 托运行李牌已确认，禁止要求补件。
+- `has_id_proof: true` 或 `has_passport: true` → 身份证明已确认，禁止要求补件。
+- `has_exit_entry_record: true` → 出入境记录已确认，禁止要求补件。
+- `has_bank_card_proof: true` → 银行卡信息已确认，禁止要求补件。
 
-**missing_materials 只列 `has_* = false` 或 `unknown` 且无替代材料证明的项目。**
+**missing_materials 只列 `has_* = false` 或 `unknown` 的项目。**
 
-**PIR 单（Property Irregularity Report / 不正常行李报告）等同于条款要求的「承运人出具的行李延误时数及原因的书面证明」**，只要 `has_baggage_delay_proof: true`，即视为满足条款第四条第(4)款的书面证明要求，不得以「未见正式延误时长证明」为由拒赔或要求补件。
+**严禁覆盖原则**：即使 parsed_json.notes 或 ai_parsed.notes 中写有"未提供XX材料""无凭证""未见证据表明已通知承运人""未及时领取""留置行李"等文字描述，只要对应的 `has_*` 字段为 `true`，必须以 `has_* = true` 为准。notes 中的文字可能来自文本解析阶段的推测，不具备权威性。**特别地，当 has_baggage_delay_proof=true 时，不得从 ai_parsed.notes 中推断"未通知承运人"或"未取得书面证明"或"留置行李"——PIR 本身即证明已通知且已取证；行李签收时间以 baggage_receipt_time 字段为准，不得推断为"旅客未及时领取"。**
+
+**严禁混淆"延误证明"与"签收时间证明"**：PIR 单 = 延误证明，签收单 = 签收时间证明，两者是不同材料。有 PIR（`has_baggage_delay_proof=true`）即满足书面证明要求，不得将"无签收单"等同于"无延误证明"。
+
+---
+
+**航空公司官方行李记录替代托运行李牌（例外规则）**：当同时满足以下所有条件时，航空公司官方出具的行李运输记录/行李查询单/行李追踪报告可替代托运行李牌照片，视为 `has_baggage_tag_proof = true` 的有效替代凭证：
+1. 申请人为单人申请，无其他同行人理赔记录；
+2. 行李记录上的旅客姓名、航班号、日期，与申请人的登机牌/机票信息 100% 匹配；
+3. 行李件数为 1 件，且与申请理赔的行李件数一致。
+
+满足上述条件时，即使无传统托运行李牌照片，也**不得**以"缺托运行李牌"为由要求补件。不满足条件（多人申请/多件行李/信息不匹配）时，仍必须收取托运行李牌照片，否则按缺材料处理。

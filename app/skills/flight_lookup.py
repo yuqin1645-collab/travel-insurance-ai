@@ -196,6 +196,13 @@ class FlightLookupSkill:
             try:
                 content = data.get("result", {}).get("content", [])
                 text_block = next((c["text"] for c in content if c.get("type") == "text"), "")
+                if not text_block or not text_block.strip():
+                    LOGGER.warning(
+                        f"飞常准MCP返回内容为空: flight={flight_no} date={date}, raw_content_count={len(content)}",
+                        extra={"forceid": "-", "stage": "fd_aviation_lookup", "attempt": 0},
+                    )
+                    return {"success": False, "error": "飞常准MCP返回内容为空",
+                            "source": "variflight", "queried_at": datetime.now(timezone.utc).isoformat()}
                 return self._parse_variflight_response(text_block, flight_no)
             except Exception as e:
                 return {"success": False, "error": f"飞常准响应解析失败: {e}",
@@ -220,6 +227,11 @@ class FlightLookupSkill:
         解析飞常准MCP返回的文本。
         返回格式：Flight details: {'code':200, 'data':[{...}]}
         """
+        # 空内容直接返回失败，避免 ast.literal_eval("") 报无意义错误
+        if not text or not text.strip():
+            return {"success": False, "error": "飞常准MCP返回内容为空",
+                    "source": "variflight", "queried_at": datetime.now(timezone.utc).isoformat()}
+
         # 提取 Python dict 字符串
         prefix = "Flight details: "
         if text.startswith(prefix):

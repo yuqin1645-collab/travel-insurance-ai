@@ -297,7 +297,7 @@ class MaterialExtractor:
 
         # Batch scan all attachments by chunk size.
         network_max_attempts = max(1, int(getattr(config, "VISION_RETRY_NETWORK_MAX_ATTEMPTS", 3) or 3))
-        json_max_attempts = max(1, int(getattr(config, "VISION_RETRY_JSON_MAX_ATTEMPTS", 2) or 2))
+        json_max_attempts = max(1, int(getattr(config, "VISION_RETRY_JSON_MAX_ATTEMPTS", 3) or 3))
         base_delay = float(getattr(config, "VISION_RETRY_BASE_DELAY", 2.0) or 2.0)
         max_delay = float(getattr(config, "VISION_RETRY_MAX_DELAY", 20.0) or 20.0)
         jitter_ratio = max(0.0, float(getattr(config, "VISION_RETRY_JITTER", 0.35) or 0.0))
@@ -341,6 +341,7 @@ class MaterialExtractor:
                     ))
                     json_retryable = any(k in err_str for k in (
                         "invalid control character", "json", "balance", "brace", "parse", "decode",
+                        "expecting", "delimiter", "unterminated", "extra data",
                     ))
                     error_type = "network" if network_retryable else ("json" if json_retryable else "other")
                     allowed_attempts = json_max_attempts if error_type == "json" else network_max_attempts
@@ -416,6 +417,14 @@ class MaterialExtractor:
                 return v.strip().lower() in unknown_values
             return False
 
+        def _is_positive(v: Any) -> bool:
+            """判断是否为肯定值（true / True）。用于分批扫描的"正向优先"合并策略。"""
+            if isinstance(v, bool):
+                return v is True
+            if isinstance(v, str):
+                return v.strip().lower() in ("true", "yes")
+            return False
+
         def _merge(dst: Any, src: Any) -> Any:
             if isinstance(dst, dict) and isinstance(src, dict):
                 out = copy.deepcopy(dst)
@@ -427,6 +436,9 @@ class MaterialExtractor:
                 return out
             if isinstance(dst, list) and isinstance(src, list):
                 return src if len(src) > len(dst) else dst
+            # 正向优先：如果 src 是 true/yes 而 dst 是 false/unknown，让 true 胜出
+            if _is_positive(src) and not _is_positive(dst):
+                return copy.deepcopy(src)
             if _is_unknown(dst) and not _is_unknown(src):
                 return copy.deepcopy(src)
             return dst

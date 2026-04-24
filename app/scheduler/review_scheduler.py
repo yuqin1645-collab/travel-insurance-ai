@@ -204,7 +204,36 @@ class ReviewScheduler:
         # 找到案件目录
         claim_folder = self._find_claim_folder(forceid)
         if not claim_folder:
-            # 目录不存在说明文件未下载到本机，重置为待下载让下载器重新处理
+            # 尝试通过 API 即时下载（在线程池中执行，避免与 asyncio event loop 冲突）
+            LOGGER.info(f"本地未找到案件目录，尝试通过 API 下载: {forceid}")
+            try:
+                import concurrent.futures
+                from scripts.fetch_claim_by_forceid import fetch_by_forceid
+                from scripts.download_claims import ClaimDownloader
+
+                def _sync_download():
+                    claim_data = fetch_by_forceid(forceid)
+                    downloader = ClaimDownloader(
+                        api_url="https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim",
+                        output_dir=str(config.CLAIMS_DATA_DIR),
+                        force_refresh=False,
+                    )
+                    downloader.process_claim(claim_data)
+
+                loop = asyncio.get_event_loop()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    await loop.run_in_executor(pool, _sync_download)
+
+                claim_folder = self._find_claim_folder(forceid)
+                if claim_folder:
+                    LOGGER.info(f"API 下载成功，继续审核: {forceid}")
+                else:
+                    LOGGER.warning(f"API 下载后仍未找到案件目录: {forceid}")
+            except Exception as dl_err:
+                LOGGER.warning(f"API 下载失败: {forceid} - {dl_err}")
+
+        if not claim_folder:
+            # 下载也失败，重置为待下载让下载器统一处理
             await self.status_manager.update_claim_status(
                 forceid,
                 ClaimStatus.DOWNLOAD_PENDING,
