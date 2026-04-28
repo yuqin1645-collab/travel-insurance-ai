@@ -7,15 +7,14 @@
 
 import os
 import sys
+import json
 import logging
 import asyncio
-from datetime import datetime
+import requests
+import pymysql
+from datetime import datetime as _dt, datetime
 from typing import Optional, Dict, Any, List
 from pathlib import Path
-
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from app.config import config
 from app.scheduler.download_scheduler import get_download_scheduler, IncrementalDownloadScheduler
@@ -208,11 +207,6 @@ class ProductionWorkflow:
 
     def _sync_review_results_to_db(self) -> tuple:
         """同步本地审核结果JSON到数据库（同步方法，供executor调用）"""
-        import json
-        import pymysql
-        import os
-        from datetime import datetime as _dt
-
         results_dir = config.REVIEW_RESULTS_DIR
         claims_dir = config.CLAIMS_DATA_DIR
 
@@ -232,6 +226,7 @@ class ProductionWorkflow:
         if not json_files:
             return 0, 0
 
+        # 批量写入：每 100 条 commit 一次，兼顾性能（减少磁盘 flush）与容错（单条失败不影响已提交批次）
         conn = pymysql.connect(
             host=os.getenv("DB_HOST", ""),
             port=int(os.getenv("DB_PORT", "3306")),
@@ -239,8 +234,11 @@ class ProductionWorkflow:
             password=os.getenv("DB_PASSWORD", ""),
             database=os.getenv("DB_NAME", "ai"),
             charset="utf8mb4",
+            autocommit=False,
         )
+        BATCH_SIZE = 100
         success = fail = 0
+        batch_count = 0
         try:
             with conn.cursor() as cur:
                 for jf in json_files:
@@ -250,10 +248,9 @@ class ProductionWorkflow:
                         if not forceid:
                             continue
                         claim_info = info_cache.get(forceid, {})
-                        fields = self._extract_review_fields(data, claim_info)
+                        main_fields, flight_fields, baggage_fields = self._extract_review_fields(data, claim_info)
 
-                        # 构建完整字段列表
-                        keys = list(fields.keys())
+                        keys = list(main_fields.keys())
                         placeholders = ", ".join(["%s"] * len(keys))
                         update_clause = ", ".join(
                             [f"{k}=VALUES({k})" for k in keys if k != "forceid"]
@@ -263,12 +260,43 @@ class ProductionWorkflow:
                             f"VALUES ({placeholders}) "
                             f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
                         )
-                        cur.execute(sql, list(fields.values()))
+                        cur.execute(sql, list(main_fields.values()))
+
+                        claim_type = main_fields.get("claim_type", "")
+                        if claim_type == "flight_delay" and flight_fields:
+                            fkeys = list(flight_fields.keys())
+                            fplaceholders = ", ".join(["%s"] * len(fkeys))
+                            fupdate = ", ".join([f"{k}=VALUES({k})" for k in fkeys if k != "forceid"])
+                            fsql = (
+                                f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
+                                f"VALUES ({fplaceholders}) "
+                                f"ON DUPLICATE KEY UPDATE {fupdate}"
+                            )
+                            cur.execute(fsql, list(flight_fields.values()))
+                        elif claim_type == "baggage_delay" and baggage_fields:
+                            bkeys = list(baggage_fields.keys())
+                            bplaceholders = ", ".join(["%s"] * len(bkeys))
+                            bupdate = ", ".join([f"{k}=VALUES({k})" for k in bkeys if k != "forceid"])
+                            bsql = (
+                                f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
+                                f"VALUES ({bplaceholders}) "
+                                f"ON DUPLICATE KEY UPDATE {bupdate}"
+                            )
+                            cur.execute(bsql, list(baggage_fields.values()))
+
                         success += 1
+                        batch_count += 1
+                        if batch_count >= BATCH_SIZE:
+                            conn.commit()
+                            batch_count = 0
                     except Exception as e:
                         fail += 1
+                        conn.rollback()
+                        batch_count = 0
                         LOGGER.warning(f"同步审核结果失败 {jf.name}: {e}")
-            conn.commit()
+                # 提交剩余未提交的批次
+                if batch_count > 0:
+                    conn.commit()
         finally:
             conn.close()
         return success, fail
@@ -278,7 +306,6 @@ class ProductionWorkflow:
         """解析日期时间字符串，返回 datetime 或 None"""
         if not value:
             return None
-        from datetime import datetime as _dt
         if isinstance(value, _dt):
             return value
         try:
@@ -387,11 +414,10 @@ class ProductionWorkflow:
             return entry[0], entry[1]
         return None, None
 
-    def _extract_review_fields(self, data: dict, claim_info: dict) -> dict:
-        """从审核结果JSON提取所有数据库字段"""
-        import json
-        from datetime import datetime as _dt
-
+    def _extract_review_fields(self, data: dict, claim_info: dict) -> tuple:
+        """从审核结果JSON提取所有数据库字段
+        返回: (main_fields, flight_fields, baggage_fields) 三个 dict
+        """
         fields = {
             "forceid": data.get("forceid", ""),
             "claim_id": (
@@ -433,7 +459,7 @@ class ProductionWorkflow:
 
             # key_data
             key_data = audit.get("key_data", {})
-            fields["passenger_name"] = key_data.get("passenger_name", "")
+            fields["applicant_name"] = key_data.get("passenger_name", "")
             fields["delay_duration_minutes"] = key_data.get("delay_duration_minutes")
             fields["delay_reason"] = key_data.get("reason", "")
 
@@ -441,7 +467,6 @@ class ProductionWorkflow:
             payout = audit.get("payout_suggestion", {})
             fields["payout_amount"] = payout.get("amount")
             fields["payout_currency"] = payout.get("currency", "CNY")
-            fields["payout_basis"] = payout.get("basis", "")
 
             # 说明
             fields["decision_reason"] = audit.get("explanation", "")
@@ -455,8 +480,8 @@ class ProductionWorkflow:
         if parse:
             # 乘客信息
             passenger = parse.get("passenger", {})
-            if not fields.get("passenger_name"):
-                fields["passenger_name"] = passenger.get("name", "")
+            if not fields.get("applicant_name"):
+                fields["applicant_name"] = passenger.get("name", "")
             fields["passenger_id_type"] = passenger.get("id_type", "")
             fields["passenger_id_number"] = passenger.get("id_number", "")
 
@@ -485,10 +510,6 @@ class ProductionWorkflow:
                 fields["dep_city"] = route.get("dep_city", "")
             if not fields.get("arr_city"):
                 fields["arr_city"] = route.get("arr_city", "")
-            if not fields.get("dep_country"):
-                fields["dep_country"] = route.get("dep_country", "")
-            if not fields.get("arr_country"):
-                fields["arr_country"] = route.get("arr_country", "")
 
             # 时间信息
             schedule = parse.get("schedule_local", {})
@@ -533,6 +554,32 @@ class ProductionWorkflow:
             if delay_meta:
                 fields["delay_calc_from"] = delay_meta.get("from_field", "")
                 fields["delay_calc_to"] = delay_meta.get("to_field", "")
+
+        # 重复案件兜底：若 flight_delay_parse 不存在（如重复检测早退），
+        # 从 result dict 顶层或 claim_info 读取申请人信息
+        if not fields.get("applicant_name"):
+            fields["applicant_name"] = (
+                data.get("applicant_name")
+                or data.get("passenger_name")
+                or claim_info.get("Applicant_Name")
+                or claim_info.get("ApplicantName")
+                or claim_info.get("Insured_Name")
+                or ""
+            )
+        if not fields.get("passenger_id_type"):
+            fields["passenger_id_type"] = (
+                data.get("passenger_id_type")
+                or claim_info.get("ID_Type")
+                or claim_info.get("id_type")
+                or ""
+            )
+        if not fields.get("passenger_id_number"):
+            fields["passenger_id_number"] = (
+                data.get("passenger_id_number")
+                or claim_info.get("ID_Number")
+                or claim_info.get("id_number")
+                or ""
+            )
 
         # flight_delay_aviation_lookup - 飞常准原航班独立字段（不再混入 planned/actual）
         lookup = debug_info.get("flight_delay_aviation_lookup") or debug_info.get("aviation_lookup") or {}
@@ -600,15 +647,11 @@ class ProductionWorkflow:
                     fields["dep_iata"] = first.get("dep_iata", "")
                 if not fields.get("arr_iata"):
                     fields["arr_iata"] = first.get("arr_iata", "")
-            # 城市/国家
+            # 城市
             if not fields.get("dep_city"):
                 fields["dep_city"] = str(vision.get("dep_city") or "")
             if not fields.get("arr_city"):
                 fields["arr_city"] = str(vision.get("arr_city") or "")
-            if not fields.get("dep_country"):
-                fields["dep_country"] = str(vision.get("dep_country") or "")
-            if not fields.get("arr_country"):
-                fields["arr_country"] = str(vision.get("arr_country") or "")
             # 替代航班路由（vision alternate）
             v_alt = vision.get("alternate") or {}
             if not fields.get("alt_flight_no"):
@@ -660,7 +703,7 @@ class ProductionWorkflow:
         # ai_parsed — 材料识别字段
         ai_parsed = debug_info.get("ai_parsed") or {}
         if ai_parsed:
-            if not fields.get("passenger_name"):
+            if not fields.get("applicant_name"):
                 pass  # 行李延误 ai_parsed 无乘机人，由 vision_extract 补充
             # 行李延误材料有无
             bdp = ai_parsed.get("has_baggage_delay_proof")
@@ -690,13 +733,13 @@ class ProductionWorkflow:
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = str(ai_parsed.get("arr_iata") or "")
 
-        # vision_extract (行李延误) — has_baggage_tag_proof / pir_no / passenger_name
+        # vision_extract (行李延误) — has_baggage_tag_proof / pir_no / applicant_name
         vision_baggage = debug_info.get("vision_extract") or {}
         if vision_baggage:
-            # 乘机人姓名：登机牌/行程单上的实际乘客（prompt 里叫 insured_name_in_materials）
+            # 申请人姓名：登机牌/行程单上的实际乘客（prompt 里叫 insured_name_in_materials）
             vp_name = str(vision_baggage.get("insured_name_in_materials") or "").strip()
             if vp_name and vp_name.lower() not in ("unknown", "null", "none", ""):
-                fields["passenger_name"] = vp_name
+                fields["applicant_name"] = vp_name
             btag = vision_baggage.get("has_baggage_tag_proof")
             if btag is not None:
                 fields["has_baggage_tag_proof"] = "Y" if str(btag).lower() in ("true", "1", "y") else "N"
@@ -711,15 +754,11 @@ class ProductionWorkflow:
                 fields["dep_iata"] = str(vision_baggage.get("dep_iata") or "")
             if not fields.get("arr_iata"):
                 fields["arr_iata"] = str(vision_baggage.get("arr_iata") or "")
-            # 城市/国家
+            # 城市
             if not fields.get("dep_city"):
                 fields["dep_city"] = str(vision_baggage.get("dep_city") or "")
             if not fields.get("arr_city"):
                 fields["arr_city"] = str(vision_baggage.get("arr_city") or "")
-            if not fields.get("dep_country"):
-                fields["dep_country"] = str(vision_baggage.get("dep_country") or "")
-            if not fields.get("arr_country"):
-                fields["arr_country"] = str(vision_baggage.get("arr_country") or "")
             # 航班到达时间（延误起算点）
             if not fields.get("actual_arr_time"):
                 fa_arr = vision_baggage.get("flight_actual_arrival_time")
@@ -762,41 +801,83 @@ class ProductionWorkflow:
         # 基础字段
         fields["remark"] = (data.get("Remark") or "")[:2000]
         fields["is_additional"] = str(data.get("IsAdditional", "N"))[:1]
-        fields["supplementary_count"] = data.get("supplementary_count", 0)
         fields["supplementary_reason"] = data.get("supplementary_reason") or data.get("Remark", "") if data.get("IsAdditional") == "Y" else ""
         fields["key_conclusions"] = json.dumps(data.get("KeyConclusions", []), ensure_ascii=False)
         fields["raw_result"] = json.dumps(data, ensure_ascii=False)
 
-        # IATA→城市/国家 兜底（AI 未提取时用代码映射）
+        # IATA→城市 兜底（AI 未提取时用代码映射）
         if not fields.get("dep_city") and fields.get("dep_iata"):
-            dc, dcountry = self._iata_to_city(fields["dep_iata"])
+            dc, _ = self._iata_to_city(fields["dep_iata"])
             if dc:
                 fields["dep_city"] = dc
-            if dcountry:
-                fields["dep_country"] = dcountry
         if not fields.get("arr_city") and fields.get("arr_iata"):
-            ac, acountry = self._iata_to_city(fields["arr_iata"])
+            ac, _ = self._iata_to_city(fields["arr_iata"])
             if ac:
                 fields["arr_city"] = ac
-            if acountry:
-                fields["arr_country"] = acountry
 
         # 去掉 None 键（避免向不存在的列写数据），但保���空字符串
         fields = {k: v for k, v in fields.items() if v is not None or k in (
-            "passenger_name", "insured_name", "flight_no",
-            "dep_iata", "arr_iata", "dep_city", "arr_city", "dep_country", "arr_country",
+            "applicant_name", "insured_name", "flight_no",
+            "dep_iata", "arr_iata", "dep_city", "arr_city",
             "audit_result", "remark", "is_additional",
         )}
 
-        return fields
+        # ── 按表拆分 ──────────────────────────────────────────────────────
+        # 判定 claim_type
+        benefit = fields.get("benefit_name", "") or ""
+        if "行李" in benefit:
+            claim_type = "baggage_delay"
+        else:
+            claim_type = "flight_delay"
+        fields["claim_type"] = claim_type
+
+        # 主表字段（只保留 ai_review_result 中存在的列）
+        main_keys = {
+            "forceid", "claim_id", "claim_type", "benefit_name",
+            "applicant_name", "insured_name", "passenger_id_type", "passenger_id_number",
+            "policy_no", "insurer", "policy_effective_date", "policy_expiry_date",
+            "audit_result", "audit_status", "confidence_score", "audit_time", "auditor",
+            "final_decision", "payout_amount", "payout_currency", "insured_amount",
+            "remaining_coverage", "is_additional", "supplementary_reason",
+            "remark", "key_conclusions", "decision_reason",
+            "identity_match", "threshold_met", "exclusion_triggered", "exclusion_reason",
+            "forwarded_to_frontend", "forwarded_at", "manual_status", "manual_conclusion",
+            "ai_model_version", "pipeline_version", "rule_ids_hit", "audit_reason_tags",
+            "human_override", "raw_result", "created_at", "updated_at",
+        }
+        main_fields = {k: v for k, v in fields.items() if k in main_keys}
+
+        # 航班子表字段
+        flight_keys = {
+            "forceid", "flight_no", "operating_carrier",
+            "dep_iata", "arr_iata", "dep_city", "arr_city",
+            "planned_dep_time", "planned_arr_time", "actual_dep_time", "actual_arr_time",
+            "alt_dep_time", "alt_arr_time", "alt_flight_no", "alt_dep_iata", "alt_arr_iata",
+            "avi_status", "avi_planned_dep", "avi_planned_arr", "avi_actual_dep", "avi_actual_arr",
+            "avi_alt_flight_no", "avi_alt_planned_dep", "avi_alt_actual_dep", "avi_alt_actual_arr",
+            "flight_scenario", "rebooking_count",
+            "is_connecting", "total_segments", "origin_iata", "destination_iata", "missed_connection",
+            "delay_duration_minutes", "delay_reason", "delay_type", "delay_calc_from", "delay_calc_to",
+        }
+        flight_fields = {k: v for k, v in fields.items() if k in flight_keys} if claim_type == "flight_delay" else {}
+
+        # 行李子表字段
+        baggage_keys = {
+            "forceid",
+            "first_flight_actual_arr_time", "baggage_receipt_time", "baggage_delay_hours",
+            "baggage_delay_calc_basis", "delay_tier", "payout_tier_amount", "claim_amount",
+            "final_payout_amount", "payout_calibration_reason",
+            "has_baggage_receipt_proof", "has_baggage_delay_proof", "has_baggage_tag",
+            "pir_no", "has_pir_report",
+        }
+        baggage_fields = {k: v for k, v in fields.items() if k in baggage_keys} if claim_type == "baggage_delay" else {}
+
+        return main_fields, flight_fields, baggage_fields
 
     def _sync_manual_status(self) -> tuple:
         """查询人工处理状态并更新数据库（同步方法，供executor调用）"""
-        import os
-        import requests
-        import pymysql
 
-        RESULT_API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Result"
+        RESULT_API_URL = os.getenv("MANUAL_RESULT_API_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Result")
 
         conn = pymysql.connect(
             host=os.getenv("DB_HOST", ""),
@@ -806,6 +887,7 @@ class ProductionWorkflow:
             database=os.getenv("DB_NAME", "ai"),
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
+            autocommit=False,
         )
         success = fail = 0
         try:
@@ -818,7 +900,6 @@ class ProductionWorkflow:
 
             forceids = [row["forceid"] for row in rows]
 
-            # 批量查询接口
             try:
                 resp = requests.post(
                     RESULT_API_URL,
@@ -846,45 +927,57 @@ class ProductionWorkflow:
                 LOGGER.warning(f"批量查询人工状态接口失败: {e}")
                 return 0, len(forceids)
 
-            for forceid in forceids:
-                data = result_map.get(forceid)
-                if not data:
-                    continue
-                try:
-                    final_status = str(data.get("Final_Status") or "").strip()
-                    supplementary_reason = str(data.get("Supplementary_Reason") or "").strip()
-                    approved = str(data.get("Approved_amount") or "").strip()
-                    assessment_remark = str(data.get("Assessment_Remark") or "").strip()
+            # 批量写入：每 100 条 commit 一次，兼顾性能与容错
+            BATCH_SIZE = 100
+            batch_count = 0
+            with conn.cursor() as cur:
+                for forceid in forceids:
+                    data = result_map.get(forceid)
+                    if not data:
+                        continue
+                    try:
+                        final_status = str(data.get("Final_Status") or "").strip()
+                        supplementary_reason = str(data.get("Supplementary_Reason") or "").strip()
+                        approved = str(data.get("Approved_amount") or "").strip()
+                        assessment_remark = str(data.get("Assessment_Remark") or "").strip()
 
-                    if final_status == "事后理赔拒赔":
-                        manual_status, manual_conclusion = "拒绝", assessment_remark
-                    elif final_status == "待补件":
-                        manual_status, manual_conclusion = "需补齐资料", supplementary_reason
-                    elif final_status == "已补件待审核":
-                        manual_status, manual_conclusion = "待定", supplementary_reason or "已补件待审核"
-                    elif final_status == "线上理赔初审":
-                        manual_status, manual_conclusion = "待定", approved or assessment_remark or "线上理赔初审"
-                    elif final_status == "支付成功":
-                        manual_status, manual_conclusion = "通过", approved
-                    elif final_status == "结案待财务付款":
-                        manual_status, manual_conclusion = "通过", approved or assessment_remark
-                    elif final_status == "取消理赔":
-                        manual_status, manual_conclusion = "拒绝", "取消理赔"
-                    else:
-                        manual_status, manual_conclusion = "待定", final_status
+                        if final_status == "事后理赔拒赔":
+                            manual_status, manual_conclusion = "拒绝", assessment_remark
+                        elif final_status == "待补件":
+                            manual_status, manual_conclusion = "需补齐资料", supplementary_reason
+                        elif final_status == "零结关案":
+                            manual_status, manual_conclusion = "需补齐资料", "零结关案（立案30天无补件自动结案）"
+                        elif final_status == "已补件待审核":
+                            manual_status, manual_conclusion = "待定", supplementary_reason or "已补件待审核"
+                        elif final_status == "线上理赔初审":
+                            manual_status, manual_conclusion = "待定", approved or assessment_remark or "线上理赔初审"
+                        elif final_status == "支付成功":
+                            manual_status, manual_conclusion = "通过", approved
+                        elif final_status == "结案待财务付款":
+                            manual_status, manual_conclusion = "通过", approved or assessment_remark
+                        elif final_status == "取消理赔":
+                            manual_status, manual_conclusion = "拒绝", "取消理赔"
+                        else:
+                            manual_status, manual_conclusion = "待定", final_status
 
-                    with conn.cursor() as cur:
                         cur.execute(
                             """UPDATE ai_review_result
                                SET manual_status=%s, manual_conclusion=%s, updated_at=CURRENT_TIMESTAMP
                                WHERE forceid=%s""",
                             (manual_status, manual_conclusion, forceid)
                         )
-                    conn.commit()
-                    success += 1
-                except Exception as e:
-                    fail += 1
-                    LOGGER.warning(f"同步人工状态失败 {forceid}: {e}")
+                        success += 1
+                        batch_count += 1
+                        if batch_count >= BATCH_SIZE:
+                            conn.commit()
+                            batch_count = 0
+                    except Exception as e:
+                        fail += 1
+                        conn.rollback()
+                        batch_count = 0
+                        LOGGER.warning(f"同步人工状态失败 {forceid}: {e}")
+            if batch_count > 0:
+                conn.commit()
         finally:
             conn.close()
         return success, fail
@@ -895,8 +988,6 @@ class ProductionWorkflow:
         且没有审核结果的案件，注册状态并推入审核队列。
         解决 run_incremental.py 等路径下载后未注册的问题。
         """
-        import json as _json
-
         LOGGER.info("开始孤儿案件兜底扫描...")
 
         registered_count = 0
@@ -918,7 +1009,7 @@ class ProductionWorkflow:
         # 扫描本地所有 claim_info.json
         for info_file in config.CLAIMS_DATA_DIR.rglob("claim_info.json"):
             try:
-                data = _json.loads(info_file.read_text(encoding="utf-8"))
+                data = json.loads(info_file.read_text(encoding="utf-8"))
                 forceid = str(data.get("forceid") or "").strip()
                 if not forceid:
                     continue

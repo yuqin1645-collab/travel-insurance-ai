@@ -6,12 +6,15 @@
 """
 
 import os
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 # 加载.env文件
 load_dotenv()
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Config:
@@ -143,9 +146,9 @@ class Config:
     @classmethod
     def validate(cls) -> bool:
         """验证必需的配置是否存在"""
-        if not cls.OPENROUTER_API_KEY:
-            print("错误: 未设置OPENROUTER_API_KEY")
-            print("请在.env文件中设置或使用环境变量")
+        if not cls.DASHSCOPE_API_KEY and not cls.OPENROUTER_API_KEY:
+            LOGGER.error("错误: 未设置DASHSCOPE_API_KEY或OPENROUTER_API_KEY")
+            LOGGER.error("请至少设置其中一个（DASHSCOPE_API_KEY用于Qwen VL，OPENROUTER_API_KEY用于Gemini）")
             return False
         return True
     

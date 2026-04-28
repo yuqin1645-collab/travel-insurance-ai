@@ -1,0 +1,24 @@
+2026-04-28 14:03:46,645 INFO forceid=a0nC800000I9eOxIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006491557】
+2026-04-28 14:03:46,645 INFO forceid=a0nC800000I9eOxIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 14:03:46,646 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 14:04:00,978 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 14:04:13,239 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 14:04:13,240 INFO forceid=a0nC800000I9eOxIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=false has_delay_proof=false has_receipt_proof=false
+2026-04-28 14:04:23,320 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=3, 航班号格式不正确
+2026-04-28 14:04:23,320 INFO forceid=- stage=- attempt=0 使用Mock数据: 未知 2026-02-12
+2026-04-28 14:04:23,540 INFO forceid=a0nC800000HqpJBIAZ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006705633】
+2026-04-28 14:04:23,541 INFO forceid=a0nC800000HqpJBIAZ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 14:04:23,541 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 14:04:44,733 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 14:04:58,428 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 14:04:58,428 INFO forceid=a0nC800000HqpJBIAZ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=false has_receipt_proof=false
+[1/2] a0nC800000I9eOxIAJ ...
+  audit: 
+  delay_hours: None
+  auto_corrected: []
+  pir_extract: {}
+[2/2] a0nC800000HqpJBIAZ ...
+  audit: 
+  delay_hours: None
+  auto_corrected: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+  pir_extract: {"attempted": true, "result": "未提取到有效签收时间", "confidence": "low"}

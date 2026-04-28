@@ -6,13 +6,19 @@ OCR服务模块
 """
 
 import os
+import re
 import json
 import base64
+import logging
+import tempfile
+import requests
 from pathlib import Path
 from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
 from app.config import config
 from app.ocr_cache import OCRCache
+
+LOGGER = logging.getLogger(__name__)
 
 
 class OCRProvider(ABC):
@@ -39,26 +45,15 @@ class AliyunOCR(OCRProvider):
         
     def recognize(self, image_path: Path) -> Dict:
         """使用阿里云OCR识别"""
-        try:
-            # TODO: 调用阿里云OCR API
-            # from aliyunsdkcore.client import AcsClient
-            # from aliyunsdkocr.request.v20191230 import RecognizeGeneralRequest
-            
-            # 模拟返回
-            return {
-                'provider': 'aliyun',
-                'success': True,
-                'text': f'模拟OCR识别: {image_path.name}',
-                'confidence': 0.95,
-                'words': [],
-                'raw_response': {}
-            }
-        except Exception as e:
-            return {
-                'provider': 'aliyun',
-                'success': False,
-                'error': str(e)
-            }
+        return {
+            'provider': 'aliyun',
+            'success': False,
+            'error': '阿里云OCR尚未接入（TODO: 调用阿里云OCR API）',
+            'text': '',
+            'confidence': 0.0,
+            'words': [],
+            'raw_response': {}
+        }
 
 
 class TencentOCR(OCRProvider):
@@ -71,26 +66,15 @@ class TencentOCR(OCRProvider):
         
     def recognize(self, image_path: Path) -> Dict:
         """使用腾讯云OCR识别"""
-        try:
-            # TODO: 调用腾讯云OCR API
-            # from tencentcloud.common import credential
-            # from tencentcloud.ocr.v20181119 import ocr_client, models
-            
-            # 模拟返回
-            return {
-                'provider': 'tencent',
-                'success': True,
-                'text': f'模拟OCR识别: {image_path.name}',
-                'confidence': 0.93,
-                'words': [],
-                'raw_response': {}
-            }
-        except Exception as e:
-            return {
-                'provider': 'tencent',
-                'success': False,
-                'error': str(e)
-            }
+        return {
+            'provider': 'tencent',
+            'success': False,
+            'error': '腾讯云OCR尚未接入（TODO: 调用腾讯云OCR API）',
+            'text': '',
+            'confidence': 0.0,
+            'words': [],
+            'raw_response': {}
+        }
 
 
 class BaiduOCR(OCRProvider):
@@ -106,14 +90,13 @@ class BaiduOCR(OCRProvider):
         if self.access_token:
             return self.access_token
             
-        import requests
         url = "https://aip.baidubce.com/oauth/2.0/token"
         params = {
             "grant_type": "client_credentials",
             "client_id": self.api_key,
             "client_secret": self.secret_key
         }
-        response = requests.post(url, params=params)
+        response = requests.post(url, params=params, timeout=config.TIMEOUT)
         result = response.json()
         self.access_token = result.get('access_token')
         return self.access_token
@@ -121,8 +104,6 @@ class BaiduOCR(OCRProvider):
     def recognize(self, image_path: Path) -> Dict:
         """使用百度OCR识别"""
         try:
-            import requests
-            
             # 获取access token
             access_token = self._get_access_token()
             
@@ -135,7 +116,7 @@ class BaiduOCR(OCRProvider):
             headers = {'Content-Type': 'application/x-www-form-urlencoded'}
             data = {'image': image_base64}
             
-            response = requests.post(url, headers=headers, data=data)
+            response = requests.post(url, headers=headers, data=data, timeout=config.TIMEOUT)
             result = response.json()
             
             if 'words_result' in result:
@@ -204,8 +185,11 @@ class OCRService:
                 tesseract_path=config.TESSERACT_PATH
             )
         else:
-            # 默认使用模拟OCR
-            return MockOCR()
+            raise ValueError(
+                f"不支持的OCR提供商: {self.provider_name}。"
+                f"支持的提供商: aliyun, tencent, baidu, tesseract。"
+                f"请在 config.py 中设置正确的 OCR_PROVIDER。"
+            )
     
     def recognize_image(self, image_path: Path) -> Dict:
         """
@@ -259,7 +243,7 @@ class OCRService:
         
         for i, image_path in enumerate(image_paths, 1):
             if show_progress:
-                print(f"  OCR识别进度: {i}/{total} - {image_path.name}")
+                LOGGER.debug(f"OCR识别进度: {i}/{total} - {image_path.name}")
             
             results[image_path.name] = self.recognize_image(image_path)
         
@@ -278,8 +262,6 @@ class OCRService:
                 'date': '2026-01-23'
             }
         """
-        import re
-        
         key_info = {}
         
         # 识别文档类型
@@ -325,12 +307,11 @@ class TesseractOCR(OCRProvider):
         Args:
             tesseract_path: tesseract.exe的路径
         """
-        self.tesseract_path = tesseract_path or r"D:\app\tools\other\Tesseract\tesseract.exe"
+        self.tesseract_path = tesseract_path or str(config.TESSERACT_PATH)
         
         # 检查tesseract是否存在
         if not Path(self.tesseract_path).exists():
-            print(f"警告: Tesseract未找到: {self.tesseract_path}")
-            print("将使用模拟OCR")
+            LOGGER.warning(f"Tesseract未找到: {self.tesseract_path}，将使用模拟OCR")
             self.use_mock = True
         else:
             self.use_mock = False
@@ -339,7 +320,7 @@ class TesseractOCR(OCRProvider):
                 import pytesseract
                 pytesseract.pytesseract.tesseract_cmd = self.tesseract_path
             except ImportError:
-                print("警告: pytesseract未安装,将使用模拟OCR")
+                LOGGER.warning("pytesseract未安装，将使用模拟OCR")
                 self.use_mock = True
     
     def recognize(self, image_path: Path) -> Dict:
@@ -360,8 +341,6 @@ class TesseractOCR(OCRProvider):
                 if image.mode != 'RGB':
                     image = image.convert('RGB')
                 # 保存为临时JPEG再打开，确保Tesseract可处理
-                import tempfile
-                import os
                 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
                     temp_path = tmp.name
                 image.save(temp_path, 'JPEG')
@@ -369,7 +348,7 @@ class TesseractOCR(OCRProvider):
                 # 清理临时文件
                 try:
                     os.unlink(temp_path)
-                except:
+                except OSError:
                     pass
             
             # 识别多语言
@@ -412,17 +391,16 @@ class TesseractOCR(OCRProvider):
             
         except Exception as e:
             error_msg = str(e)
-            print(f"Tesseract识别失败: {error_msg}")
+            LOGGER.error(f"Tesseract识别失败: {error_msg}")
             
             # 尝试识别具体问题
             if "Unsupported" in error_msg:
                 try:
                     from PIL import Image
                     with Image.open(image_path) as img:
-                        print(f"  图片模式: {img.mode}, 格式: {img.format}")
-                        print(f"  图片尺寸: {img.size}")
+                        LOGGER.warning(f"图片模式: {img.mode}, 格式: {img.format}, 尺寸: {img.size}")
                 except Exception as pil_error:
-                    print(f"  PIL也无法打开: {pil_error}")
+                    LOGGER.warning(f"PIL也无法打开: {pil_error}")
             
             return {
                 'provider': 'tesseract',

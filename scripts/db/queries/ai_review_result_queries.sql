@@ -20,7 +20,7 @@ FROM ai_review_result
 UNION ALL
 SELECT '有审核结果', SUM(CASE WHEN audit_result IS NOT NULL AND audit_result != '' THEN 1 ELSE 0 END) FROM ai_review_result
 UNION ALL
-SELECT '有被保险人姓名', SUM(CASE WHEN passenger_name IS NOT NULL AND passenger_name != '' THEN 1 ELSE 0 END) FROM ai_review_result
+SELECT '有申请人姓名', SUM(CASE WHEN applicant_name IS NOT NULL AND applicant_name != '' THEN 1 ELSE 0 END) FROM ai_review_result
 UNION ALL
 SELECT '有证件号', SUM(CASE WHEN passenger_id_number IS NOT NULL AND passenger_id_number != '' THEN 1 ELSE 0 END) FROM ai_review_result
 UNION ALL
@@ -46,7 +46,7 @@ GROUP BY audit_result;
 SELECT
     forceid AS '案件ID',
     claim_id AS '案件编号',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     flight_no AS '航班号',
     dep_iata AS '出发',
     arr_iata AS '到达',
@@ -61,7 +61,7 @@ ORDER BY audit_time DESC;
 -- 6. 查询拒绝的案件
 SELECT
     forceid AS '案件ID',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     flight_no AS '航班号',
     remark AS '审核备注',
     decision_reason AS '核赔意见',
@@ -73,7 +73,7 @@ ORDER BY audit_time DESC;
 -- 7. 查询需补件的案件
 SELECT
     forceid AS '案件ID',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     flight_no AS '航班号',
     supplementary_count AS '补件次数',
     supplementary_reason AS '补件原因',
@@ -89,7 +89,7 @@ ORDER BY created_at DESC;
 -- 8. 按航班号查询
 SELECT
     forceid AS '案件ID',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     flight_no AS '航班号',
     operating_carrier AS '承运人',
     dep_iata AS '出发',
@@ -145,7 +145,7 @@ SELECT
     forceid AS '案件ID',
     policy_no AS '保单号',
     insurer AS '保险公司',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     policy_effective_date AS '生效日期',
     policy_expiry_date AS '截止日期',
     insured_amount AS '保额',
@@ -167,26 +167,26 @@ GROUP BY insurer
 ORDER BY COUNT(*) DESC;
 
 -- ============================================
--- 五、被保险人信息查询
+-- 五、申请人信息查询
 -- ============================================
 
 -- 13. 按被保险人姓名查询
 SELECT
     forceid AS '案件ID',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     passenger_id_type AS '证件类型',
     passenger_id_number AS '证件号码',
     flight_no AS '航班号',
     audit_result AS '审核结果',
     payout_amount AS '赔付金额'
 FROM ai_review_result
-WHERE passenger_name IS NOT NULL AND passenger_name != ''
+WHERE applicant_name IS NOT NULL AND applicant_name != ''
 ORDER BY created_at DESC;
 
 -- 14. 按证件号码查询
 SELECT
     forceid AS '案件ID',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     passenger_id_number AS '证件号码',
     flight_no AS '航班号',
     audit_result AS '审核结果',
@@ -264,7 +264,7 @@ ORDER BY DATE_FORMAT(created_at, '%Y-%m') DESC;
 SELECT
     forceid AS '案件ID',
     claim_id AS '案件编号',
-    passenger_name AS '被保险人',
+    applicant_name AS '申请人',
     passenger_id_type AS '证件类型',
     passenger_id_number AS '证件号码',
     policy_no AS '保单号',

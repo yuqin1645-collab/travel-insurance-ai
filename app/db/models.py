@@ -8,7 +8,7 @@
 import json
 from datetime import datetime, date
 from typing import Optional, Dict, Any, List
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, fields
 from enum import Enum
 
 
@@ -126,15 +126,151 @@ class ClaimStatusRecord:
 
 
 @dataclass
+class FlightDelayData:
+    """航班延误专属数据（ai_flight_delay_data 子表）"""
+    id: Optional[int] = None
+    forceid: str = ""
+
+    # 航班基础信息
+    flight_no: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    dep_iata: Optional[str] = None
+    arr_iata: Optional[str] = None
+    dep_city: Optional[str] = None
+    arr_city: Optional[str] = None
+
+    # 原航班时间
+    planned_dep_time: Optional[datetime] = None
+    planned_arr_time: Optional[datetime] = None
+    actual_dep_time: Optional[datetime] = None
+    actual_arr_time: Optional[datetime] = None
+
+    # 实际乘坐航班（改签/替代）
+    alt_dep_time: Optional[datetime] = None
+    alt_arr_time: Optional[datetime] = None
+    alt_flight_no: Optional[str] = None
+    alt_dep_iata: Optional[str] = None
+    alt_arr_iata: Optional[str] = None
+
+    # 飞常准原航班独立字段
+    avi_status: Optional[str] = None
+    avi_planned_dep: Optional[datetime] = None
+    avi_planned_arr: Optional[datetime] = None
+    avi_actual_dep: Optional[datetime] = None
+    avi_actual_arr: Optional[datetime] = None
+
+    # 飞常准替代航班独立字段
+    avi_alt_flight_no: Optional[str] = None
+    avi_alt_planned_dep: Optional[datetime] = None
+    avi_alt_actual_dep: Optional[datetime] = None
+    avi_alt_actual_arr: Optional[datetime] = None
+
+    # 航班场景
+    flight_scenario: Optional[str] = None
+    rebooking_count: int = 0
+
+    # 联程汇总
+    is_connecting: Optional[bool] = None
+    total_segments: Optional[int] = None
+    origin_iata: Optional[str] = None
+    destination_iata: Optional[str] = None
+    missed_connection: Optional[bool] = None
+
+    # 延误计算追溯
+    delay_duration_minutes: Optional[int] = None
+    delay_reason: Optional[str] = None
+    delay_type: Optional[str] = None
+    delay_calc_from: Optional[str] = None
+    delay_calc_to: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'FlightDelayData':
+        datetime_fields = [
+            'planned_dep_time', 'planned_arr_time', 'actual_dep_time', 'actual_arr_time',
+            'alt_dep_time', 'alt_arr_time',
+            'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
+            'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
+        ]
+        for field_name in datetime_fields:
+            if field_name in data and data[field_name]:
+                if isinstance(data[field_name], str):
+                    try:
+                        data[field_name] = datetime.fromisoformat(data[field_name].replace('Z', '+00:00'))
+                    except ValueError:
+                        data[field_name] = None
+        known = {f.name for f in fields(cls)}
+        data = {k: v for k, v in data.items() if k in known}
+        return cls(**data)
+
+
+@dataclass
+class BaggageDelayData:
+    """行李延误专属数据（ai_baggage_delay_data 子表）"""
+    id: Optional[int] = None
+    forceid: str = ""
+
+    # 延误时长计算
+    first_flight_actual_arr_time: Optional[datetime] = None
+    baggage_receipt_time: Optional[datetime] = None
+    baggage_delay_hours: Optional[float] = None
+    baggage_delay_calc_basis: Optional[str] = None
+
+    # 赔付门槛与金额
+    delay_tier: Optional[str] = None
+    payout_tier_amount: Optional[float] = None
+    claim_amount: Optional[float] = None
+    final_payout_amount: Optional[float] = None
+    payout_calibration_reason: Optional[str] = None
+
+    # 证明材料
+    has_baggage_receipt_proof: Optional[str] = None
+    has_baggage_delay_proof: Optional[str] = None
+    has_baggage_tag: Optional[str] = None
+    pir_no: Optional[str] = None
+    has_pir_report: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'BaggageDelayData':
+        datetime_fields = ['first_flight_actual_arr_time', 'baggage_receipt_time']
+        for field_name in datetime_fields:
+            if field_name in data and data[field_name]:
+                if isinstance(data[field_name], str):
+                    try:
+                        data[field_name] = datetime.fromisoformat(data[field_name].replace('Z', '+00:00'))
+                    except ValueError:
+                        data[field_name] = None
+        known = {f.name for f in fields(cls)}
+        data = {k: v for k, v in data.items() if k in known}
+        return cls(**data)
+
+
+@dataclass
 class ReviewResult:
-    """审核结果记录 - 整合所有审核字段"""
+    """审核结果记录 - 主表公用字段"""
     # 基础信息
     id: Optional[int] = None
     forceid: str = ""
     claim_id: Optional[str] = None
+    claim_type: Optional[str] = None
+    benefit_name: Optional[str] = None
 
-    # 被保险人信息
-    passenger_name: Optional[str] = None
+    # 申请人/被保险人信息
+    applicant_name: Optional[str] = None
+    insured_name: Optional[str] = None
     passenger_id_type: Optional[str] = None
     passenger_id_number: Optional[str] = None
 
@@ -144,100 +280,28 @@ class ReviewResult:
     policy_effective_date: Optional[date] = None
     policy_expiry_date: Optional[date] = None
 
-    # 航班信息
-    flight_no: Optional[str] = None
-    operating_carrier: Optional[str] = None
-    dep_iata: Optional[str] = None
-    arr_iata: Optional[str] = None
-    dep_city: Optional[str] = None
-    arr_city: Optional[str] = None
-    dep_country: Optional[str] = None
-    arr_country: Optional[str] = None
-
-    # 航班时间（原航班）
-    planned_dep_time: Optional[datetime] = None   # 原航班首次购票计划起飞（schedule_local）
-    actual_dep_time: Optional[datetime] = None    # 原航班飞常准实际起飞
-    planned_arr_time: Optional[datetime] = None   # 原航班首次购票计划到达
-    actual_arr_time: Optional[datetime] = None    # 原航班飞常准实际到达
-
-    # 实际乘坐航班时间（改签/替代）
-    alt_dep_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际起飞
-    alt_arr_time: Optional[datetime] = None       # 被保险人最终乘坐航班实际到达
-
-    # 行李延误专属字段
-    baggage_receipt_time: Optional[datetime] = None   # 行李签收时间（延误终止点）
-    baggage_delay_hours: Optional[float] = None       # 行李延误小时数
-    has_baggage_delay_proof: Optional[str] = None     # 是否有行李延误证明 Y/N
-    has_baggage_receipt_proof: Optional[str] = None   # 是否有签收时间证明 Y/N
-    has_baggage_tag_proof: Optional[str] = None       # 是否有行李牌 Y/N
-    pir_no: Optional[str] = None                      # PIR不正常行李报告编号
-
-    # 航班场景
-    flight_scenario: Optional[str] = None        # direct/connecting/rebooking/multi_rebooking/cancelled_nofly
-    rebooking_count: Optional[int] = None        # 改签次数（0=无改签）
-
-    # 实际乘坐航班信息
-    alt_flight_no: Optional[str] = None          # 被保险人实际乘坐的改签航班号
-    alt_dep_iata: Optional[str] = None           # 实际乘坐航班出发机场
-    alt_arr_iata: Optional[str] = None           # 实际乘坐航班到达机场
-
-    # 联程信息（汇总标量，详情见 ai_review_segments 子表）
-    # flight_no/dep_iata/arr_iata 始终记录"触发延误的那段"
-    is_connecting: Optional[bool] = None         # 是否联程（True=联程，False=直飞）
-    total_segments: Optional[int] = None         # 联程总段数（直飞=1）
-    origin_iata: Optional[str] = None            # 整个行程出发机场（联程首段起飞地）
-    destination_iata: Optional[str] = None       # 整个行程最终目的地（联程末段落地）
-    missed_connection: Optional[bool] = None     # 是否因前段延误导致误机（联程接驳失误）
-
-    # 飞常准查原航班
-    avi_status: Optional[str] = None             # 飞常准原航班状态（正常/延误/取消）
-    avi_planned_dep: Optional[datetime] = None   # 飞常准原航班计划起飞
-    avi_planned_arr: Optional[datetime] = None   # 飞常准原航班计划到达
-    avi_actual_dep: Optional[datetime] = None    # 飞常准原航班实际起飞
-    avi_actual_arr: Optional[datetime] = None    # 飞常准原航班实际到达
-
-    # 飞常准查替代航班
-    avi_alt_flight_no: Optional[str] = None      # 飞常准查到的替代航班号
-    avi_alt_planned_dep: Optional[datetime] = None
-    avi_alt_actual_dep: Optional[datetime] = None
-    avi_alt_actual_arr: Optional[datetime] = None
-
-    # 延误计算追溯
-    delay_calc_from: Optional[str] = None        # 延误起算时间点来源字段名
-    delay_calc_to: Optional[str] = None          # 延误终止时间点来源字段名
-
-    # 延误计算
-    delay_duration_minutes: Optional[int] = None
-    delay_reason: Optional[str] = None
-    delay_type: Optional[str] = None
-
     # 审核结果
     audit_result: Optional[str] = None
     audit_status: str = "pending"
     confidence_score: Optional[float] = None
     audit_time: Optional[datetime] = None
     auditor: str = "AI系统"
+    final_decision: Optional[str] = None
 
     # 赔付信息
     payout_amount: Optional[float] = None
     payout_currency: str = "CNY"
-    payout_basis: Optional[str] = None
     insured_amount: Optional[float] = None
     remaining_coverage: Optional[float] = None
 
     # 补件信息
     is_additional: str = "N"
-    supplementary_count: int = 0
     supplementary_reason: Optional[str] = None
-    supplementary_deadline: Optional[datetime] = None
 
-    # 审核结论
+    # 审核备注
     remark: Optional[str] = None
     key_conclusions: Optional[str] = None
-    final_decision: Optional[str] = None
     decision_reason: Optional[str] = None
-    review_status: Optional[str] = None
-    benefit_name: Optional[str] = None
 
     # 逻辑校验
     identity_match: Optional[str] = None
@@ -248,13 +312,18 @@ class ReviewResult:
     # 前端推送状态
     forwarded_to_frontend: bool = False
     forwarded_at: Optional[datetime] = None
-    frontend_response: Optional[str] = None
+    manual_status: Optional[str] = None
+    manual_conclusion: Optional[str] = None
+
+    # AI追溯
+    ai_model_version: Optional[str] = None
+    pipeline_version: Optional[str] = None
+    rule_ids_hit: Optional[str] = None
+    audit_reason_tags: Optional[str] = None
+    human_override: Optional[str] = None
 
     # 原始数据
     raw_result: Optional[str] = None
-
-    # 元数据
-    metadata: Optional[Dict[str, Any]] = None
 
     # 时间戳
     created_at: datetime = field(default_factory=datetime.now)
@@ -263,41 +332,19 @@ class ReviewResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         data = asdict(self)
-        # 处理datetime字段
-        datetime_fields = [
-            'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time', 'baggage_receipt_time',
-            'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
-            'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
-            'audit_time', 'supplementary_deadline',
-            'forwarded_at', 'created_at', 'updated_at'
-        ]
         for key, value in data.items():
             if isinstance(value, datetime):
                 data[key] = value.isoformat()
             elif isinstance(value, date):
                 data[key] = value.isoformat()
-
-        # 处理JSON字段
-        if data.get('metadata') is not None:
-            data['metadata'] = json.dumps(data['metadata'], ensure_ascii=False) if isinstance(data['metadata'], dict) else data['metadata']
-
-        # 排除表中不存在的字段
-        data.pop('review_status', None)
-
         return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ReviewResult':
         """从字典创建"""
-        # 处理datetime字段
         datetime_fields = [
-            'planned_dep_time', 'actual_dep_time', 'planned_arr_time', 'actual_arr_time',
-            'alt_dep_time', 'alt_arr_time', 'baggage_receipt_time',
-            'avi_planned_dep', 'avi_planned_arr', 'avi_actual_dep', 'avi_actual_arr',
-            'avi_alt_planned_dep', 'avi_alt_actual_dep', 'avi_alt_actual_arr',
-            'audit_time', 'supplementary_deadline',
-            'forwarded_at', 'created_at', 'updated_at'
+            'audit_time', 'forwarded_at', 'created_at', 'updated_at',
+            'policy_effective_date', 'policy_expiry_date',
         ]
         for field_name in datetime_fields:
             if field_name in data and data[field_name]:
@@ -317,19 +364,8 @@ class ReviewResult:
                     except ValueError:
                         data[field_name] = None
 
-        # 处理JSON字段
-        if 'metadata' in data and data['metadata']:
-            if isinstance(data['metadata'], str):
-                try:
-                    data['metadata'] = json.loads(data['metadata'])
-                except json.JSONDecodeError:
-                    data['metadata'] = {}
-
-        # 过滤掉dataclass不认识的字段
-        import dataclasses
-        known = {f.name for f in dataclasses.fields(cls)}
+        known = {f.name for f in fields(cls)}
         data = {k: v for k, v in data.items() if k in known}
-
         return cls(**data)
 
 
@@ -576,8 +612,7 @@ class ReviewSegment:
                         data[field_name] = datetime.fromisoformat(data[field_name].replace('Z', '+00:00'))
                     except ValueError:
                         data[field_name] = None
-        import dataclasses
-        known = {f.name for f in dataclasses.fields(cls)}
+        known = {f.name for f in fields(cls)}
         data = {k: v for k, v in data.items() if k in known}
         return cls(**data)
 
@@ -585,6 +620,8 @@ class ReviewSegment:
 # 数据库表名常量
 TABLE_CLAIM_STATUS = "ai_claim_status"
 TABLE_REVIEW_RESULT = "ai_review_result"
+TABLE_FLIGHT_DELAY_DATA = "ai_flight_delay_data"
+TABLE_BAGGAGE_DELAY_DATA = "ai_baggage_delay_data"
 TABLE_REVIEW_SEGMENTS = "ai_review_segments"
 TABLE_SUPPLEMENTARY_RECORDS = "ai_supplementary_records"
 TABLE_SCHEDULER_LOGS = "ai_scheduler_logs"

@@ -16,7 +16,6 @@ from __future__ import annotations
   ↓ Stage 5: compensation — 赔付计算（内含最终 approval 构建）
 """
 
-import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -111,8 +110,8 @@ async def review_baggage_damage_async(
         LOGGER.error(
             f"[{index}/{total}] exception: {err}",
             extra=log_extra(forceid=forceid, stage="exception", attempt=0),
+            exc_info=True,
         )
-        traceback.print_exc()
         return build_exception_result(
             forceid=forceid,
             err=err,

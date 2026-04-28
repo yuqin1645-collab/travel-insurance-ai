@@ -24,7 +24,7 @@ except ImportError:
     print("请先安装: pip install requests")
     sys.exit(1)
 
-CONCLUSION_API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Conclusion"
+CONCLUSION_API_URL = os.getenv("CONCLUSION_API_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Conclusion")
 CLAIMS_DATA_DIR = ROOT / "claims_data"
 
 

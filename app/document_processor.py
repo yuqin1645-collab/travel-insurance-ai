@@ -7,10 +7,13 @@
 """
 
 import base64
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 import json
 from app.document_cache import document_cache
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DocumentProcessor:
@@ -37,7 +40,7 @@ class DocumentProcessor:
         # 先检查缓存
         cached_result = document_cache.get(file_path)
         if cached_result:
-            print(f"  使用缓存: {file_path.name}")
+            LOGGER.debug(f"使用缓存: {file_path.name}")
             return cached_result
         
         suffix = file_path.suffix.lower()
@@ -209,7 +212,7 @@ class DocumentProcessor:
         
         for i, file_path in enumerate(file_paths, 1):
             if show_progress:
-                print(f"  处理文件: {i}/{total} - {file_path.name}")
+                LOGGER.debug(f"处理文件: {i}/{total} - {file_path.name}")
             
             results[file_path.name] = self.process_file(file_path)
         

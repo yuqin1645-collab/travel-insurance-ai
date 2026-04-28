@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -41,7 +42,6 @@ def _extract_dynamic_keywords(claim_info: Dict) -> List[str]:
     ]:
         if field:
             # 提取所有字母+数字混合的航班号片段（忽略纯数字）
-            import re
             for m in re.finditer(r"[A-Za-z]{2,}\d+", str(field)):
                 kw = m.group().upper()
                 # 添加完整航班号和前4位（前4位已有区分度）
@@ -55,7 +55,6 @@ def _extract_dynamic_keywords(claim_info: Dict) -> List[str]:
                     keywords.append(kw)
 
     # 机场码（出发/到达）：从 Description 或 claim_info 其他字段中提取三字码
-    import re
     for m in re.finditer(r"\b[A-Z]{3}\b", str(claim_info.get("Description_of_Accident", ""))):
         keywords.append(m.group())
 
@@ -123,6 +122,7 @@ def prepare_attachments_for_claim(
     claim_folder: Path,
     out_root: Path | None = None,
     claim_info: Dict | None = None,
+    max_attachments: int | None = None,
 ) -> Tuple[List[VisionAttachment], Dict]:
     """
     将案件目录下的材料文件预处理为附件列表。
@@ -147,15 +147,42 @@ def prepare_attachments_for_claim(
         for f in claim_folder.iterdir()
         if f.is_file()
         and f.name != "claim_info.json"
-        and f.suffix.lower() in [".jpg", ".jpeg", ".png", ".pdf"]
+        and f.suffix.lower() in [".jpg", ".jpeg", ".png", ".pdf", ".bin"]
     ]
 
     attachments: List[VisionAttachment] = []
     manifest_items: List[Dict] = []
 
+    # 魔数兜底：.bin 文件按文件头判断真实类型
+    MAGIC_BYTES = {
+        b"\xff\xd8\xff": "jpeg",
+        b"\x89PNG\r\n\x1a\n": "png",
+        b"%PDF": "pdf",
+    }
+
+    def _detect_file_type(path: Path) -> str:
+        """按扩展名或魔数检测文件类型"""
+        ext = path.suffix.lower()
+        if ext in (".jpg", ".jpeg"):
+            return "jpeg"
+        if ext == ".png":
+            return "png"
+        if ext == ".pdf":
+            return "pdf"
+        if ext == ".bin":
+            try:
+                with open(path, "rb") as fh:
+                    header = fh.read(16)
+                for magic, ftype in MAGIC_BYTES.items():
+                    if header[:len(magic)] == magic:
+                        return ftype
+            except Exception:
+                pass
+        return "unknown"
+
     for f in sorted(material_files, key=lambda p: p.name):
-        suf = f.suffix.lower()
-        if suf in [".jpg", ".jpeg", ".png"]:
+        file_type = _detect_file_type(f)
+        if file_type in ("jpeg", "png"):
             dst = out_dir / f"{f.stem}_q.jpg"
             try:
                 _to_jpeg_resized(f, dst)
@@ -165,7 +192,7 @@ def prepare_attachments_for_claim(
                 )
             except Exception as e:
                 manifest_items.append({"source": f.name, "attachments": [], "type": "image", "error": str(e)})
-        elif suf == ".pdf":
+        elif file_type == "pdf":
             pages_dir = out_dir / f"{f.stem}__pdf_pages"
             try:
                 page_imgs = _pdf_pages_to_jpegs(f, pages_dir, config.VISION_PDF_MAX_PAGES)
@@ -178,7 +205,10 @@ def prepare_attachments_for_claim(
                 manifest_items.append({"source": f.name, "attachments": [], "type": "pdf", "error": str(e)})
 
     # 如果附件过多，做一次"限额+优先级"筛选，确保关键材料更易被模型关注
-    max_n = int(getattr(config, "VISION_MAX_ATTACHMENTS", 10) or 10)
+    if max_attachments is None:
+        max_n = int(getattr(config, "VISION_MAX_ATTACHMENTS", 10) or 10)
+    else:
+        max_n = int(max_attachments)
     if max_n > 0 and len(attachments) > max_n:
         # 固定基础关键词
         _BASE_KEYWORDS = (
@@ -227,7 +257,7 @@ def prepare_attachments_for_claim(
         "pdf_max_pages": int(config.VISION_PDF_MAX_PAGES),
         "image_max_edge": int(config.VISION_IMAGE_MAX_EDGE),
         "jpeg_quality": int(config.VISION_IMAGE_JPEG_QUALITY),
-        "max_attachments": int(getattr(config, "VISION_MAX_ATTACHMENTS", 10) or 10),
+        "max_attachments": max_n if max_n > 0 else len(attachments),
         "items": manifest_items,
     }
 

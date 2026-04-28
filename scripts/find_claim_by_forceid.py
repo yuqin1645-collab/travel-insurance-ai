@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import sys
+import requests
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -32,7 +33,6 @@ API_URL = os.getenv("CLAIMS_API_URL", "https://nanyan.sites.sfcrmapps.cn/service
 
 def fetch_by_forceid(forceid: str, api_url: str = API_URL) -> Dict:
     """从 API 按 forceid 拉取单个案件数据，返回 claim dict"""
-    import requests
     resp = requests.post(api_url, json={}, timeout=30)
     resp.raise_for_status()
     raw = resp.json()

@@ -68,10 +68,10 @@
 | claim_id | VARCHAR(64) | NULL | 上游案件ID |
 | benefit_name | VARCHAR(64) | NULL | 险种名称（如"航班延误"、"行李延误"） |
 
-#### 被保险人信息
+#### 申请人信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
-| passenger_name | VARCHAR(128) | NULL | 被保险人姓名（来自材料/审核结果） |
+| applicant_name | VARCHAR(128) | NULL | 申请人姓名（来自claim_info.json的Applicant_Name） |
 | insured_name | VARCHAR(128) | NULL | 被保险人姓名（来自 claim_info） |
 | passenger_id_type | VARCHAR(32) | NULL | 证件类型 |
 | passenger_id_number | VARCHAR(64) | NULL | 证件号码 |
@@ -239,7 +239,7 @@
 - KEY idx_audit_result (audit_result)
 - KEY idx_audit_status (audit_status)
 - KEY idx_is_additional (is_additional)
-- KEY idx_passenger_name (passenger_name)
+- KEY idx_applicant_name (applicant_name)
 - KEY idx_flight_no (flight_no)
 - KEY idx_policy_no (policy_no)
 - KEY idx_insurer (insurer)

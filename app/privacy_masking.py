@@ -16,7 +16,7 @@ class PrivacyMasker:
     MASKING_RULES = {
         'id_number': {
             'pattern': r'(\d{2})\d{14}(\d{2})',
-            'replacement': r'\1****\2****',
+            'replacement': r'\1**************\2',
             'description': '身份证号'
         },
         'phone': {

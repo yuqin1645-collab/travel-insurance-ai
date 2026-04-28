@@ -4,6 +4,7 @@
 Prompt加载和管理模块
 """
 
+import re
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 from app.config import config
@@ -52,8 +53,6 @@ class PromptLoader:
 
     def _resolve_includes(self, content: str) -> str:
         """将 {{include:block_name}} 替换为 _shared/ 目录下对应文件的内容"""
-        import re
-
         def replacer(m: "re.Match") -> str:
             block_name = m.group(1).strip()
             shared_file = self.prompts_dir / "_shared" / f"{block_name}.txt"
@@ -65,7 +64,6 @@ class PromptLoader:
     
     def format(self, prompt_name: str, namespace: str = "", **kwargs) -> str:
         """加载并格式化prompt，只替换已知 kwargs 占位符，其余保持原样"""
-        import re
         template = self.load(prompt_name, namespace=namespace)
         # 先把 {{ }} 还原为字面量 { }，再只替换已知 kwargs
         # 避免 JSON 示例中的 {key: value} / 多行 { 触发 str.format() 的 KeyError

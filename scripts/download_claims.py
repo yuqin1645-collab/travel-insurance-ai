@@ -6,15 +6,21 @@
 """
 
 import os
+import re
 import json
 import time
 import logging
 import requests
 import aiohttp
 import asyncio
+import sys
+from urllib.parse import urlparse, parse_qs, unquote
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
+
+# 确保项目根目录在 sys.path（脚本位于 scripts/ 子目录）
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # 异步模式下需要全局 session 引用
 _async_session: Optional[aiohttp.ClientSession] = None
@@ -154,7 +160,6 @@ class ClaimDownloader:
         返回 True 表示成功，False 表示失败。
         重试策略: 最多 DOWNLOAD_MAX_RETRIES 次，间隔 DOWNLOAD_RETRY_DELAY 秒。
         """
-        import time as _time
         for attempt in range(1, DOWNLOAD_MAX_RETRIES + 1):
             try:
                 resp = requests.get(url, timeout=DOWNLOAD_TIMEOUT, stream=True)
@@ -175,14 +180,14 @@ class ClaimDownloader:
             except requests.RequestException as e:
                 if attempt < DOWNLOAD_MAX_RETRIES:
                     LOGGER.warning(f"[重试] {dest_path.name} 第{attempt}次失败，{DOWNLOAD_RETRY_DELAY}s后重试: {e}")
-                    _time.sleep(DOWNLOAD_RETRY_DELAY)
+                    time.sleep(DOWNLOAD_RETRY_DELAY)
                 else:
                     LOGGER.error(f"[失败] 下载 {url} -> {e}")
 
             except IOError as e:
                 if attempt < DOWNLOAD_MAX_RETRIES:
                     LOGGER.warning(f"[重试] 写入 {dest_path.name} 第{attempt}次失败: {e}")
-                    _time.sleep(DOWNLOAD_RETRY_DELAY)
+                    time.sleep(DOWNLOAD_RETRY_DELAY)
                 else:
                     LOGGER.error(f"[失败] 写入文件 {dest_path} -> {e}")
 
@@ -420,7 +425,6 @@ class ClaimDownloader:
             file_info.get("url") or ""
         ).strip()
         if url:
-            from urllib.parse import urlparse, unquote
             parsed = urlparse(url)
             path = parsed.path.rstrip("/")
             if path:
@@ -454,7 +458,6 @@ class ClaimDownloader:
 
         url = self._get_file_url(file_info)
         if url:
-            from urllib.parse import urlparse, parse_qs, unquote
             parsed = urlparse(url)
 
             # 2. URL 路径末段
@@ -929,7 +932,6 @@ class AsyncClaimDownloader:
             file_info.get("url") or ""
         ).strip()
         if url:
-            from urllib.parse import urlparse, unquote
             parsed = urlparse(url)
             path = parsed.path.rstrip("/")
             if path:
@@ -956,7 +958,6 @@ class AsyncClaimDownloader:
 
         url = AsyncClaimDownloader._get_file_url(file_info)
         if url:
-            from urllib.parse import urlparse, parse_qs, unquote
             parsed = urlparse(url)
             path = parsed.path.rstrip("/")
             if path:
@@ -1009,7 +1010,6 @@ class AsyncClaimDownloader:
 
 def _sanitize_filename(name: str) -> str:
     """替换 Windows 文件名中的非法字符（\\ / : * ? " < > |）为下划线。"""
-    import re
     return re.sub(r'[\\/:*?"<>|]', '_', name)
 
 
@@ -1036,9 +1036,6 @@ def _parse_date_dl(val: str):
 def _save_claim_info_to_db(claim_info: dict):
     """将 claim_info.json 关键字段同步写入 ai_claim_info_raw 表。
     download_claims.py 是同步脚本，用 asyncio.run 包裹异步 upsert。"""
-    import asyncio
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from app.db.database import DatabaseConnection, ClaimInfoRawDAO
     from app.db.models import ClaimInfoRaw
 
@@ -1116,7 +1113,7 @@ if __name__ == "__main__":
         datefmt="%H:%M:%S",
     )
     # 兼容性：直接运行脚本时使用同步版本
-    API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim"
+    API_URL = os.getenv("CLAIMS_API_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim")
     REQUEST_PAYLOAD = {}
 
     downloader = ClaimDownloader(

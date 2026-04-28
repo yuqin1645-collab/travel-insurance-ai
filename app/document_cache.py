@@ -7,10 +7,13 @@
 
 import hashlib
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 from app.config import config
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DocumentCache:
@@ -32,7 +35,7 @@ class DocumentCache:
                 with open(self.index_file, 'r', encoding='utf-8') as f:
                     self.index = json.load(f)
             except Exception as e:
-                print(f"警告: 加载文档缓存索引失败: {e}")
+                LOGGER.warning(f"加载文档缓存索引失败: {e}")
                 self.index = {}
         else:
             self.index = {}
@@ -42,7 +45,7 @@ class DocumentCache:
             with open(self.index_file, 'w', encoding='utf-8') as f:
                 json.dump(self.index, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"警告: 保存文档缓存索引失败: {e}")
+            LOGGER.warning(f"保存文档缓存索引失败: {e}")
     
     def _calculate_file_hash(self, file_path: Path) -> str:
         md5_hash = hashlib.md5()
@@ -80,18 +83,18 @@ class DocumentCache:
                 cache_data = json.load(f)
             
             if self._is_expired(cache_data.get('cache_time', '')):
-                print(f"  文档缓存已过期: {file_path.name}")
+                LOGGER.debug(f"文档缓存已过期: {file_path.name}")
                 cache_path.unlink()
                 if file_hash in self.index:
                     del self.index[file_hash]
                     self._save_index()
                 return None
             
-            print(f"  使用文档缓存: {file_path.name}")
+            LOGGER.debug(f"使用文档缓存: {file_path.name}")
             return cache_data.get('result')
             
         except Exception as e:
-            print(f"  读取文档缓存失败: {e}")
+            LOGGER.warning(f"读取文档缓存失败: {e}")
             return None
     
     def set(self, file_path: Path, result: Dict):
@@ -120,7 +123,7 @@ class DocumentCache:
             self._save_index()
             
         except Exception as e:
-            print(f"  保存文档缓存失败: {e}")
+            LOGGER.warning(f"保存文档缓存失败: {e}")
     
     def clear(self):
         if not self.enabled:
@@ -132,9 +135,9 @@ class DocumentCache:
                     cache_file.unlink()
             self.index = {}
             self._save_index()
-            print("文档缓存已清除")
+            LOGGER.info("文档缓存已清除")
         except Exception as e:
-            print(f"清除文档缓存失败: {e}")
+            LOGGER.warning(f"清除文档缓存失败: {e}")
     
     def clean_expired(self):
         if not self.enabled:
@@ -152,9 +155,9 @@ class DocumentCache:
             
             if expired_count > 0:
                 self._save_index()
-                print(f"清理了 {expired_count} 个过期文档缓存")
+                LOGGER.info(f"清理了 {expired_count} 个过期文档缓存")
         except Exception as e:
-            print(f"清理过期文档缓存失败: {e}")
+            LOGGER.warning(f"清理过期文档缓存失败: {e}")
     
     def get_stats(self) -> Dict:
         if not self.enabled:

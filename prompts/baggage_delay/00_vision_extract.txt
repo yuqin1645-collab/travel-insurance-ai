@@ -34,7 +34,7 @@
   "airline_baggage_record_pieces": "行李记录上的行李件数（数字）/unknown",
   "accident_date_in_materials": "YYYY-MM-DD/unknown（从材料中提取的真实事故发生日期，见下方提取规则）",
   "flight_actual_arrival_time": "YYYY-MM-DD HH:MM/unknown（首次乘坐航班的实际到达时间，行李延误时长起算点）",
-  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点）",
+  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点。若无明确签收时间，但材料中航司邮件/通知提到了行李搭乘的转运航班及预计到达时间，可将该转运航班的预计到达时间作为临时签收时间填入，并在 notes 中说明来源）",
   "receipt_times": ["YYYY-MM-DD HH:MM（若识别到多份签收证明，列出全部签收时间，最晚者写入 baggage_receipt_time）"],
   "delay_hours": "number/unknown（根据 baggage_receipt_time - flight_actual_arrival_time 计算，结果保留1位小数；信息不足时输出 unknown）",
   "has_id_proof": "true/false/unknown（是否存在被保险人身份证）",

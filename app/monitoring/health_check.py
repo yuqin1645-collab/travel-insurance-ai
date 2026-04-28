@@ -6,19 +6,17 @@
 """
 
 import os
-import sys
+import shutil
+import asyncio
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass
 
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 from app.config import config
 from app.db.database import get_db_connection
+from app.db.models import TaskStatus
 
 LOGGER = logging.getLogger(__name__)
 
@@ -148,8 +146,6 @@ class HealthChecker:
     async def _check_disk_space(self) -> HealthCheck:
         """检查磁盘空间"""
         try:
-            import shutil
-
             # 检查项目目录所在磁盘
             usage = shutil.disk_usage(project_root)
 
@@ -256,8 +252,6 @@ class HealthChecker:
     async def _check_recent_tasks(self) -> HealthCheck:
         """检查最近任务执行情况"""
         try:
-            from app.db.models import TaskStatus
-
             # 获取最近的任务日志
             logs = await self.db.scheduler_log_dao.get_recent_logs(limit=100)
 
@@ -350,7 +344,6 @@ async def run_health_check():
 
 
 if __name__ == '__main__':
-    import asyncio
 
     async def test():
         result = await run_health_check()

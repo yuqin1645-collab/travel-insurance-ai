@@ -1,0 +1,717 @@
+================================================================================
+行李延误72件重跑分析报告
+================================================================================
+
+------------------------------------------------------------
+【1】72件案件 audit_result 分布
+------------------------------------------------------------
+  需补件: 48 件 (66.7%)
+  通过: 22 件 (30.6%)
+  拒绝: 2 件 (2.8%)
+  合计: 72 件
+
+------------------------------------------------------------
+【2】auto_corrected 统计
+------------------------------------------------------------
+  auto_corrected=True:  32 件
+  auto_corrected=False/无: 40 件
+
+------------------------------------------------------------
+【3】auto_corrected=True 案件的 audit_result 分布
+------------------------------------------------------------
+  需补件: 23 件 (71.9%)
+  通过: 9 件 (28.1%)
+
+------------------------------------------------------------
+【4】auto_corrected=True 但仍需补件/拒赔的案件（按补件原因分组）
+------------------------------------------------------------
+  共 23 件
+
+  --- 补件原因 #1 (9 件) ---
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+
+    forceid: a0nC800000IdwOPIAZ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000ICHXNIA5
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: True
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000IBWjlIAH
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000Ib5ZTIAZ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: True
+      has_exit_entry_record: True
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000I9eOxIAJ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000I9eOuIAJ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000I7iQHIAZ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: true
+      has_airline_baggage_record: false
+      has_id_proof: true
+      has_passport: false
+      has_exit_entry_record: false
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: true
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000HqpJBIAZ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000JZU0NIAX
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: unknown
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: []
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+
+  --- 补件原因 #2 (6 件) ---
+  Remark: 需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+    forceid: a0nC800000IdCJtIAN
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 27.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000IBkDFIA1
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 120.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000IBbl3IAD
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 61.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000I9eP2IAJ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 16.2
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000I9eOzIAJ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: true
+      has_airline_baggage_record: false
+      has_id_proof: true
+      has_passport: false
+      has_exit_entry_record: false
+      delay_hours: 26.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: true
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000HJIPHIA5
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 18.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+
+  --- 补件原因 #3 (3 件) ---
+  Remark: 需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）
+
+    forceid: a0nC800000IC8AjIAL
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 31.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['官方航班数据（含完整年-月-日的原航班计划起飞日期）']
+      auto_corrected(from DebugInfo): ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000IBjaXIAT
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 74.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: False
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: True
+    【其他】
+      missing_materials: ['官方航班数据（含完整年-月-日的原航班计划起飞日期）']
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+    forceid: a0nC800000HzYscIAF
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: true
+      has_baggage_receipt_time_proof: true
+      has_boarding_or_ticket: true
+      has_airline_baggage_record: false
+      has_id_proof: true
+      has_passport: false
+      has_exit_entry_record: true
+      delay_hours: 22.2
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: true
+      has_baggage_receipt_time_proof: true
+      has_boarding_or_ticket: true
+    【其他】
+      missing_materials: ['官方航班数据（含完整年-月-日的原航班计划起飞日期）']
+      auto_corrected(from DebugInfo): ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+
+  --- 补件原因 #4 (2 件) ---
+  Remark: 需补件：交通票据（机票/登机牌/行程单）
+
+    forceid: a0nC800000IAGVlIAP
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正', 'has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: False
+      has_airline_baggage_record: False
+      has_id_proof: True
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 20.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: False
+    【其他】
+      missing_materials: ['交通票据（机票/登机牌/行程单）']
+      auto_corrected(from DebugInfo): ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正', 'has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+    forceid: a0nC800000L1SxSIAV
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: False
+      has_airline_baggage_record: False
+      has_id_proof: False
+      has_passport: False
+      has_exit_entry_record: False
+      delay_hours: 38.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: False
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: False
+      has_boarding_or_ticket: False
+    【其他】
+      missing_materials: ['交通票据（机票/登机牌/行程单）']
+      auto_corrected(from DebugInfo): ['has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正']
+
+
+  --- 补件原因 #5 (1 件) ---
+  Remark: 需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；护照照片页、签证页、出入境盖章页；被保险人身份证正反面或护照
+
+    forceid: a0nC800000ICEBJIA5
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: true
+      has_airline_baggage_record: false
+      has_id_proof: false
+      has_passport: false
+      has_exit_entry_record: false
+      delay_hours: 6.5
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: true
+    【其他】
+      missing_materials: ['托运行李牌照片（含姓名、航班信息、行李牌号码）', '护照照片页、签证页、出入境盖章页', '被保险人身份证正反面或护照']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+
+  --- 补件原因 #6 (1 件) ---
+  Remark: 需补件：flight_actual_arrival_time；flight_no
+
+    forceid: a0nC800000I7iQPIAZ
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正', 'has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: True
+      has_baggage_delay_proof: True
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: true
+      has_airline_baggage_record: false
+      has_id_proof: true
+      has_passport: false
+      has_exit_entry_record: false
+      delay_hours: 144.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: true
+    【其他】
+      missing_materials: ['flight_actual_arrival_time', 'flight_no']
+      auto_corrected(from DebugInfo): ['has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正', 'has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正', 'has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+
+  --- 补件原因 #7 (1 件) ---
+  Remark: 需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+    forceid: a0nC800000IAGIvIAP
+    audit_result: 需补件
+    auto_corrected 内容: ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+    【ai_parsed 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: True
+      has_boarding_or_ticket: false
+      has_airline_baggage_record: false
+      has_id_proof: true
+      has_passport: false
+      has_exit_entry_record: false
+      delay_hours: 24.0
+    【vision_extract 材料字段】
+      has_baggage_tag_proof: false
+      has_baggage_delay_proof: false
+      has_baggage_receipt_time_proof: false
+      has_boarding_or_ticket: false
+    【其他】
+      missing_materials: ['交通票据（机票/登机牌/行程单）', '托运行李牌照片（含姓名、航班信息、行李牌号码）']
+      auto_corrected(from DebugInfo): ['has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正']
+
+
+------------------------------------------------------------
+【5】auto_corrected=False/无 案件的 audit_result 分布
+------------------------------------------------------------
+  需补件: 25 件 (62.5%)
+  通过: 13 件 (32.5%)
+  拒绝: 2 件 (5.0%)
+
+------------------------------------------------------------
+【6】auto_corrected=True 但补件案件的 KeyConclusions 明细
+------------------------------------------------------------
+  forceid: a0nC800000IdwOPIAZ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000IdCJtIAN
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000ICHXNIA5
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000ICEBJIA5
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）；护照照片页、签证页、出入境盖章页；被保险人身份证正反面或护照
+
+  forceid: a0nC800000IC8AjIAL
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    赔付门槛: 是 - 延误时长31.00小时，达到赔付门槛
+    AI审计补件: 需补件 - 官方航班数据（含完整年-月-日的原航班计划起飞日期）
+
+  forceid: a0nC800000IBWjlIAH
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000IBkDFIA1
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000IBjaXIAT
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    赔付门槛: 是 - 延误时长65.00小时，达到赔付门槛
+    AI审计补件: 需补件 - 官方航班数据（含完整年-月-日的原航班计划起飞日期）
+
+  forceid: a0nC800000IBbl3IAD
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000Ib5ZTIAZ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000IAGVlIAP
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 交通票据（机票/登机牌/行程单）
+
+  forceid: a0nC800000I9eP2IAJ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000I9eOzIAJ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000I9eOxIAJ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000I9eOuIAJ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000I7iQPIAZ
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    赔付门槛: 是 - 延误时长144.00小时，达到赔付门槛
+    AI审计补件: 需补件 - flight_actual_arrival_time；flight_no
+
+  forceid: a0nC800000I7iQHIAZ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000HzYscIAF
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    赔付门槛: 是 - 延误时长22.08小时，达到赔付门槛
+    AI审计补件: 需补件 - 官方航班数据（含完整年-月-日的原航班计划起飞日期）
+
+  forceid: a0nC800000HqpJBIAZ
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000HJIPHIA5
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000IAGIvIAP
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）
+
+  forceid: a0nC800000JZU0NIAX
+    官方航班数据: 是 - 已获取官方实际到达时间用于时长核算
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 是 - 视觉识别确认关键材料已提供
+    延误时长: 需补件 - 未识别到明确延误时长或签收时间信息
+
+  forceid: a0nC800000L1SxSIAV
+    官方航班数据: 需补件 - 官方航班数据未命中，需补充可核验航班号/日期/航段信息
+    事故类型: 是 - 未发现行李丢失单独触发，继续按行李延误审核
+    材料完整性: 需补件 - 交通票据（机票/登机牌/行程单）
+
+================================================================================
+【汇总摘要】
+================================================================================
+  总案件数: 72
+  通过: 22 (30.6%)
+  需补件: 48 (66.7%)
+  拒赔: 2 (2.8%)
+
+  auto_corrected=True 共 32 件
+    其中通过: 9 件
+    其中需补件/拒赔: 23 件
+  auto_corrected=False/无 共 40 件

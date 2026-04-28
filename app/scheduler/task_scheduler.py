@@ -5,17 +5,17 @@
 使用APScheduler实现定时执行
 """
 
+import shutil
 import os
 import sys
+import re
+import json
 import logging
 import asyncio
-from datetime import datetime
+import aiohttp
+from datetime import datetime, timedelta
 from typing import Optional
 from pathlib import Path
-
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -24,6 +24,9 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 
 from app.config import config
 from app.production.main_workflow import get_production_workflow, ProductionWorkflow
+from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
+from app.policy_terms_registry import POLICY_TERMS
+from app.output.frontend_pusher import push_to_frontend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -212,9 +215,6 @@ class TaskScheduler:
 
     async def _run_claims_cleanup(self):
         """清理7天前的案件文件"""
-        import shutil
-        from datetime import timedelta
-        from pathlib import Path
 
         try:
             LOGGER.info("\n" + "=" * 60)
@@ -226,7 +226,9 @@ class TaskScheduler:
             deleted = 0
             skipped = 0
 
-            for folder in claims_dir.rglob("claim_info.json"):
+            # 先收集到列表再遍历，避免 rglob 迭代期间删除文件夹导致迭代器异常
+            claim_info_files = list(claims_dir.rglob("claim_info.json"))
+            for folder in claim_info_files:
                 claim_folder = folder.parent
                 # 以文件夹最后修改时间判断
                 mtime = datetime.fromtimestamp(claim_folder.stat().st_mtime)
@@ -246,8 +248,6 @@ class TaskScheduler:
 
     async def _run_orphan_sweep_review(self):
         """执行孤儿案件全量兜底审核（每周日03:05）"""
-        import json as _json
-        import aiohttp as _aiohttp
 
         try:
             LOGGER.info("\n" + "=" * 60)
@@ -273,7 +273,7 @@ class TaskScheduler:
             orphan_forceids = []
             for info_file in config.CLAIMS_DATA_DIR.rglob("claim_info.json"):
                 try:
-                    data = _json.loads(info_file.read_text(encoding="utf-8"))
+                    data = json.loads(info_file.read_text(encoding="utf-8"))
                     forceid = str(data.get("forceid") or "").strip()
                     if not forceid or forceid in reviewed_ids:
                         skipped += 1
@@ -310,15 +310,11 @@ class TaskScheduler:
                 return
 
             # 对孤儿案件执行 AI 审核
-            from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
-            from app.policy_terms_registry import POLICY_TERMS
-            from app.output.frontend_pusher import push_to_frontend
-
             reviewer = AIClaimReviewer()
             terms_cache = {}
 
-            connector = _aiohttp.TCPConnector()
-            async with _aiohttp.ClientSession(connector=connector, trust_env=True) as session:
+            connector = aiohttp.TCPConnector()
+            async with aiohttp.ClientSession(connector=connector, trust_env=True) as session:
                 for i, (forceid, claim_type) in enumerate(orphan_forceids, 1):
                     LOGGER.info(f"  [{i}/{len(orphan_forceids)}] 兜底审核: {forceid}")
 
@@ -327,11 +323,11 @@ class TaskScheduler:
                         claim_folder = None
                         for info_file in config.CLAIMS_DATA_DIR.rglob("claim_info.json"):
                             try:
-                                d = _json.loads(info_file.read_text(encoding="utf-8"))
+                                d = json.loads(info_file.read_text(encoding="utf-8"))
                                 if str(d.get("forceid") or "") == forceid:
                                     claim_folder = info_file.parent
                                     break
-                            except:
+                            except (OSError, json.JSONDecodeError, ValueError):
                                 continue
 
                         if not claim_folder:
@@ -344,7 +340,7 @@ class TaskScheduler:
                             try:
                                 tf = POLICY_TERMS.resolve(claim_type)
                                 terms_cache[claim_type] = tf.read_text(encoding="utf-8")
-                            except:
+                            except OSError:
                                 terms_cache[claim_type] = ""
 
                         result = await review_claim_async(
@@ -360,9 +356,9 @@ class TaskScheduler:
                         output_dir = config.REVIEW_RESULTS_DIR / claim_type
                         output_dir.mkdir(parents=True, exist_ok=True)
                         rf = output_dir / f"{result['forceid']}_ai_review.json"
-                        rf.write_text(_json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+                        rf.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
                         LOGGER.info(f"  审核结果已保存: {rf.name}")
-                        LOGGER.info(f"  audit_result: {result.get('flight_delay_audit', {}).get('audit_result', '')}")
+                        LOGGER.info(f"  audit_result: {result.get('flight_delay_audit', result.get('baggage_delay_audit', {})).get('audit_result', '')}")
 
                         # 推送前端
                         push_result = await push_to_frontend(result, session)
@@ -540,6 +536,7 @@ async def main():
         # 优雅关闭：先停止调度器接受新任务，再等待任务完成，最后关闭数据库
         LOGGER.info("开始优雅关闭...")
         scheduler._is_shutting_down = True
+        scheduler.workflow._is_shutting_down = True  # 同步到 workflow，确保 run_hourly_check 短路
 
         # 暂停所有待执行任务（防止新任务启动）
         for job in scheduler.scheduler.get_jobs():

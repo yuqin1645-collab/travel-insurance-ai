@@ -94,54 +94,6 @@ def lookup_alerts_table(
     return results
 
 
-async def lookup_alerts(
-    airport_iata: Optional[str] = None,
-    region: Optional[str] = None,
-    check_date: Optional[date] = None,
-    session: Optional[aiohttp.ClientSession] = None,
-) -> Dict[str, Any]:
-    """
-    Skill D: weather.lookup_alerts
-
-    查询气象/公告预警信息，用于：
-    - 判断投保/订票时是否已存在可预见的延误因素
-    - 为"可预见因素时间线"提供证据
-
-    Args:
-        airport_iata: 机场三字码
-        region: 地区名称（如"华南"，与airport_iata二选一）
-        check_date: 检查日期（默认今天）
-        session: 复用的 aiohttp 会话（可选）
-
-    Returns:
-        {
-            "alerts": [...],  # 命中的预警列表
-            "has_alert": bool,
-            "suggestion": "check_timeline" | "none",
-            "note": str,
-            "source": str,
-        }
-    """
-    alerts = lookup_alerts_table(airport_iata=airport_iata, region=region, check_date=check_date)
-
-    if alerts:
-        return {
-            "alerts": alerts,
-            "has_alert": True,
-            "suggestion": "check_timeline",
-            "note": f"发现{len(alerts)}条气象/公告预警，建议核查投保/订票时间线",
-            "source": "local_table",
-        }
-
-    return {
-        "alerts": [],
-        "has_alert": False,
-        "suggestion": "none",
-        "note": "未在维护表中发现相关预警（初期阶段：气象预警自动化接入尚未完成，建议人工确认极端天气场景）",
-        "source": "local_table",
-    }
-
-
 def check_foreseeability(
     published_at: Optional[str],
     action_time: Optional[str],

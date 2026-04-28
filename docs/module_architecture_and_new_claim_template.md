@@ -64,7 +64,8 @@
 每个模块目录建议保持固定结构：
 
 - `module.py`：模块声明，提供 `claim_type`、`prompt_namespace`、`policy_terms_path`
-- `pipeline.py`：该险种自己的主审核流程
+- `pipeline.py`：该险种的纯编排层（只做 stage 串联和结果传递，不超过 500 行）
+- `stages/`：该险种的具体 stage 实现子目录（见下方"Pipeline 拆分规范"）
 - `extractors.py`：关键字段硬抽取
 - `materials.py`：材料门禁、缺件规则
 - `coverage.py`：保障责任规则
@@ -100,6 +101,110 @@
 
 - `modules/` 决定业务怎么审
 - `skills/` 提供审核时要用的专业能力
+
+## 2.5 Pipeline 拆分规范（强制）
+
+> **核心原则：`pipeline.py` 只做编排，不做实现。**
+
+`pipeline.py` 文件行数**不得超过 500 行**。超过时必须拆分出 `stages/` 子目录。
+
+### 为什么强制拆分
+
+之前的 `flight_delay/pipeline.py` 曾经膨胀到 3190 行，`baggage_delay/pipeline.py` 膨胀到 1149 行。原因：编排逻辑、纯工具函数、业务校验、计算函数全部混在一个文件中。后果：
+
+- 无法快速定位某个 stage 的代码在哪个位置
+- 修改一个校验函数需要滚动几百行才能找到
+- 新增 stage 时不知道该插在哪里
+- 新人无法通过目录结构理解模块内部流程
+
+### 拆分后的目录结构
+
+```
+app/modules/<claim_type>/
+├── module.py
+├── pipeline.py              ← 纯编排层（≤500行），只做 stage 串联
+└── stages/
+    ├── __init__.py          ← re-export 所有 stage 函数
+    ├── utils.py             ← 纯工具函数（_safe_float, _parse_date, _is_unknown 等）
+    ├── handlers.py          ← handler/check 函数（保单校验、材料门禁、一致性校验等）
+    ├── calculator.py        ← 计算函数（延误时长、赔付金额、档位等）
+    ├── validators.py        ← 校验函数（姓名匹配、同天投保、承保区域等）
+    ├── hardcheck.py         ← 硬校验集合（调用 validators + skills）
+    ├── payout.py            ← 赔付计算
+    ├── delay_calc.py        ← 延误时长计算
+    ├── postprocess.py       ← 后处理（AI 结果兜底修正）
+    └── duplicate.py         ← 重复理赔检测
+```
+
+**不是每个文件都必须存在**，根据险种实际需要裁剪。但 `utils.py`、`__init__.py` 是必选的。
+
+### `pipeline.py` 只允许做什么
+
+- imports（从 `stages/` 子模块导入）
+- 主入口函数（如 `review_xxx_async()`）
+- stage 串联逻辑（调用 stages 函数，组装返回值）
+- 日志输出
+
+### `pipeline.py` 不允许做什么
+
+- 定义纯工具函数（`_safe_float`、`_parse_date` 等）
+- 定义业务校验函数（`_check_xxx`）
+- 定义计算函数（`_compute_xxx`）
+- 定义结果组装函数（`_result`）——应放在 `stages/utils.py`
+
+### `stages/__init__.py` 模板
+
+```python
+"""
+<claim_type> stages — 统一 re-export。
+"""
+
+from .utils import (
+    _safe_float, _parse_date, _extract_delay_hours, _result,
+)
+from .handlers import (
+    _check_policy_validity, _material_gate, _check_exclusions,
+)
+from .calculator import (
+    _compute_delay_hours_by_rule, _compute_payout_with_rules,
+)
+
+__all__ = [
+    # utils
+    "_safe_float", "_parse_date", "_extract_delay_hours", "_result",
+    # handlers
+    "_check_policy_validity", "_material_gate", "_check_exclusions",
+    # calculator
+    "_compute_delay_hours_by_rule", "_compute_payout_with_rules",
+]
+```
+
+### 外部 import 兼容
+
+`pipeline.py` 瘦身后，必须保持外部 import 兼容。通过两种方式：
+
+1. 主入口函数（`review_xxx_async`）仍在 `pipeline.py` 中定义
+2. 需要外部访问的 stage 函数，在 `pipeline.py` 顶部 import 后自动可达：
+
+```python
+# pipeline.py 顶部
+from app.modules.<claim_type>.stages import _compute_xxx
+
+# 外部可访问
+from app.modules.<claim_type>.pipeline import review_xxx_async, _compute_xxx
+```
+
+### 新险种开发 Checklist
+
+开发新险种 pipeline 时，必须遵守：
+
+- [ ] `pipeline.py` 行数 ≤ 500 行
+- [ ] 纯工具函数放在 `stages/utils.py`
+- [ ] handler/check 函数放在 `stages/handlers.py`
+- [ ] 计算函数放在 `stages/calculator.py`
+- [ ] `stages/__init__.py` re-export 所有 stage 函数
+- [ ] `pipeline.py` 只做编排，不做实现
+- [ ] 外部 import 路径不变（`from app.modules.<claim_type>.pipeline import ...`）
 
 ## 3. Prompts 隔离规范
 
@@ -206,7 +311,12 @@ project/
 │  │  ├─ registry.py
 │  │  ├─ baggage_damage/
 │  │  │  ├─ module.py
-│  │  │  ├─ pipeline.py
+│  │  │  ├─ pipeline.py              ← 纯编排层（≤500行）
+│  │  │  ├─ stages/                  ← stage 实现子目录
+│  │  │  │  ├─ __init__.py
+│  │  │  │  ├─ utils.py
+│  │  │  │  ├─ handlers.py
+│  │  │  │  └─ calculator.py
 │  │  │  ├─ extractors.py
 │  │  │  ├─ materials.py
 │  │  │  ├─ accident.py
@@ -216,13 +326,17 @@ project/
 │  │  │  └─ final.py
 │  │  ├─ flight_delay/
 │  │  │  ├─ module.py
-│  │  │  ├─ pipeline.py
-│  │  │  ├─ parse.py
-│  │  │  ├─ hard_checks.py
-│  │  │  ├─ coverage.py
-│  │  │  ├─ compensation.py
-│  │  │  └─ final.py
-│  │  └─ ...更多 claim_type/
+│  │  │  ├─ pipeline.py              ← 纯编排层（≤500行）
+│  │  │  └─ stages/                  ← stage 实现子目录
+│  │  │     ├─ __init__.py
+│  │  │     ├─ utils.py
+│  │  │     ├─ hardcheck.py
+│  │  │     ├─ payout.py
+│  │  │     ├─ delay_calc.py
+│  │  │     ├─ postprocess.py
+│  │  │     ├─ duplicate.py
+│  │  │     └─ validators.py
+│  │  └─ ...更多 claim_type/（同上结构）
 │  ├─ skills/
 │  │  ├─ airport.py
 │  │  ├─ flight_lookup.py
@@ -253,15 +367,15 @@ project/
 
 1. 在 `app/modules/` 下新增 `trip_cancellation/`
 2. 新建 `module.py`，声明模块元信息
-3. 新建 `pipeline.py`，编排该险种的主流程
-4. 新建 `extractors.py`、`materials.py`、`coverage.py`、`compensation.py` 等业务文件
+3. 新建 `stages/` 子目录，包含 `__init__.py`、`utils.py`、`handlers.py`、`calculator.py`（见下方骨架）
+4. 新建 `pipeline.py`，纯编排层，从 `stages/` 导入并串联 stage（≤500 行）
 5. 在 `prompts/trip_cancellation/` 下放 Prompt 模板
 6. 在 `static/旅行险条款/trip_cancellation/` 下放条款文件
 7. 在 `app/modules/registry.py` 中注册新模块
 8. 在条款注册表中增加该险种的条款映射
 9. 在 `claim_ai_reviewer.py` 的案件识别逻辑中将其路由到该模块
 
-新增模块应该是“新增一个目录并注册”，而不是“修改旧模块内部逻辑”。
+新增模块应该是”新增一个目录并注册”，而不是”修改旧模块内部逻辑”。
 
 ## 7. 新增案件类型的标准代码骨架
 
@@ -295,7 +409,74 @@ class TripCancellationModule:
 MODULE: ClaimModule = TripCancellationModule()
 ```
 
-### 7.2 `pipeline.py`
+### 7.2 `stages/` 子目录
+
+每个新险种必须先建 `stages/` 子目录，再写 `pipeline.py`。推荐最小骨架：
+
+```
+app/modules/trip_cancellation/
+├── module.py
+├── pipeline.py
+└── stages/
+    ├── __init__.py          ← re-export
+    ├── utils.py             ← _safe_float, _parse_date, _is_unknown, _result 等
+    ├── handlers.py          ← _check_policy_validity, _material_gate, _check_exclusions 等
+    └── calculator.py        ← _compute_xxx, _compute_payout 等
+```
+
+**`stages/utils.py` 示例：**
+
+```python
+"""
+trip_cancellation stages — 纯工具函数。
+"""
+from __future__ import annotations
+from typing import Any, Optional
+
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        if value is None:
+            return None
+        s = str(value).strip().replace(",", "")
+        if not s:
+            return None
+        return float(s)
+    except Exception:
+        return None
+
+def _result(forceid: str, remark: str, is_additional: str,
+            conclusions: list, debug: dict) -> dict:
+    audit_result = "通过" if remark.startswith("审核通过") else \
+                   "需补件" if is_additional == "Y" or remark.startswith("需补件") else "拒绝"
+    return {
+        "forceid": forceid,
+        "claim_type": "trip_cancellation",
+        "Remark": remark,
+        "IsAdditional": is_additional,
+        "KeyConclusions": conclusions,
+        "trip_cancellation_audit": {"audit_result": audit_result, "explanation": remark},
+        "DebugInfo": debug,
+    }
+```
+
+**`stages/__init__.py` 示例：**
+
+```python
+"""
+trip_cancellation stages — 统一 re-export。
+"""
+from .utils import _safe_float, _result
+from .handlers import _check_policy_validity, _material_gate
+from .calculator import _compute_payout
+
+__all__ = [
+    "_safe_float", "_result",
+    "_check_policy_validity", "_material_gate",
+    "_compute_payout",
+]
+```
+
+### 7.3 `pipeline.py`（编排层）
 
 ```python
 from __future__ import annotations
@@ -307,7 +488,18 @@ import aiohttp
 
 from app.engine.workflow import StageRunner
 from app.engine.stage_fallbacks import build_stage_error_return
+from app.engine.material_extractor import ExtractionStrategy, MaterialExtractor
 from app.logging_utils import LOGGER, log_extra
+
+from app.modules.trip_cancellation.stages.utils import (
+    _safe_float, _result, _extract_file_names,
+)
+from app.modules.trip_cancellation.stages.handlers import (
+    _check_policy_validity, _material_gate, _check_exclusions,
+)
+from app.modules.trip_cancellation.stages.calculator import (
+    _compute_payout,
+)
 
 
 async def review_trip_cancellation_async(
@@ -320,15 +512,36 @@ async def review_trip_cancellation_async(
     total: int,
     session: aiohttp.ClientSession,
 ) -> Dict[str, Any]:
+    """旅行取消审核主流程（编排层）。"""
     forceid = str(claim_info.get("forceid") or "unknown")
-    ctx: Dict[str, Any] = {"debug": []}
-    runner = StageRunner(ctx=ctx, forceid=forceid)
+    debug: Dict[str, Any] = {"debug": []}
+    runner = StageRunner(ctx=debug, forceid=forceid)
 
     LOGGER.info(
         f"[{index}/{total}] 旅行取消审核开始",
-        extra=log_extra(forceid=forceid, stage="trip_cancellation", attempt=0),
+        extra=log_extra(forceid=forceid, stage="trip_cancellation_start", attempt=0),
     )
+    conclusions = []
 
+    # 0) 视觉识别
+    vision_extract = {}
+    try:
+        extractor = MaterialExtractor(reviewer=reviewer, forceid=forceid)
+        extraction = await extractor.extract(
+            claim_folder=claim_folder,
+            claim_info=claim_info,
+            strategy=ExtractionStrategy.VISION_DIRECT,
+            prompt_name="00_vision_extract",
+            session=session,
+        )
+        raw_vision = extraction.vision_data
+        if isinstance(raw_vision, dict):
+            vision_extract = raw_vision
+    except Exception as _ve:
+        LOGGER.warning(f"[{forceid}] 视觉识别失败: {_ve}")
+    debug["vision_extract"] = vision_extract
+
+    # 1) AI 结构化抽取
     parsed, err = await runner.run(
         "trip_cancellation_parse",
         reviewer._ai_trip_cancellation_parse_async,
@@ -339,27 +552,20 @@ async def review_trip_cancellation_async(
         retry_sleep=2.0,
     )
     if err:
-        return build_stage_error_return(
-            forceid=forceid,
-            checkpoint="旅行取消信息解析",
-            err=err,
-            ctx=ctx,
-        )
+        return build_stage_error_return(forceid=forceid, checkpoint="信息解析", err=err, ctx=debug)
 
-    ctx["parsed"] = parsed
+    # 2) 前置校验（调用 stages 函数）
+    policy_violation = _check_policy_validity(claim_info, debug)
+    if policy_violation:
+        return _result(forceid, policy_violation, "N", conclusions, debug)
 
-    # 继续串接 materials / coverage / compensation / final
-    return {
-        "forceid": forceid,
-        "claim_type": "trip_cancellation",
-        "Remark": "示例返回，后续补全",
-        "IsAdditional": "Y",
-        "KeyConclusions": [],
-        "DebugInfo": ctx,
-    }
+    # 3) 材料门禁
+    # ... 继续串联 stages 函数 ...
+
+    return _result(forceid, "审核通过", "N", conclusions, debug)
 ```
 
-### 7.3 `registry.py`
+### 7.4 `registry.py`
 
 ```python
 from app.modules.baggage_damage.module import MODULE as BAGGAGE_DAMAGE_MODULE
@@ -568,8 +774,10 @@ return await review_baggage_damage_async(...)
 
 为了让架构真正闭环，后续建议补这几个文件：
 
-- `app/modules/baggage_damage/pipeline.py`
-  作用：承接当前 reviewer 中的随身财产主流程
+- `app/modules/<新claim_type>/stages/`
+  作用：新险种的 stage 实现子目录（必选，见 2.5 节 Pipeline 拆分规范）
+- `app/modules/<新claim_type>/pipeline.py`
+  作用：纯编排层，从 stages/ 导入并串联（≤500 行）
 - `app/router.py` 或 `app/modules/router.py`
   作用：集中管理 claim type 检测与模块路由
 - `app/registries/prompt_registry.py`
@@ -588,6 +796,11 @@ return await review_baggage_damage_async(...)
 3. 继续把 reviewer 中残留的随身财产专属辅助函数迁入 `baggage_damage/`。
 4. 根据节奏再决定是否引入 `app/router.py`。
 5. 等模块边界稳定后，再做 `infra/` 和 `registries/` 的目录整理。
+
+已完成：
+- `flight_delay/pipeline.py` 已拆分为编排层（~370行）+ `stages/` 子目录（8个文件）
+- `baggage_delay/pipeline.py` 已拆分为编排层（~280行）+ `stages/` 子目录（4个文件）
+- 两个模块的外部 import 路径保持不变，`claim_ai_reviewer.py` 无需修改
 
 ### 10.6 建议的最小排期方案
 
@@ -618,6 +831,8 @@ return await review_baggage_damage_async(...)
 
 ## 12. 当前收尾状态
 
+### 12.1 随身财产模块
+
 截至 2026-03-24，随身财产模块的迁移状态如下：
 
 - `app/modules/baggage_damage/pipeline.py` 已成为随身财产主流程入口
@@ -629,6 +844,19 @@ return await review_baggage_damage_async(...)
 - `pipeline.py`：看阶段编排和阶段输入输出
 - `stages.py`：看具体审核逻辑
 - `extractors.py`：看购买金额、第三方赔付等硬抽取规则
+
+### 12.2 航班延误 / 行李延误模块
+
+截至 2026-04-28，航班延误和行李延误模块已完成 `pipeline.py` + `stages/` 拆分：
+
+| 模块 | 原始行数 | 拆分后 pipeline | stages/ 文件数 |
+|------|---------|----------------|---------------|
+| flight_delay | 3190 行 | ~370 行 | 8 个文件 |
+| baggage_delay | 1149 行 | ~280 行 | 4 个文件 |
+
+- `pipeline.py` 现在是纯编排层，只做 stage 串联
+- 所有业务逻辑下沉到 `stages/utils.py`、`stages/handlers.py`、`stages/calculator.py` 等
+- 外部 import 路径不变（`from app.modules.flight_delay.pipeline import review_flight_delay_async`）
 
 ## 13. 本地 Python 环境说明
 

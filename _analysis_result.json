@@ -1,0 +1,1476 @@
+{
+  "total": 72,
+  "auto_corrected_count": 32,
+  "no_correction_count": 40,
+  "pass_count": 22,
+  "supplement_count": 48,
+  "reject_count": 2,
+  "auto_corrected_cases": [
+    {
+      "forceid": "a0nC800000HgqmsIAB",
+      "mtime": "09:56",
+      "remark": "审核通过：行李延误6.78小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HJIPHIA5",
+      "mtime": "09:57",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HqpJBIAZ",
+      "mtime": "10:05",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HzYscIAF",
+      "mtime": "10:10",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I5xd2IAB",
+      "mtime": "10:18",
+      "remark": "审核通过：行李延误19.13小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I7iQHIAZ",
+      "mtime": "10:22",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I7iQPIAZ",
+      "mtime": "10:22",
+      "remark": "需补件：flight_actual_arrival_time；flight_no",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I93VpIAJ",
+      "mtime": "10:23",
+      "remark": "审核通过：行李延误83.18小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I93VxIAJ",
+      "mtime": "10:24",
+      "remark": "审核通过：行李延误31.95小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOuIAJ",
+      "mtime": "10:25",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOxIAJ",
+      "mtime": "10:26",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOzIAJ",
+      "mtime": "10:27",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eP1IAJ",
+      "mtime": "10:28",
+      "remark": "审核通过：行李延误47.88小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eP2IAJ",
+      "mtime": "10:29",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAGIvIAP",
+      "mtime": "09:47",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAGVlIAP",
+      "mtime": "10:34",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Ib5ZTIAZ",
+      "mtime": "10:39",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBayfIAD",
+      "mtime": "10:41",
+      "remark": "审核通过：行李延误20.50小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBbl3IAD",
+      "mtime": "10:42",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBeUPIA1",
+      "mtime": "09:39",
+      "remark": "审核通过：行李延误27.65小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBjaXIAT",
+      "mtime": "10:44",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBkDFIA1",
+      "mtime": "10:45",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IbsnGIAR",
+      "mtime": "10:47",
+      "remark": "审核通过：行李延误12.83小时，建议赔付500.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBWjlIAH",
+      "mtime": "10:48",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Ic4g9IAB",
+      "mtime": "10:54",
+      "remark": "审核通过：行李延误12.83小时，建议赔付500.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC8AjIAL",
+      "mtime": "10:56",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ICEBJIA5",
+      "mtime": "10:57",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；护照照片页、签证页、出入境盖章页；被保险人身份证正反面或护照",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ICHXNIA5",
+      "mtime": "10:58",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdCJtIAN",
+      "mtime": "11:09",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdwOPIAZ",
+      "mtime": "11:15",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000JZU0NIAX",
+      "mtime": "09:47",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000L1SxSIAV",
+      "mtime": "09:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    }
+  ],
+  "no_correction_cases": [
+    {
+      "forceid": "a0nC800000HjxQLIAZ",
+      "mtime": "10:00",
+      "remark": "审核通过：行李延误27.50小时，建议赔付1500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Hkxw9IAB",
+      "mtime": "10:02",
+      "remark": "转人工复核：存在材料识别或真实性争议",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Hl061IAB",
+      "mtime": "10:04",
+      "remark": "拒赔：保单自始无效：被保险人实际出境时间为2025-10-14，早于投保时间2025-12-15，且超出安联专属顺延/提前规则允许的±15日范围（相差62天），导致保险合同无效，本权益亦无效。",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": false,
+      "is_reject": true
+    },
+    {
+      "forceid": "a0nC800000HRtWVIA1",
+      "mtime": "10:06",
+      "remark": "审核通过：行李延误25.77小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HX6UiIAL",
+      "mtime": "10:09",
+      "remark": "审核通过：行李延误117.90小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I090wIAB",
+      "mtime": "10:11",
+      "remark": "转人工复核：存在材料识别或真实性争议",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I0B2kIAF",
+      "mtime": "10:12",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I5xd3IAB",
+      "mtime": "10:21",
+      "remark": "审核通过：行李延误24.13小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOtIAJ",
+      "mtime": "10:25",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOyIAJ",
+      "mtime": "10:27",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o01IAB",
+      "mtime": "10:30",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o03IAB",
+      "mtime": "10:30",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o09IAB",
+      "mtime": "10:30",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IA32HIAT",
+      "mtime": "10:33",
+      "remark": "审核通过：行李延误17.48小时，建议赔付500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAUwvIAH",
+      "mtime": "10:35",
+      "remark": "需补件：官方航班数据",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBak9IAD",
+      "mtime": "10:40",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBeFtIAL",
+      "mtime": "10:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IbIGYIA3",
+      "mtime": "10:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC0bNIAT",
+      "mtime": "10:49",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC0czIAD",
+      "mtime": "10:51",
+      "remark": "审核通过：行李延误48.25小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC5snIAD",
+      "mtime": "10:55",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID349IAD",
+      "mtime": "11:01",
+      "remark": "审核通过：行李延误38.70小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID3CFIA1",
+      "mtime": "11:04",
+      "remark": "审核通过：行李延误38.70小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID4ufIAD",
+      "mtime": "11:04",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID4zVIAT",
+      "mtime": "11:07",
+      "remark": "审核通过：行李延误35.00小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID52jIAD",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID52kIAD",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID7EDIA1",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdpLMIAZ",
+      "mtime": "11:11",
+      "remark": "审核通过：行李延误49.25小时，建议赔付500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Idtn5IAB",
+      "mtime": "11:14",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IE7C9IAL",
+      "mtime": "11:16",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IEf2YIAT",
+      "mtime": "11:21",
+      "remark": "审核通过：行李延误15.93小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IEgufIAD",
+      "mtime": "09:42",
+      "remark": "审核通过：行李延误14.40小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IGDVCIA5",
+      "mtime": "09:50",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000KVHFaIAP",
+      "mtime": "11:38",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000LVvQzIAL",
+      "mtime": "09:50",
+      "remark": "审核通过：行李延误22.52小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Lxn2DIAR",
+      "mtime": "11:38",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000MVKaUIAX",
+      "mtime": "11:36",
+      "remark": "拒赔：战争/罢工等社会风险，属除外责任",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": false,
+      "is_reject": true
+    },
+    {
+      "forceid": "a0nC800000MWHyjIAH",
+      "mtime": "11:40",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000MWLvtIAH",
+      "mtime": "11:42",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    }
+  ],
+  "pass_cases": [
+    {
+      "forceid": "a0nC800000HgqmsIAB",
+      "mtime": "09:56",
+      "remark": "审核通过：行李延误6.78小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HjxQLIAZ",
+      "mtime": "10:00",
+      "remark": "审核通过：行李延误27.50小时，建议赔付1500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HRtWVIA1",
+      "mtime": "10:06",
+      "remark": "审核通过：行李延误25.77小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HX6UiIAL",
+      "mtime": "10:09",
+      "remark": "审核通过：行李延误117.90小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I5xd2IAB",
+      "mtime": "10:18",
+      "remark": "审核通过：行李延误19.13小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I5xd3IAB",
+      "mtime": "10:21",
+      "remark": "审核通过：行李延误24.13小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I93VpIAJ",
+      "mtime": "10:23",
+      "remark": "审核通过：行李延误83.18小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I93VxIAJ",
+      "mtime": "10:24",
+      "remark": "审核通过：行李延误31.95小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eP1IAJ",
+      "mtime": "10:28",
+      "remark": "审核通过：行李延误47.88小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IA32HIAT",
+      "mtime": "10:33",
+      "remark": "审核通过：行李延误17.48小时，建议赔付500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBayfIAD",
+      "mtime": "10:41",
+      "remark": "审核通过：行李延误20.50小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBeUPIA1",
+      "mtime": "09:39",
+      "remark": "审核通过：行李延误27.65小时，建议赔付0.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IbsnGIAR",
+      "mtime": "10:47",
+      "remark": "审核通过：行李延误12.83小时，建议赔付500.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC0czIAD",
+      "mtime": "10:51",
+      "remark": "审核通过：行李延误48.25小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Ic4g9IAB",
+      "mtime": "10:54",
+      "remark": "审核通过：行李延误12.83小时，建议赔付500.00元",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID349IAD",
+      "mtime": "11:01",
+      "remark": "审核通过：行李延误38.70小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID3CFIA1",
+      "mtime": "11:04",
+      "remark": "审核通过：行李延误38.70小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID4zVIAT",
+      "mtime": "11:07",
+      "remark": "审核通过：行李延误35.00小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdpLMIAZ",
+      "mtime": "11:11",
+      "remark": "审核通过：行李延误49.25小时，建议赔付500.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IEf2YIAT",
+      "mtime": "11:21",
+      "remark": "审核通过：行李延误15.93小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IEgufIAD",
+      "mtime": "09:42",
+      "remark": "审核通过：行李延误14.40小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000LVvQzIAL",
+      "mtime": "09:50",
+      "remark": "审核通过：行李延误22.52小时，建议赔付0.00元",
+      "auto_corrected": [],
+      "is_pass": true,
+      "is_supplement": false,
+      "is_reject": false
+    }
+  ],
+  "supplement_cases": [
+    {
+      "forceid": "a0nC800000HJIPHIA5",
+      "mtime": "09:57",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Hkxw9IAB",
+      "mtime": "10:02",
+      "remark": "转人工复核：存在材料识别或真实性争议",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HqpJBIAZ",
+      "mtime": "10:05",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000HzYscIAF",
+      "mtime": "10:10",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I090wIAB",
+      "mtime": "10:11",
+      "remark": "转人工复核：存在材料识别或真实性争议",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I0B2kIAF",
+      "mtime": "10:12",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I7iQHIAZ",
+      "mtime": "10:22",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I7iQPIAZ",
+      "mtime": "10:22",
+      "remark": "需补件：flight_actual_arrival_time；flight_no",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOtIAJ",
+      "mtime": "10:25",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOuIAJ",
+      "mtime": "10:25",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOxIAJ",
+      "mtime": "10:26",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOyIAJ",
+      "mtime": "10:27",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eOzIAJ",
+      "mtime": "10:27",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9eP2IAJ",
+      "mtime": "10:29",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o01IAB",
+      "mtime": "10:30",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o03IAB",
+      "mtime": "10:30",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000I9o09IAB",
+      "mtime": "10:30",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAGIvIAP",
+      "mtime": "09:47",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAGVlIAP",
+      "mtime": "10:34",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正",
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IAUwvIAH",
+      "mtime": "10:35",
+      "remark": "需补件：官方航班数据",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Ib5ZTIAZ",
+      "mtime": "10:39",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBak9IAD",
+      "mtime": "10:40",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBbl3IAD",
+      "mtime": "10:42",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBeFtIAL",
+      "mtime": "10:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IbIGYIA3",
+      "mtime": "10:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBjaXIAT",
+      "mtime": "10:44",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBkDFIA1",
+      "mtime": "10:45",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IBWjlIAH",
+      "mtime": "10:48",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC0bNIAT",
+      "mtime": "10:49",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC5snIAD",
+      "mtime": "10:55",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IC8AjIAL",
+      "mtime": "10:56",
+      "remark": "需补件：官方航班数据（含完整年-月-日的原航班计划起飞日期）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ICEBJIA5",
+      "mtime": "10:57",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；护照照片页、签证页、出入境盖章页；被保险人身份证正反面或护照",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ICHXNIA5",
+      "mtime": "10:58",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID4ufIAD",
+      "mtime": "11:04",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID52jIAD",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID52kIAD",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000ID7EDIA1",
+      "mtime": "11:07",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdCJtIAN",
+      "mtime": "11:09",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [
+        "has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Idtn5IAB",
+      "mtime": "11:14",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IdwOPIAZ",
+      "mtime": "11:15",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IE7C9IAL",
+      "mtime": "11:16",
+      "remark": "需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000IGDVCIA5",
+      "mtime": "09:50",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000JZU0NIAX",
+      "mtime": "09:47",
+      "remark": "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "auto_corrected": [
+        "has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正",
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000KVHFaIAP",
+      "mtime": "11:38",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000L1SxSIAV",
+      "mtime": "09:43",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）",
+      "auto_corrected": [
+        "has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正"
+      ],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000Lxn2DIAR",
+      "mtime": "11:38",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000MWHyjIAH",
+      "mtime": "11:40",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    },
+    {
+      "forceid": "a0nC800000MWLvtIAH",
+      "mtime": "11:42",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；托运行李牌照片（含姓名、航班信息、行李牌号码）",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": true,
+      "is_reject": false
+    }
+  ],
+  "reject_cases": [
+    {
+      "forceid": "a0nC800000Hl061IAB",
+      "mtime": "10:04",
+      "remark": "拒赔：保单自始无效：被保险人实际出境时间为2025-10-14，早于投保时间2025-12-15，且超出安联专属顺延/提前规则允许的±15日范围（相差62天），导致保险合同无效，本权益亦无效。",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": false,
+      "is_reject": true
+    },
+    {
+      "forceid": "a0nC800000MVKaUIAX",
+      "mtime": "11:36",
+      "remark": "拒赔：战争/罢工等社会风险，属除外责任",
+      "auto_corrected": [],
+      "is_pass": false,
+      "is_supplement": false,
+      "is_reject": true
+    }
+  ]
+}

@@ -99,12 +99,7 @@ async def ai_check_materials_async(
         if claim_folder is None:
             raise RuntimeError("无法定位案件目录(vision模式需要原始材料文件)")
 
-        old_max = getattr(config, "VISION_MAX_ATTACHMENTS", 10)
-        try:
-            config.VISION_MAX_ATTACHMENTS = 10**9  # type: ignore[attr-defined]
-            all_attachments, _manifest = prepare_attachments_for_claim(claim_folder=claim_folder)
-        finally:
-            config.VISION_MAX_ATTACHMENTS = old_max  # type: ignore[attr-defined]
+        all_attachments, _manifest = prepare_attachments_for_claim(claim_folder=claim_folder, max_attachments=0)
 
         if not all_attachments:
             return {

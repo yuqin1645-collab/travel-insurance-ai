@@ -162,6 +162,13 @@ class PipelineContext:
 # 管道执行器
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _make_stage_fn(handler: StageHandler, ctx: PipelineContext):
+    """构造一个无参协程，供 StageRunner 调用。"""
+    async def _fn():
+        return await handler.run(ctx)
+    return _fn
+
+
 class AuditPipeline:
     """
     通用审核管道执行器。
@@ -221,11 +228,11 @@ class AuditPipeline:
                 stage_key=stage_key,
             )
 
-            # 用 StageRunner 包裹，享受重试 + 熔断器
+            stage_fn = _make_stage_fn(handler, ctx)
+
             raw_result, err = await self._runner.run(
                 stage_key,
-                self._call_handler,
-                handler,
+                stage_fn,
                 max_retries=self._max_retries,
                 retry_sleep=self._retry_sleep,
             )
@@ -241,7 +248,6 @@ class AuditPipeline:
                     ctx_dict=ctx.as_debug_dict(),
                 )
 
-            # 解包结果
             stage_result, early_return = self._unpack(raw_result)
             ctx.stage_results[stage_key] = stage_result
 
@@ -252,27 +258,7 @@ class AuditPipeline:
                 )
                 return early_return
 
-        # 所有阶段完成，交给子类/调用方构建最终结果
         return await self._build_final_result()
-
-    # ── 内部工具 ──────────────────────────────────────────────────────────────
-
-    @staticmethod
-    async def _call_handler(
-        handler: StageHandler,
-        ctx: "PipelineContext",
-    ) -> Any:
-        """包装为 StageRunner 可调用的协程函数。"""
-        return await handler.run(ctx)
-
-    # 注意：execute 中调用时需要把 ctx 传给 _call_handler
-    # 但 StageRunner.run 的签名是 func(*args)，所以我们需要额外处理
-    async def _run_stage(
-        self,
-        handler: StageHandler,
-    ) -> Any:
-        """直接执行 handler，不通过 StageRunner（内部调用）。"""
-        return await handler.run(self._ctx)
 
     @staticmethod
     def _unpack(raw: Any) -> tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
@@ -313,72 +299,3 @@ class AuditPipeline:
             "DebugInfo": self._ctx.as_debug_dict(),
         }
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 修复：StageRunner 的调用方式适配
-# ─────────────────────────────────────────────────────────────────────────────
-# StageRunner.run(stage_name, func, *args) → func(*args)
-# 我们需要把 (handler, ctx) 一起传进去。
-# 为此覆盖 AuditPipeline.execute 中的调用，改用 lambda 适配器。
-
-# 替换 execute 中的 _call_handler 为闭包版本，避免 ctx 传递问题。
-# （上方 _call_handler 为静态方法作为文档，实际执行见下方 _make_stage_fn）
-
-def _make_stage_fn(handler: StageHandler, ctx: PipelineContext):
-    """构造一个无参协程，供 StageRunner 调用。"""
-    async def _fn():
-        return await handler.run(ctx)
-    return _fn
-
-
-# 打补丁：覆盖 AuditPipeline.execute 使用 _make_stage_fn
-_orig_execute = AuditPipeline.execute
-
-async def _patched_execute(self: AuditPipeline) -> Dict[str, Any]:
-    ctx = self._ctx
-    forceid = ctx.forceid
-
-    for handler in self._handlers:
-        stage_key = handler.stage_key
-
-        log_stage(
-            forceid=forceid,
-            index=ctx.index,
-            total=ctx.total,
-            stage_key=stage_key,
-        )
-
-        stage_fn = _make_stage_fn(handler, ctx)
-
-        raw_result, err = await self._runner.run(
-            stage_key,
-            stage_fn,
-            max_retries=self._max_retries,
-            retry_sleep=self._retry_sleep,
-        )
-
-        if err is not None:
-            LOGGER.error(
-                f"[{ctx.index}/{ctx.total}] 阶段 {stage_key} 最终失败: {err}",
-                extra=log_extra(forceid=forceid, stage=stage_key, attempt=0),
-            )
-            return handler.on_error(
-                forceid=forceid,
-                err=err,
-                ctx_dict=ctx.as_debug_dict(),
-            )
-
-        stage_result, early_return = AuditPipeline._unpack(raw_result)
-        ctx.stage_results[stage_key] = stage_result
-
-        if early_return is not None:
-            LOGGER.info(
-                f"[{ctx.index}/{ctx.total}] 阶段 {stage_key} 触发早退",
-                extra=log_extra(forceid=forceid, stage=stage_key, attempt=0),
-            )
-            return early_return
-
-    return await self._build_final_result()
-
-
-AuditPipeline.execute = _patched_execute  # type: ignore[method-assign]

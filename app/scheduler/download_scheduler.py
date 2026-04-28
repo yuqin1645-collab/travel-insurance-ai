@@ -122,13 +122,12 @@ class IncrementalDownloadScheduler:
             # 在下载前，先从接口拉取本次返回的案件列表，
             # 识别出"已补件待审核"状态的案件，清空其进度文件下载记录，强制重新下载补件材料
             from scripts.download_claims import ClaimDownloader
-            import requests as _requests
 
             # 接口补件状态标识
             SUPPLEMENTARY_SUBMITTED_STATUS = {"已补件待审核"}
 
             try:
-                _resp = _requests.post(self.api_url, json={}, timeout=30)
+                _resp = requests.post(self.api_url, json={}, timeout=30)
                 _resp.raise_for_status()
                 _raw = _resp.json()
                 if isinstance(_raw, list):
@@ -661,7 +660,6 @@ async def run_download_scheduler():
 
 if __name__ == '__main__':
     # 测试
-    import asyncio
 
     async def test():
         scheduler = IncrementalDownloadScheduler()

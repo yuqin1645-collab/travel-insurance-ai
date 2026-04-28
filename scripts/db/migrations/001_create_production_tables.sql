@@ -103,8 +103,8 @@ CREATE TABLE IF NOT EXISTS ai_review_result (
     forceid VARCHAR(64) NOT NULL COMMENT '案件唯一ID',
     claim_id VARCHAR(64) NULL COMMENT '上游案件ID',
 
-    -- 被保险人信息
-    passenger_name VARCHAR(128) NULL COMMENT '被保险人姓名',
+    -- 申请人信息
+    applicant_name VARCHAR(128) NULL COMMENT '申请人姓名（来自claim_info.json的Applicant_Name）',
     passenger_id_type VARCHAR(32) NULL COMMENT '证件类型',
     passenger_id_number VARCHAR(64) NULL COMMENT '证件号码',
 
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS ai_review_result (
     KEY idx_audit_result (audit_result),
     KEY idx_audit_status (audit_status),
     KEY idx_is_additional (is_additional),
-    KEY idx_passenger_name (passenger_name),
+    KEY idx_applicant_name (applicant_name),
     KEY idx_flight_no (flight_no),
     KEY idx_policy_no (policy_no),
     KEY idx_insurer (insurer),
@@ -206,7 +206,7 @@ CREATE OR REPLACE VIEW v_claim_audit_summary AS
 SELECT
     r.forceid AS '案件ID',
     r.claim_id AS '案件编号',
-    r.passenger_name AS '被保险人',
+    r.applicant_name AS '申请人',
     r.passenger_id_number AS '证件号',
     r.flight_no AS '航班号',
     r.dep_city AS '出发城市',

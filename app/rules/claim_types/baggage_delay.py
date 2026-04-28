@@ -9,6 +9,7 @@
 from typing import Any, Dict, List, Optional
 
 from app.rules.base import RuleResult
+from app.skills.compensation import tier_lookup
 
 RULE_ID = "claim_types.baggage_delay"
 RULE_VERSION = "1.0"
@@ -63,8 +64,6 @@ def compute_payout(
     Returns:
         RuleResult：detail["payout"] 为最终赔付金额
     """
-    from app.skills.compensation import tier_lookup
-
     delay_minutes = int(delay_hours * 60)
     tier_result = tier_lookup(delay_minutes, BAGGAGE_DELAY_TIERS)
     base = float(tier_result["amount"])

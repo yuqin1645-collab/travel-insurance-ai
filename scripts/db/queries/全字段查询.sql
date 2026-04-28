@@ -15,9 +15,9 @@ SELECT
     forceid AS '案件ID',
     claim_id AS '案件编号',
 
-    -- 被保险人信息
-    passenger_name AS '被保险人姓名',
-    insured_name AS '被保险人姓名(别名)',
+    -- 申请人信息
+    applicant_name AS '申请人姓名',
+    insured_name AS '被保险人姓名',
     passenger_id_type AS '证件类型',
     passenger_id_number AS '证件号码',
 

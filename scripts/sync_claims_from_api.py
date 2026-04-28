@@ -31,7 +31,7 @@ except ImportError:
     sys.exit(1)
 
 # 默认接口地址（可被环境变量或 --api-url 覆盖）
-DEFAULT_API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim"
+DEFAULT_API_URL = os.getenv("REST_AI_CLAIM_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLAIM")
 
 
 def load_dotenv_if_exists() -> None:

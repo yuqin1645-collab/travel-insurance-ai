@@ -152,7 +152,7 @@ def extract_third_party_compensation_amount(ocr_results: Dict) -> Dict[str, obje
                 return True
             if "*" in window or "＊" in window:
                 return True
-            if re.search(r"\\b1[3-9]\\d{2,}\\b", window):
+            if re.search(r"\b1[3-9]\d{2,}\b", window):
                 return True
             return False
 
@@ -160,7 +160,7 @@ def extract_third_party_compensation_amount(ocr_results: Dict) -> Dict[str, obje
             if not (isinstance(res, dict) and res.get("success") and res.get("text")):
                 continue
             text = str(res.get("text") or "")
-            blob_compact = re.sub(r"\\s+", "", text)
+            blob_compact = re.sub(r"\s+", "", text)
             for pat in patterns:
                 for m in re.finditer(pat, blob_compact, flags=re.IGNORECASE | re.DOTALL):
                     try:

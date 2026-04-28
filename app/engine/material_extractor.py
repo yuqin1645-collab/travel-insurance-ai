@@ -42,7 +42,11 @@ from __future__ import annotations
 """
 
 import enum
+import json
 import copy
+import os
+import re
+import asyncio
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -52,6 +56,7 @@ import aiohttp
 
 from app.logging_utils import LOGGER, log_extra
 from app.config import config
+from app.vision_preprocessor import prepare_attachments_for_claim
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -184,9 +189,6 @@ class MaterialExtractor:
         if not file_list:
             return 0
 
-        import asyncio as _asyncio
-        import os
-
         proxy = (
             os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
             or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
@@ -194,7 +196,7 @@ class MaterialExtractor:
 
         close_session = False
         if session is None:
-            session = aiohttp.ClientSession()
+            session = aiohttp.ClientSession(trust_env=True)
             close_session = True
 
         downloaded = 0
@@ -253,32 +255,21 @@ class MaterialExtractor:
         session: Optional[aiohttp.ClientSession],
     ) -> ExtractionResult:
         """把所有附件发给视觉模型做一次性提取。"""
-        from app.vision_preprocessor import prepare_attachments_for_claim
-
         LOGGER.info(
             "材料提取 [Vision] 开始",
             extra=log_extra(forceid=self._forceid, stage="material_extractor"),
         )
 
-        # 全量附件模式：先解除 prepare_attachments_for_claim 的截断，再按 batch_size 分批送模型
+        # 全量附件模式：解除 prepare_attachments_for_claim 的截断，再按 batch_size 分批送模型
         batch_size = max(1, int(getattr(config, "VISION_MAX_ATTACHMENTS", 10) or 10))
-        old_limit = getattr(config, "VISION_MAX_ATTACHMENTS", 10)
-        try:
-            config.VISION_MAX_ATTACHMENTS = 10**9  # type: ignore[attr-defined]
-            all_attachments, _manifest = prepare_attachments_for_claim(claim_folder, claim_info=claim_info)
-        finally:
-            config.VISION_MAX_ATTACHMENTS = old_limit  # type: ignore[attr-defined]
+        all_attachments, _manifest = prepare_attachments_for_claim(claim_folder, claim_info=claim_info, max_attachments=0)
         attachment_paths: List[Path] = [a.path for a in all_attachments]
 
         # 本地无附件时，尝试从 FileList URL 下载
         if not attachment_paths:
             n = await self._download_filelist_to_folder(claim_folder, claim_info, session)
             if n > 0:
-                try:
-                    config.VISION_MAX_ATTACHMENTS = 10**9  # type: ignore[attr-defined]
-                    all_attachments, _manifest = prepare_attachments_for_claim(claim_folder, claim_info=claim_info)
-                finally:
-                    config.VISION_MAX_ATTACHMENTS = old_limit  # type: ignore[attr-defined]
+                all_attachments, _manifest = prepare_attachments_for_claim(claim_folder, claim_info=claim_info, max_attachments=0)
                 attachment_paths = [a.path for a in all_attachments]
 
         if not attachment_paths:
@@ -291,9 +282,6 @@ class MaterialExtractor:
                 strategy_used=ExtractionStrategy.VISION_DIRECT,
                 summary="无附件",
             )
-
-        import asyncio as _asyncio
-        import json as _json
 
         # Batch scan all attachments by chunk size.
         network_max_attempts = max(1, int(getattr(config, "VISION_RETRY_NETWORK_MAX_ATTEMPTS", 3) or 3))
@@ -311,7 +299,7 @@ class MaterialExtractor:
                 prompt = self._reviewer.prompt_loader.format(
                     prompt_name,
                     namespace=self._reviewer.prompt_namespace,
-                    claim_info_json=_json.dumps(claim_info, ensure_ascii=False, indent=2),
+                    claim_info_json=json.dumps(claim_info, ensure_ascii=False, indent=2),
                     ocr_text=ocr_text_for_prompt,
                 )
             except Exception as e:
@@ -354,7 +342,7 @@ class MaterialExtractor:
                             f"material extract [Vision] retryable failure(batch {batch_index}/{total_batches}, attempt {_attempt}/{allowed_attempts}, type={error_type}), retry in {wait_seconds:.1f}s: {e}",
                             extra=log_extra(forceid=self._forceid, stage="material_extractor"),
                         )
-                        await _asyncio.sleep(wait_seconds)
+                        await asyncio.sleep(wait_seconds)
                     else:
                         LOGGER.warning(
                             f"material extract [Vision] failed(batch {batch_index}/{total_batches}, attempt {_attempt}/{allowed_attempts}, type={error_type}): {e}",
@@ -466,15 +454,12 @@ class MaterialExtractor:
         try:
             import pytesseract
             from PIL import Image
-            from app.config import config as _cfg
-            tesseract_path = getattr(_cfg, "TESSERACT_PATH", None) or r"D:\app\tools\other\Tesseract\tesseract.exe"
+            tesseract_path = str(getattr(config, "TESSERACT_PATH", ""))
             if not Path(tesseract_path).exists():
                 return ""
             pytesseract.pytesseract.tesseract_cmd = tesseract_path
         except ImportError:
             return ""
-
-        import re as _re
 
         # 从 _q.jpg 路径推断原始文件：
         # .cache/vision_attachments/<case>/filelist_005_q.jpg
@@ -484,12 +469,11 @@ class MaterialExtractor:
             if "_q.jpg" not in name:
                 return p
             stem = name.replace("_q.jpg", "")
-            stem = _re.sub(r"_p\d+$", "", stem)  # 去掉 _p1/_p2 分页后缀
+            stem = re.sub(r"_p\d+$", "", stem)  # 去掉 _p1/_p2 分页后缀
             # 从 .cache 路径推断 claims_data 中的对应目录
             # 路径结构：.cache/vision_attachments/<case_folder>/filelist_XXX_q.jpg
             case_folder_name = p.parent.name
-            from app.config import config as _cfg2
-            claims_dir = getattr(_cfg2, "CLAIMS_DATA_DIR", None) or Path("claims_data")
+            claims_dir = getattr(config, "CLAIMS_DATA_DIR", None) or Path("claims_data")
             # 在 claims_data 下递归找同名案件目录
             for candidate_dir in Path(claims_dir).rglob(case_folder_name):
                 if candidate_dir.is_dir():
@@ -515,8 +499,7 @@ class MaterialExtractor:
                 text = text.strip()
                 if text:
                     # 过滤 OCR 输出中的控制字符，防止触发 API 的 JSON 校验报错（如 "Invalid control character"）
-                    import re as _re2
-                    text = _re2.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+                    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
                     texts.append(f"[{orig.name}]\n{text}")
             except Exception:
                 continue

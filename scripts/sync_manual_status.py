@@ -36,7 +36,7 @@ except ImportError as e:
     print(f"缺少依赖: {e}，请先安装: pip install pymysql requests")
     sys.exit(1)
 
-RESULT_API_URL = "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Result"
+RESULT_API_URL = os.getenv("MANUAL_RESULT_API_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Result")
 CLAIMS_DATA_DIR = ROOT / os.getenv("CLAIMS_DATA_DIR", "claims_data")
 
 
@@ -110,40 +110,53 @@ def get_benefit_name(forceid: str) -> Optional[str]:
 
 def query_manual_results_batch(forceids: list, timeout: int = 30) -> dict:
     """
-    批量查询人工处理状态。
+    批量查询人工处理状态（支持分页）。
     POST {"pageSize":"100","pageIndex":"1","data":[forceid1, forceid2, ...]}
+    接口返回: {"totalPage": N, "totalCount": N, "data": [...]}
     返回 {forceid: result_dict} 映射。
     """
+    result_map = {}
     try:
-        resp = requests.post(
-            RESULT_API_URL,
-            json={"pageSize": "100", "pageIndex": "1", "data": forceids},
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        raw = resp.json()
+        page = 1
+        total_page = 1
+        while page <= total_page:
+            resp = requests.post(
+                RESULT_API_URL,
+                json={"pageSize": "100", "pageIndex": str(page), "data": forceids},
+                timeout=timeout,
+            )
+            resp.raise_for_status()
+            raw = resp.json()
 
-        # 提取结果列表
-        if isinstance(raw, list):
-            items = raw
-        elif isinstance(raw, dict):
-            inner = raw.get("data")
-            items = inner if isinstance(inner, list) else [raw]
-        else:
-            return {}
+            if isinstance(raw, list):
+                items = raw
+                total_page = 1
+            elif isinstance(raw, dict):
+                total_page = int(raw.get("totalPage", 1))
+                total_count = raw.get("totalCount", 0)
+                if page == 1:
+                    print(f"  接口返回: totalCount={total_count}, totalPage={total_page}")
+                inner = raw.get("data")
+                items = inner if isinstance(inner, list) else [raw]
+            else:
+                break
 
-        # 以 forceid 为 key 建立映射
-        result_map = {}
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
-            if fid:
-                result_map[fid] = item
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
+                if fid:
+                    result_map[fid] = item
+
+            if page >= total_page:
+                break
+            page += 1
+            time.sleep(0.5)
+
         return result_map
     except Exception as e:
         print(f"  [警告] 批量查询接口失败: {e}")
-        return {}
+        return result_map if result_map else {}
 
 
 # ── 状态映射 ─────────────────────────────────────────────────────────────────

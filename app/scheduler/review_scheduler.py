@@ -6,6 +6,7 @@
 """
 
 import logging
+import os
 import asyncio
 import json
 import aiohttp
@@ -20,6 +21,7 @@ from app.db.models import ClaimStatusRecord, SchedulerLog, TaskType, TaskStatus
 from app.db.database import get_scheduler_log_dao, get_db_connection
 from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
 from app.policy_terms_registry import POLICY_TERMS
+from app.output.frontend_pusher import push_to_frontend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,18 +119,15 @@ class ReviewScheduler:
                         output_dir = config.REVIEW_RESULTS_DIR / claim_type
                         output_dir.mkdir(parents=True, exist_ok=True)
                         result_file = output_dir / f"{forceid}_ai_review.json"
-                        import json as _json
                         result_file.write_text(
-                            _json.dumps(result, ensure_ascii=False, indent=2),
+                            json.dumps(result, ensure_ascii=False, indent=2),
                             encoding='utf-8'
                         )
                         LOGGER.info(f"审核结果已保存: {result_file}")
 
                         # 推送审核结果到前端接口
                         try:
-                            from app.output.frontend_pusher import push_to_frontend
-                            import aiohttp as _aiohttp
-                            async with _aiohttp.ClientSession() as _session:
+                            async with aiohttp.ClientSession(trust_env=True) as _session:
                                 push_result = await push_to_frontend(result, _session)
                             if push_result.get("success"):
                                 LOGGER.info(f"✓ 推送前端成功: {forceid}")
@@ -214,7 +213,7 @@ class ReviewScheduler:
                 def _sync_download():
                     claim_data = fetch_by_forceid(forceid)
                     downloader = ClaimDownloader(
-                        api_url="https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim",
+                        api_url=os.getenv("CLAIMS_API_URL", "https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim"),
                         output_dir=str(config.CLAIMS_DATA_DIR),
                         force_refresh=False,
                     )
@@ -400,7 +399,6 @@ async def run_review_scheduler():
 
 if __name__ == '__main__':
     # 测试
-    import asyncio
 
     async def test():
         scheduler = ReviewScheduler()

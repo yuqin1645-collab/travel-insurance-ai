@@ -6,8 +6,10 @@
 """
 
 import os
+import sys
 import json
 import asyncio
+import logging
 import aiohttp
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -15,6 +17,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
+
+LOGGER = logging.getLogger(__name__)
 
 # API配置
 FRONTEND_API_URL = os.getenv('FRONTEND_API_URL', 'https://nanyan.sites.sfcrmapps.cn/services/apexrest/Rest_AI_CLaim_Conclusion')
@@ -87,10 +91,10 @@ def build_flights_from_json(data: Dict) -> List[Dict]:
     flights = []
 
     # 从 DebugInfo 中提取航班信息
-    debug_info = data.get('DebugInfo', {})
+    debug_info = data.get('DebugInfo') or {}
 
     # 1. 从 flight_delay_aviation_lookup 提取
-    lookup = debug_info.get('flight_delay_aviation_lookup', {})
+    lookup = debug_info.get('flight_delay_aviation_lookup') or {}
     if lookup:
         flight = {
             "flight_no": lookup.get('flight_no', ''),
@@ -111,7 +115,7 @@ def build_flights_from_json(data: Dict) -> List[Dict]:
         flights.append(flight)
 
     # 2. 从 flight_delay_vision_extract 提取所有航班
-    vision = debug_info.get('flight_delay_vision_extract', {})
+    vision = debug_info.get('flight_delay_vision_extract') or {}
     all_flights = vision.get('all_flights_found', [])
 
     for i, f in enumerate(all_flights):
@@ -180,7 +184,7 @@ def format_datetime(dt_str: Any) -> str:
         if 'T' in dt_str:
             dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
             return dt.strftime('%Y-%m-%d %H:%M:%S')
-    except:
+    except (ValueError, TypeError, OverflowError):
         pass
 
     return dt_str
@@ -221,8 +225,8 @@ def build_api_payload(data: Dict) -> Dict:
     remark = data.get('Remark', '')
     is_additional = data.get('IsAdditional', 'N')
 
-    # 从 flight_delay_audit 提取审核信息
-    audit = data.get('flight_delay_audit', {})
+    # 从 flight_delay_audit 或 baggage_delay_audit 提取审核信息
+    audit = data.get('flight_delay_audit') or data.get('baggage_delay_audit') or {}
     audit_result = audit.get('audit_result', '')
     explanation = audit.get('explanation', '')
 
@@ -231,7 +235,7 @@ def build_api_payload(data: Dict) -> Dict:
 
     # 提取赔付金额（文本格式，两位小数）
     payout_amount = ""
-    payout = audit.get('payout_suggestion', {})
+    payout = audit.get('payout_suggestion') or {}
     raw_amount = payout.get('amount')
     if raw_amount is not None:
         try:
@@ -269,8 +273,8 @@ def build_api_payload(data: Dict) -> Dict:
     elif approval_status == "2":
         # 补件：Assessment_Remark 和 Reimbursement_Rejection 不填
         # 补件信息填写到专属字段
-        debug_info = data.get('DebugInfo', {})
-        materials = debug_info.get('materials', {})
+        debug_info = data.get('DebugInfo') or {}
+        materials = debug_info.get('materials') or {}
 
         # 补件清单
         missing_materials = materials.get('missing_materials', [])
@@ -282,7 +286,7 @@ def build_api_payload(data: Dict) -> Dict:
 
         # 线上线下补件：根据申请金额判断
         # 从 claim_info 提取申请金额
-        claim_info = data.get('claim_info', {})
+        claim_info = data.get('claim_info') or {}
         insured_amount = float(claim_info.get('Insured_Amount') or claim_info.get('insured_amount') or 0)
         payload["Ofline_online"] = "Offline" if insured_amount > 5000 else "Online"
 
@@ -314,7 +318,8 @@ async def push_to_frontend(
     close_session = False
     if session is None:
         session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=FRONTEND_TIMEOUT)
+            timeout=aiohttp.ClientTimeout(total=FRONTEND_TIMEOUT),
+            trust_env=True,
         )
         close_session = True
 
@@ -345,15 +350,14 @@ async def push_to_frontend(
             }
 
             if response.status == 200:
-                print(f"[OK] Pushed to frontend: {forceid}")
+                LOGGER.info(f"推送成功: {forceid}")
             else:
-                print(f"[FAIL] Push failed ({response.status}): {forceid}")
-                print(f"  Response: {response_text[:200]}")
+                LOGGER.warning(f"推送失败 ({response.status}): {forceid}, 响应: {response_text[:200]}")
 
             return result
 
     except Exception as e:
-        print(f"[ERROR] Push exception: {forceid}, {str(e)[:100]}")
+        LOGGER.error(f"推送异常: {forceid}, {str(e)[:100]}")
         return {
             "forceid": forceid,
             "status_code": 0,
@@ -388,7 +392,7 @@ async def push_from_json_file(
         return await push_to_frontend(data, session)
 
     except Exception as e:
-        print(f"[ERROR] Failed to read {json_path}: {e}")
+        LOGGER.error(f"读取文件失败: {json_path}: {e}")
         return {
             "forceid": "",
             "status_code": 0,
@@ -421,11 +425,12 @@ async def batch_push_from_directory(
     if limit:
         json_files = json_files[:limit]
 
-    print(f"Found {len(json_files)} files to push")
+    LOGGER.info(f"发现 {len(json_files)} 个文件待推送")
 
     # 创建会话
     session = aiohttp.ClientSession(
-        timeout=aiohttp.ClientTimeout(total=FRONTEND_TIMEOUT)
+        timeout=aiohttp.ClientTimeout(total=FRONTEND_TIMEOUT),
+        trust_env=True,
     )
 
     results = {
@@ -437,7 +442,7 @@ async def batch_push_from_directory(
 
     try:
         for i, json_file in enumerate(json_files):
-            print(f"[{i+1}/{len(json_files)}] Pushing {json_file.name}...")
+            LOGGER.info(f"[{i+1}/{len(json_files)}] 推送: {json_file.name}")
 
             result = await push_from_json_file(json_file, session)
             results["details"].append(result)
@@ -453,21 +458,13 @@ async def batch_push_from_directory(
     finally:
         await session.close()
 
-    print()
-    print("=" * 50)
-    print(f"Batch push complete:")
-    print(f"  Total: {results['total']}")
-    print(f"  Success: {results['success']}")
-    print(f"  Failed: {results['failed']}")
-    print("=" * 50)
+    LOGGER.info(f"批量推送完成: 总计={results['total']}, 成功={results['success']}, 失败={results['failed']}")
 
     return results
 
 
 # 命令行入口
 if __name__ == '__main__':
-    import sys
-
     if len(sys.argv) > 1:
         # 推送指定文件
         json_file = Path(sys.argv[1])

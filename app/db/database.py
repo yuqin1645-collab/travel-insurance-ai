@@ -16,9 +16,11 @@ import aiomysql
 from app.config import config
 from app.db.models import (
     ClaimStatusRecord, ReviewResult, SupplementaryRecord, SchedulerLog, StatusHistory,
+    FlightDelayData, BaggageDelayData,
     ClaimStatus, DownloadStatus, ReviewStatus, SupplementaryStatus, TaskType, TaskStatus,
     TABLE_CLAIM_STATUS, TABLE_REVIEW_RESULT, TABLE_SUPPLEMENTARY_RECORDS,
     TABLE_SCHEDULER_LOGS, TABLE_STATUS_HISTORY,
+    TABLE_FLIGHT_DELAY_DATA, TABLE_BAGGAGE_DELAY_DATA,
     ClaimInfoRaw, TABLE_CLAIM_INFO_RAW,
     ReviewSegment, TABLE_REVIEW_SEGMENTS,
 )
@@ -238,20 +240,19 @@ class ReviewResultDAO:
         self.db = db
 
     def _get_review_result_columns(self) -> List[str]:
-        """获取审核结果表的列名"""
+        """获取审核结果表的列名（仅主表公用字段）"""
         return [
-            'forceid', 'claim_id', 'passenger_name', 'passenger_id_type', 'passenger_id_number',
+            'forceid', 'claim_id', 'claim_type', 'benefit_name',
+            'applicant_name', 'insured_name', 'passenger_id_type', 'passenger_id_number',
             'policy_no', 'insurer', 'policy_effective_date', 'policy_expiry_date',
-            'flight_no', 'operating_carrier', 'dep_iata', 'arr_iata', 'dep_city', 'arr_city',
-            'dep_country', 'arr_country', 'planned_dep_time', 'actual_dep_time',
-            'planned_arr_time', 'actual_arr_time', 'alt_dep_time', 'alt_arr_time',
-            'delay_duration_minutes', 'delay_reason', 'delay_type',
-            'audit_result', 'audit_status', 'confidence_score', 'audit_time', 'auditor',
-            'payout_amount', 'payout_currency', 'payout_basis', 'insured_amount', 'remaining_coverage',
-            'is_additional', 'supplementary_count', 'supplementary_reason', 'supplementary_deadline',
+            'audit_result', 'audit_status', 'confidence_score', 'audit_time', 'auditor', 'final_decision',
+            'payout_amount', 'payout_currency', 'insured_amount', 'remaining_coverage',
+            'is_additional', 'supplementary_reason',
             'remark', 'key_conclusions', 'decision_reason',
             'identity_match', 'threshold_met', 'exclusion_triggered', 'exclusion_reason',
-            'forwarded_to_frontend', 'forwarded_at', 'frontend_response', 'raw_result', 'metadata'
+            'forwarded_to_frontend', 'forwarded_at', 'manual_status', 'manual_conclusion',
+            'ai_model_version', 'pipeline_version', 'rule_ids_hit', 'audit_reason_tags', 'human_override',
+            'raw_result', 'created_at', 'updated_at'
         ]
 
     async def create_or_update_result(self, result: ReviewResult) -> int:
@@ -327,8 +328,8 @@ class ReviewResultDAO:
                 if not forceid:
                     continue
 
-                # 解析flight_delay_audit部分
-                audit = data.get('flight_delay_audit', {})
+                # 解析 flight_delay_audit 或 baggage_delay_audit 部分
+                audit = data.get('flight_delay_audit') or data.get('baggage_delay_audit', {})
                 payout = audit.get('payout_suggestion', {})
                 logic_check = audit.get('logic_check', {})
 
@@ -359,7 +360,7 @@ class ReviewResultDAO:
                     identity_match='Y' if logic_check.get('identity_match') else 'N',
                     threshold_met='Y' if logic_check.get('threshold_met') else 'N',
                     exclusion_triggered='Y' if logic_check.get('exclusion_triggered') else 'N',
-                    passenger_name=data.get('_ci_insured_name') or parse.get('passenger', {}).get('name'),
+                    applicant_name=data.get('_ci_applicant_name') or parse.get('passenger', {}).get('name'),
                     passenger_id_type=data.get('_ci_id_type') or parse.get('passenger', {}).get('id_type'),
                     passenger_id_number=data.get('_ci_id_number') or parse.get('passenger', {}).get('id_number'),
                     policy_no=data.get('_ci_policy_no') or parse.get('policy_hint', {}).get('policy_no'),
@@ -595,6 +596,116 @@ class ReviewSegmentDAO:
                 return [ReviewSegment.from_dict(row) for row in await cursor.fetchall()]
 
 
+class FlightDelayDataDAO:
+    """航班延误专属数据 DAO（ai_flight_delay_data）"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def upsert(self, data: FlightDelayData) -> int:
+        """插入或更新航班延误数据（以 forceid 为唯一键）"""
+        d = data.to_dict()
+        exclude = {'id'}
+        fields = {k: v for k, v in d.items() if k not in exclude}
+
+        def _bool(v):
+            if v is None:
+                return None
+            return 1 if v else 0
+
+        def _dt(v):
+            if v is None:
+                return None
+            if hasattr(v, "strftime"):
+                return v.strftime("%Y-%m-%d %H:%M:%S")
+            return str(v)
+
+        # 转换布尔和日期字段
+        values = {}
+        for k, v in fields.items():
+            if k in ('is_connecting', 'missed_connection'):
+                values[k] = _bool(v)
+            elif k.endswith('_time') or k.startswith('avi_'):
+                values[k] = _dt(v)
+            else:
+                values[k] = v
+
+        keys = list(values.keys())
+        placeholders = ', '.join(['%s'] * len(keys))
+        update_set = ', '.join([f"{k} = VALUES({k})" for k in keys])
+
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                sql = (
+                    f"INSERT INTO {TABLE_FLIGHT_DELAY_DATA} ({', '.join(keys)}) "
+                    f"VALUES ({placeholders}) "
+                    f"ON DUPLICATE KEY UPDATE {update_set}"
+                )
+                await cursor.execute(sql, list(values.values()))
+                return cursor.lastrowid
+
+    async def get_by_forceid(self, forceid: str) -> Optional[FlightDelayData]:
+        """根据 forceid 获取航班延误数据"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT * FROM {TABLE_FLIGHT_DELAY_DATA} WHERE forceid = %s", (forceid,)
+                )
+                row = await cursor.fetchone()
+                return FlightDelayData.from_dict(row) if row else None
+
+
+class BaggageDelayDataDAO:
+    """行李延误专属数据 DAO（ai_baggage_delay_data）"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def upsert(self, data: BaggageDelayData) -> int:
+        """插入或更新行李延误数据（以 forceid 为唯一键）"""
+        d = data.to_dict()
+        exclude = {'id'}
+        fields = {k: v for k, v in d.items() if k not in exclude}
+
+        def _dt(v):
+            if v is None:
+                return None
+            if hasattr(v, "strftime"):
+                return v.strftime("%Y-%m-%d %H:%M:%S")
+            return str(v)
+
+        values = {}
+        for k, v in fields.items():
+            if k.endswith('_time'):
+                values[k] = _dt(v)
+            else:
+                values[k] = v
+
+        keys = list(values.keys())
+        placeholders = ', '.join(['%s'] * len(keys))
+        update_set = ', '.join([f"{k} = VALUES({k})" for k in keys])
+
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                sql = (
+                    f"INSERT INTO {TABLE_BAGGAGE_DELAY_DATA} ({', '.join(keys)}) "
+                    f"VALUES ({placeholders}) "
+                    f"ON DUPLICATE KEY UPDATE {update_set}"
+                )
+                await cursor.execute(sql, list(values.values()))
+                return cursor.lastrowid
+
+    async def get_by_forceid(self, forceid: str) -> Optional[BaggageDelayData]:
+        """根据 forceid 获取行李延误数据"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT * FROM {TABLE_BAGGAGE_DELAY_DATA} WHERE forceid = %s", (forceid,)
+                )
+                row = await cursor.fetchone()
+                return BaggageDelayData.from_dict(row) if row else None
+
+
 def get_db_connection() -> DatabaseConnection:
     """获取数据库连接实例"""
     return _db_connection
@@ -608,6 +719,16 @@ def get_claim_status_dao() -> ClaimStatusDAO:
 def get_review_result_dao() -> ReviewResultDAO:
     """获取审核结果DAO"""
     return ReviewResultDAO(_db_connection)
+
+
+def get_flight_delay_data_dao() -> FlightDelayDataDAO:
+    """获取航班延误数据DAO"""
+    return FlightDelayDataDAO(_db_connection)
+
+
+def get_baggage_delay_data_dao() -> BaggageDelayDataDAO:
+    """获取行李延误数据DAO"""
+    return BaggageDelayDataDAO(_db_connection)
 
 
 def get_review_segment_dao() -> ReviewSegmentDAO:

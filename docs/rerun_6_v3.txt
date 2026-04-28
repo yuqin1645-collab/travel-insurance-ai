@@ -1,0 +1,132 @@
+2026-04-28 13:55:57,866 INFO forceid=a0nC800000IBWjlIAH stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006635051】
+2026-04-28 13:55:57,867 INFO forceid=a0nC800000IBWjlIAH stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 13:55:57,867 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 13:56:10,832 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 13:56:33,030 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 13:56:33,033 INFO forceid=a0nC800000IBWjlIAH stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-28 13:56:48,092 INFO forceid=a0nC800000I9eOxIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006491557】
+2026-04-28 13:56:48,092 INFO forceid=a0nC800000I9eOxIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 13:56:48,093 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 13:57:00,709 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 13:57:18,797 INFO forceid=a0nC800000I9eOxIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 13:57:18,798 INFO forceid=a0nC800000I9eOxIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=False has_receipt_proof=False
+Vision API error(provider=dashscope): status=400, response: {"error":{"message":"Invalid value: file. Supported values are: 'text','image_url','video_url' and 'video'.","type":"invalid_request_error","param":"'messages.[0].content[1].type'","code":"invalid_value"},"request_id":"chatcmpl-c277e5ea-4ad8-9c4f-a357-67b0dabfe64a"}
+Vision API call failed(provider=dashscope): 400, message='Bad Request', url='https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+2026-04-28 13:57:29,298 INFO forceid=a0nC800000I9eOuIAJ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006641222】
+2026-04-28 13:57:29,298 INFO forceid=a0nC800000I9eOuIAJ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 13:57:29,299 INFO forceid=a0nC800000I9eOuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 13:57:43,105 INFO forceid=a0nC800000I9eOuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 13:58:24,020 INFO forceid=a0nC800000I9eOuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 13:58:24,021 INFO forceid=a0nC800000I9eOuIAJ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-04-28 13:58:42,655 INFO forceid=a0nC800000I7iQHIAZ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006526036】
+2026-04-28 13:58:42,655 INFO forceid=a0nC800000I7iQHIAZ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 13:58:42,655 INFO forceid=a0nC800000I7iQHIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 13:58:55,984 INFO forceid=a0nC800000I7iQHIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 13:59:14,995 INFO forceid=a0nC800000I7iQHIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 13:59:14,997 INFO forceid=a0nC800000I7iQHIAZ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=false has_receipt_proof=false
+2026-04-28 13:59:29,676 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=3, 航班号格式不正确
+2026-04-28 13:59:29,677 INFO forceid=- stage=- attempt=0 使用Mock数据: LH1879,LH726,CA1836 2026-02-12
+2026-04-28 13:59:29,840 INFO forceid=a0nC800000HqpJBIAZ stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006705633】
+2026-04-28 13:59:29,841 INFO forceid=a0nC800000HqpJBIAZ stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 13:59:29,841 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 13:59:51,892 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 14:00:05,756 INFO forceid=a0nC800000HqpJBIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 14:00:05,756 INFO forceid=a0nC800000HqpJBIAZ stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=False has_receipt_proof=False
+Vision API error(provider=dashscope): status=400, response: {"error":{"message":"Invalid value: file. Supported values are: 'text','image_url','video_url' and 'video'.","type":"invalid_request_error","param":"'messages.[0].content[1].type'","code":"invalid_value"},"request_id":"chatcmpl-d8650d22-ca28-981a-a6a7-fe27bf9f991b"}
+Vision API call failed(provider=dashscope): 400, message='Bad Request', url='https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+2026-04-28 14:00:17,765 INFO forceid=a0nC800000JZU0NIAX stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006662129】
+2026-04-28 14:00:17,765 INFO forceid=a0nC800000JZU0NIAX stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+2026-04-28 14:00:17,765 INFO forceid=a0nC800000JZU0NIAX stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-04-28 14:00:41,135 INFO forceid=a0nC800000JZU0NIAX stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-04-28 14:00:56,605 INFO forceid=a0nC800000JZU0NIAX stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+2026-04-28 14:00:56,605 INFO forceid=a0nC800000JZU0NIAX stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=True has_delay_proof=False has_receipt_proof=False
+
+[1/6] 重跑: a0nC800000IBWjlIAH
+  [baggage_delay] a0nC800000IBWjlIAH
+    audit_result: 
+    Remark: 审核通过：行李延误12.50小时，建议赔付0.00元
+    payout: 
+    auto_corrected: (无)
+    delay_calc: method=arrival_receipt_delta, delay_hours=12.5
+    已保存: review_results\baggage_delay\a0nC800000IBWjlIAH_ai_review.json
+
+[2/6] 重跑: a0nC800000I9eOxIAJ
+  [baggage_delay] a0nC800000I9eOxIAJ
+    audit_result: 
+    Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+    payout: 
+    auto_corrected: has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正
+    auto_corrected: has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正
+    pir_warning: 400, message='Bad Request', url='https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+    delay_calc: method=unknown, delay_hours=None
+    已保存: review_results\baggage_delay\a0nC800000I9eOxIAJ_ai_review.json
+
+[3/6] 重跑: a0nC800000I9eOuIAJ
+  [baggage_delay] a0nC800000I9eOuIAJ
+    audit_result: 
+    Remark: 审核通过：行李延误20.00小时，建议赔付0.00元
+    payout: 
+    auto_corrected: (无)
+    delay_calc: method=arrival_receipt_delta, delay_hours=20.0
+    已保存: review_results\baggage_delay\a0nC800000I9eOuIAJ_ai_review.json
+
+[4/6] 重跑: a0nC800000I7iQHIAZ
+  [baggage_delay] a0nC800000I7iQHIAZ
+    audit_result: 
+    Remark: 需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）
+    payout: 
+    auto_corrected: (无)
+    已保存: review_results\baggage_delay\a0nC800000I7iQHIAZ_ai_review.json
+
+[5/6] 重跑: a0nC800000HqpJBIAZ
+  [baggage_delay] a0nC800000HqpJBIAZ
+    audit_result: 
+    Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+    payout: 
+    auto_corrected: has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正
+    auto_corrected: has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正
+    pir_warning: 400, message='Bad Request', url='https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+    delay_calc: method=unknown, delay_hours=None
+    已保存: review_results\baggage_delay\a0nC800000HqpJBIAZ_ai_review.json
+
+[6/6] 重跑: a0nC800000JZU0NIAX
+  [baggage_delay] a0nC800000JZU0NIAX
+    audit_result: 
+    Remark: 需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）
+    payout: 
+    auto_corrected: (无)
+    已保存: review_results\baggage_delay\a0nC800000JZU0NIAX_ai_review.json
+
+============================================================
+汇总
+============================================================
+  a0nC800000IBWjlIAH:
+    audit=
+    delay_hours=12.5
+    pir_extract=skipped
+    auto_corrected: (无)
+  a0nC800000I9eOxIAJ:
+    audit=
+    delay_hours=None
+    pir_extract=skipped
+    auto_corrected: has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正, has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正
+  a0nC800000I9eOuIAJ:
+    audit=
+    delay_hours=20.0
+    pir_extract=skipped
+    auto_corrected: (无)
+  a0nC800000I7iQHIAZ:
+    audit=
+    delay_hours=unknown
+    pir_extract=skipped
+    auto_corrected: (无)
+  a0nC800000HqpJBIAZ:
+    audit=
+    delay_hours=None
+    pir_extract=skipped
+    auto_corrected: has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正, has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正
+  a0nC800000JZU0NIAX:
+    audit=
+    delay_hours=unknown
+    pir_extract=skipped
+    auto_corrected: (无)

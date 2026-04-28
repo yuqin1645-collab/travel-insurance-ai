@@ -5,6 +5,7 @@
 包含：赔付档位配置、改签场景提示词块
 """
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from app.rules.base import RuleResult
@@ -61,8 +62,6 @@ def check_rebooking_scenario(
     Returns:
         RuleResult：detail["delay_minutes"] 为计算结果（分钟）
     """
-    from datetime import datetime
-
     def _parse(s: Optional[str]):
         if not s:
             return None

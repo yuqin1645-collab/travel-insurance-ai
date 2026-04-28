@@ -421,15 +421,15 @@ async def run_supplementary_check():
     try:
         # 1. 检查截止时间并发送提醒
         reminder_count, reminder_msg = await handler.check_supplementary_deadline()
-        print(f"补件提醒: {reminder_msg}")
+        LOGGER.info(f"补件提醒: {reminder_msg}")
 
         # 2. 检查超时
         timeout_count, timeout_msg = await handler.check_supplementary_timeout()
-        print(f"补件超时: {timeout_msg}")
+        LOGGER.info(f"补件超时: {timeout_msg}")
 
         # 3. 检查收到补件
         received_count, received_msg = await handler.check_supplementary_received()
-        print(f"补件接收: {received_msg}")
+        LOGGER.info(f"补件接收: {received_msg}")
 
         return {
             "reminder": reminder_count,
@@ -443,7 +443,6 @@ async def run_supplementary_check():
 
 if __name__ == '__main__':
     # 测试
-    import asyncio
 
     async def test():
         handler = SupplementaryHandler()

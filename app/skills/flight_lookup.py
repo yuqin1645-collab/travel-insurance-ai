@@ -3,11 +3,20 @@
 用于从第三方航班数据源获取航班状态、延误时间、原因等信息
 """
 
+import ast
+import os
 import json
+import re
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 import aiohttp
 
@@ -167,8 +176,7 @@ class FlightLookupSkill:
         # 飞常准规范：国际航班必须同时传 dep + arr，否则触发 error_code:10
         # 两者都有才传；只有一个或都没有则不传（国内航班可仅用航班号+日期查询）
         # 清洗航班号：取分号/斜杠/加号/括号前的第一个有效航班号，去除空格
-        import re as _re
-        fnum_clean = _re.split(r'[;/+（(]', flight_no)[0].strip().upper().replace(" ", "")
+        fnum_clean = re.split(r'[;/+（(]', flight_no)[0].strip().upper().replace(" ", "")
         arguments: Dict[str, Any] = {"fnum": fnum_clean, "date": date}
         if dep_clean and arr_clean:
             arguments["dep"] = dep_clean
@@ -240,7 +248,6 @@ class FlightLookupSkill:
             dict_str = text
 
         # 用 ast.literal_eval 安全解析（飞常准返回的是Python dict格式）
-        import ast
         try:
             result_dict = ast.literal_eval(dict_str)
         except Exception:
@@ -376,13 +383,6 @@ _flight_lookup_skill: Optional[FlightLookupSkill] = None
 def get_flight_lookup_skill() -> FlightLookupSkill:
     """获取单例实例"""
     global _flight_lookup_skill
-    import os
-    # 确保 .env 已加载（flight_lookup 可能在 config 之前被调用）
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except Exception:
-        pass
     provider = os.getenv("FLIGHT_DATA_PROVIDER", "mock")
 
     if _flight_lookup_skill is not None and _flight_lookup_skill.variflight_api_key != os.getenv("VARIFLIGHT_API_KEY"):
@@ -393,79 +393,3 @@ def get_flight_lookup_skill() -> FlightLookupSkill:
             variflight_api_key=os.getenv("VARIFLIGHT_API_KEY"),
         )
     return _flight_lookup_skill
-
-
-async def flight_lookup_status(
-    flight_no: str,
-    date: str,
-    dep_iata: Optional[str] = None,
-    arr_iata: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    MCP Skill: flight.lookup_status
-    
-    查询航班权威数据，用于：
-    1. 核验材料中的航班时间是否与官方一致
-    2. 获取延误原因（外部原因判定）
-    3. 补充缺失的航班时间点
-    """
-    skill = get_flight_lookup_skill()
-    return await skill.lookup_status(
-        flight_no=flight_no,
-        date=date,
-        dep_iata=dep_iata,
-        arr_iata=arr_iata,
-    )
-
-
-# 便捷函数：计算延误分钟数
-def calculate_delay_minutes(
-    planned_dep: Optional[str],
-    actual_dep: Optional[str],
-    planned_arr: Optional[str],
-    actual_arr: Optional[str],
-) -> Dict[str, Any]:
-    """
-    计算延误分钟数（取长原则）
-    
-    Returns:
-        - a_minutes: 起飞口径延误分钟数
-        - b_minutes: 到达口径延误分钟数
-        - final_minutes: 最终延误分钟数（取长）
-        - method: 计算方法说明
-    """
-    def parse_dt(s: Optional[str]) -> Optional[datetime]:
-        if not s:
-            return None
-        try:
-            return datetime.fromisoformat(s.replace("Z", "+00:00"))
-        except Exception:
-            return None
-    
-    pd = parse_dt(planned_dep)
-    ad = parse_dt(actual_dep)
-    pa = parse_dt(planned_arr)
-    aa = parse_dt(actual_arr)
-    
-    a_minutes = None
-    b_minutes = None
-    
-    if pd and ad:
-        delta = int((ad - pd).total_seconds() / 60)
-        if delta >= 0:
-            a_minutes = delta
-    
-    if pa and aa:
-        delta = int((aa - pa).total_seconds() / 60)
-        if delta >= 0:
-            b_minutes = delta
-    
-    candidates = [m for m in [a_minutes, b_minutes] if isinstance(m, int)]
-    final_minutes = max(candidates) if candidates else None
-    
-    return {
-        "a_minutes": a_minutes,
-        "b_minutes": b_minutes,
-        "final_minutes": final_minutes,
-        "method": "max(起飞延误, 到达延误)",
-    }

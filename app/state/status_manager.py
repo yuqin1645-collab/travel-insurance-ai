@@ -9,7 +9,6 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Tuple
-from contextlib import asynccontextmanager
 
 from app.db.models import (
     ClaimStatusRecord, ReviewResult, SupplementaryRecord,
@@ -19,6 +18,7 @@ from app.db.database import (
     get_claim_status_dao, get_review_result_dao, get_supplementary_dao,
     ClaimStatusDAO, ReviewResultDAO, SupplementaryDAO
 )
+from app.config import config
 from app.state.claim_state_machine import ClaimStateMachine, StateTransitionError
 
 LOGGER = logging.getLogger(__name__)
@@ -532,7 +532,7 @@ class StatusManager:
             final_decision=review_result.get("final_decision"),
             decision_reason=review_result.get("decision_reason"),
             # 优先用 claim_info.json 注入的固定字段（_ci_* 前缀），AI 解析结果做兜底
-            passenger_name=review_result.get("_ci_insured_name"),
+            applicant_name=review_result.get("_ci_applicant_name"),
             passenger_id_type=review_result.get("_ci_id_type"),
             passenger_id_number=review_result.get("_ci_id_number"),
             policy_no=review_result.get("_ci_policy_no"),
@@ -554,8 +554,6 @@ class StatusManager:
         review_result: Dict[str, Any]
     ):
         """创建补件记录"""
-        from datetime import timedelta
-        from app.config import config
 
         # 获取案件状态
         status_record = await self.claim_status_dao.get_status_by_forceid(forceid)
@@ -588,33 +586,3 @@ def get_status_manager() -> StatusManager:
     if _status_manager is None:
         _status_manager = StatusManager()
     return _status_manager
-
-
-@asynccontextmanager
-async def status_transaction(forceid: str, new_status: str, change_reason: str = ""):
-    """
-    状态更新事务上下文管理器
-
-    Args:
-        forceid: 案件唯一ID
-        new_status: 新状态
-        change_reason: 变更原因
-
-    Yields:
-        状态管理器
-    """
-    manager = get_status_manager()
-    try:
-        yield manager
-        # 事务成功，更新状态
-        await manager.update_claim_status(forceid, new_status, change_reason)
-    except Exception as e:
-        # 事务失败，记录错误
-        LOGGER.error(f"状态更新事务失败: {forceid}, 错误: {e}")
-        await manager.update_claim_status(
-            forceid,
-            ClaimStatus.ERROR,
-            f"事务失败: {change_reason}",
-            str(e)
-        )
-        raise

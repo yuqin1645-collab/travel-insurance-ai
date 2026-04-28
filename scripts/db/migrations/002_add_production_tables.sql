@@ -6,8 +6,8 @@
 -- 1. 扩展 ai_review_result 表（添加缺失字段）
 -- ============================================
 ALTER TABLE ai_review_result
-    ADD COLUMN IF NOT EXISTS passenger_name VARCHAR(128) NULL COMMENT '被保险人姓名' AFTER claim_id,
-    ADD COLUMN IF NOT EXISTS passenger_id_type VARCHAR(32) NULL COMMENT '证件类型' AFTER passenger_name,
+    ADD COLUMN IF NOT EXISTS applicant_name VARCHAR(128) NULL COMMENT '申请人姓名（来自claim_info.json的Applicant_Name）' AFTER claim_id,
+    ADD COLUMN IF NOT EXISTS passenger_id_type VARCHAR(32) NULL COMMENT '证件类型' AFTER applicant_name,
     ADD COLUMN IF NOT EXISTS passenger_id_number VARCHAR(64) NULL COMMENT '证件号码' AFTER passenger_id_type,
     ADD COLUMN IF NOT EXISTS policy_no VARCHAR(64) NULL COMMENT '保单号' AFTER passenger_id_number,
     ADD COLUMN IF NOT EXISTS insurer VARCHAR(128) NULL COMMENT '保险公司' AFTER policy_no,
@@ -54,7 +54,7 @@ ALTER TABLE ai_review_result
 ALTER TABLE ai_review_result ADD INDEX idx_audit_result (audit_result);
 ALTER TABLE ai_review_result ADD INDEX idx_audit_status (audit_status);
 ALTER TABLE ai_review_result ADD INDEX idx_is_additional (is_additional);
-ALTER TABLE ai_review_result ADD INDEX idx_passenger_name (passenger_name);
+ALTER TABLE ai_review_result ADD INDEX idx_applicant_name (applicant_name);
 ALTER TABLE ai_review_result ADD INDEX idx_flight_no (flight_no);
 ALTER TABLE ai_review_result ADD INDEX idx_policy_no (policy_no);
 ALTER TABLE ai_review_result ADD INDEX idx_insurer (insurer);
@@ -162,7 +162,7 @@ CREATE OR REPLACE VIEW v_claim_audit_summary AS
 SELECT
     r.forceid AS '案件ID',
     r.claim_id AS '案件编号',
-    r.passenger_name AS '被保险人',
+    r.applicant_name AS '申请人',
     r.passenger_id_number AS '证件号',
     r.flight_no AS '航班号',
     r.dep_city AS '出发城市',

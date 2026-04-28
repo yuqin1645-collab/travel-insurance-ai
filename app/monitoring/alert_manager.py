@@ -6,15 +6,10 @@
 """
 
 import os
-import sys
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
-from pathlib import Path
-
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from app.config import config
 from app.db.database import get_scheduler_log_dao, get_db_connection
@@ -440,7 +435,6 @@ from app.db.models import TaskType, TaskStatus
 
 
 if __name__ == '__main__':
-    import asyncio
 
     async def test():
         manager = AlertManager()

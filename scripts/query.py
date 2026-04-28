@@ -13,6 +13,7 @@ import sys
 import json
 import os
 import argparse
+import pymysql
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -57,7 +58,6 @@ def cmd_forceid(forceid: str):
 
 def cmd_status():
     """查看数据库状态概览"""
-    import pymysql
     conn = pymysql.connect(
         host=os.getenv("DB_HOST", ""),
         port=int(os.getenv("DB_PORT", "3306")),

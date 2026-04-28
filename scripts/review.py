@@ -19,6 +19,7 @@ import json
 import asyncio
 import argparse
 import re
+import pymysql
 from pathlib import Path
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Tuple
@@ -136,7 +137,7 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
     else:
         LOGGER.error(f"推送前端失败: {forceid}", extra=_log_extra(forceid=forceid, stage="review"))
 
-    # 同步数据库
+    # 同步数据库（主表 + 子表）
     try:
         from app.production.main_workflow import ProductionWorkflow
         workflow = ProductionWorkflow()
@@ -144,9 +145,7 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
         folder = find_claim_folder(forceid)
         if folder:
             claim_info = json.loads((folder / "claim_info.json").read_text(encoding="utf-8"))
-        fields = workflow._extract_review_fields(result, claim_info)
-        # 写 DB
-        import pymysql
+        main_fields, flight_fields, baggage_fields = workflow._extract_review_fields(result, claim_info)
         conn = pymysql.connect(
             host=os.getenv("DB_HOST", ""), port=int(os.getenv("DB_PORT", "3306")),
             user=os.getenv("DB_USER", ""), password=os.getenv("DB_PASSWORD", ""),
@@ -154,7 +153,8 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
         )
         try:
             with conn.cursor() as cur:
-                keys = list(fields.keys())
+                # 1. 写主表
+                keys = list(main_fields.keys())
                 placeholders = ", ".join(["%s"] * len(keys))
                 update_clause = ", ".join([f"{k}=VALUES({k})" for k in keys if k != "forceid"])
                 sql = (
@@ -162,7 +162,28 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
                     f"VALUES ({placeholders}) "
                     f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
                 )
-                cur.execute(sql, list(fields.values()))
+                cur.execute(sql, list(main_fields.values()))
+
+                # 2. 写子表
+                ct = main_fields.get("claim_type", "")
+                if ct == "flight_delay" and flight_fields:
+                    fkeys = list(flight_fields.keys())
+                    fph = ", ".join(["%s"] * len(fkeys))
+                    fup = ", ".join([f"{k}=VALUES({k})" for k in fkeys if k != "forceid"])
+                    fsql = (
+                        f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
+                        f"VALUES ({fph}) ON DUPLICATE KEY UPDATE {fup}"
+                    )
+                    cur.execute(fsql, list(flight_fields.values()))
+                elif ct == "baggage_delay" and baggage_fields:
+                    bkeys = list(baggage_fields.keys())
+                    bph = ", ".join(["%s"] * len(bkeys))
+                    bup = ", ".join([f"{k}=VALUES({k})" for k in bkeys if k != "forceid"])
+                    bsql = (
+                        f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
+                        f"VALUES ({bph}) ON DUPLICATE KEY UPDATE {bup}"
+                    )
+                    cur.execute(bsql, list(baggage_fields.values()))
             conn.commit()
             LOGGER.info(f"数据库同步成功: {forceid}", extra=_log_extra(forceid=forceid, stage="review"))
         finally:

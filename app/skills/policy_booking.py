@@ -199,46 +199,6 @@ def check_delay_in_coverage(
     }
 
 
-# ==================== Skill F: booking.lookup_ticket_status ====================
-
-def lookup_ticket_status_stub(ticket_no: Optional[str]) -> Dict[str, Any]:
-    """
-    Skill F: 客票号使用状态（存根实现，待接入真实客票查询接口）。
-    目前无后端接口，返回 unknown 并建议补材。
-    """
-    if not ticket_no:
-        return {
-            "ticket_no": None,
-            "status": "unknown",
-            "note": "未提供客票号，无法查询，建议补充客票号/登机牌",
-        }
-    return {
-        "ticket_no": ticket_no,
-        "status": "unknown",
-        "note": f"客票号 {ticket_no} 查询接口尚未接入，建议人工核验票号使用状态",
-    }
-
-
-# ==================== Skill G: flight.lookup_rebooking ====================
-
-def lookup_rebooking_stub(
-    original_flight_no: Optional[str],
-    flight_date: Optional[str],
-    passenger_name: Optional[str],
-) -> Dict[str, Any]:
-    """
-    Skill G: 改签记录查询（存根实现，待接入航司/GDS接口）。
-    目前无后端接口，返回 unknown 并建议补材。
-    """
-    return {
-        "original_flight_no": original_flight_no or "unknown",
-        "flight_date": flight_date or "unknown",
-        "rebooking_records": [],
-        "status": "unknown",
-        "note": "改签记录查询接口尚未接入，建议提供承运人改签记录证明或登机牌",
-    }
-
-
 # ==================== Skill H: policy.lookup_coverage_area ====================
 
 def lookup_coverage_area(claim_info: Dict[str, Any]) -> Dict[str, Any]:

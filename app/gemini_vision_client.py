@@ -7,8 +7,11 @@ Vision API客户端
 
 import os
 import sys
+import re
+import json
 import asyncio
 import base64
+import logging
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -18,6 +21,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import aiohttp
 from app.config import config
+
+LOGGER = logging.getLogger(__name__)
 
 _VISION_GLOBAL_CONCURRENCY = max(1, int(getattr(config, 'VISION_GLOBAL_CONCURRENCY', 6) or 6))
 _VISION_SEMAPHORE = asyncio.Semaphore(_VISION_GLOBAL_CONCURRENCY)
@@ -79,8 +84,7 @@ class GeminiVisionClient:
         """
         Review claim materials with Vision API.
         """
-        import re as _re
-        prompt_clean = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", prompt)
+        prompt_clean = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", prompt)
         content_parts = [{"type": "text", "text": prompt_clean}]
 
         for file_path in material_files:
@@ -131,7 +135,7 @@ class GeminiVisionClient:
             async with _VISION_SEMAPHORE:
                 _VISION_INFLIGHT += 1
                 try:
-                    print(f"Vision API request start(provider={self.provider}, inflight={_VISION_INFLIGHT}/{_VISION_GLOBAL_CONCURRENCY})")
+                    LOGGER.debug(f"Vision API request start(provider={self.provider}, inflight={_VISION_INFLIGHT}/{_VISION_GLOBAL_CONCURRENCY})")
                     async with session.post(
                         f"{self.base_url}/chat/completions",
                         headers=self.headers,
@@ -142,19 +146,16 @@ class GeminiVisionClient:
                     ) as response:
                         if response.status != 200:
                             error_text = await response.text()
-                            print(f"Vision API error(provider={self.provider}):")
-                            print(f"  status: {response.status}")
-                            print(f"  response: {error_text[:500]}")
+                            LOGGER.warning(f"Vision API error(provider={self.provider}): status={response.status}, response: {error_text[:500]}")
                         response.raise_for_status()
                         raw_bytes = await response.read()
-                        import json as _json
                         try:
-                            result = _json.loads(raw_bytes.decode('utf-8'))
-                        except _json.JSONDecodeError as _je:
+                            result = json.loads(raw_bytes.decode('utf-8'))
+                        except json.JSONDecodeError as _je:
                             if "control character" in str(_je).lower():
                                 cleaned = raw_bytes.decode('utf-8', errors='replace')
-                                cleaned = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
-                                result = _json.loads(cleaned)
+                                cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
+                                result = json.loads(cleaned)
                             else:
                                 raise
 
@@ -164,7 +165,7 @@ class GeminiVisionClient:
                     _VISION_INFLIGHT = max(0, _VISION_INFLIGHT - 1)
 
         except Exception as e:
-            print(f"Vision API call failed(provider={self.provider}): {e}")
+            LOGGER.warning(f"Vision API call failed(provider={self.provider}): {e}")
             raise
 
         finally:
@@ -176,8 +177,6 @@ class GeminiVisionClient:
         尽量稳健地从模型返回内容中提取并解析 JSON object。
         目标：避免因贪婪截取导致的 json.loads 语法错误（如 Expecting ',' delimiter）。
         """
-        import json
-        import re
 
         if content is None:
             raise ValueError("vision response content is None")

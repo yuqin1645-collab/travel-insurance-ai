@@ -118,6 +118,30 @@ class RuleResult:
 - [ ] 险种提示词中使用 `{{include:}}` 引用共享块，而非复制粘贴
 - [ ] 用至少一个真实案件（或构造的 claim_info 字典）跑通审核流程，比对 `KeyConclusions` 和 `Remark` 与预期一致
 
+### 7. Pipeline 拆分规范（强制）
+
+`pipeline.py` 文件行数**不得超过 500 行**。超过时必须拆分出 `stages/` 子目录。
+
+**`pipeline.py` 只做编排，不做实现。** 所有业务函数必须放在 `stages/` 子目录中：
+
+```
+app/modules/<claim_type>/
+├── module.py
+├── pipeline.py              ← 纯编排层（≤500行），只做 stage 串联
+└── stages/
+    ├── __init__.py          ← re-export 所有 stage 函数
+    ├── utils.py             ← 纯工具函数（_safe_float, _parse_date, _is_unknown, _result 等）
+    ├── handlers.py          ← handler/check 函数（保单校验、材料门禁、除外责任等）
+    └── calculator.py        ← 计算函数（延误时长、赔付金额等）
+```
+
+新增险种时：
+1. 先建 `stages/` 子目录（utils.py, handlers.py, calculator.py, __init__.py）
+2. 再写 `pipeline.py`，只从 `stages/` 导入并串联
+3. 禁止在 `pipeline.py` 中定义纯工具函数或业务校验函数
+
+详细规范见 [docs/module_architecture_and_new_claim_template.md](docs/module_architecture_and_new_claim_template.md) 第 2.5 节。
+
 ---
 
 ## 常用运维脚本

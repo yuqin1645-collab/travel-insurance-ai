@@ -1,0 +1,723 @@
+
+============================================================
+案件: a0nC800000IdwOPIAZ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 零结关案
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'QZ646', 'date': '2026-01-29', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': 'boarding_pass', 'role_hint': '登机牌'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'QZ646', 'original_date': '2026-01-29', 'original_dep_iata': 'unknown', 'original_arr_iata': 'unknown', 'original_status': 'unknown', 'original_status_source': '材料未明确说明'}]
+    flight_no: QZ646
+    flight_date: 2026-01-29
+    dep_iata: unknown
+    arr_iata: unknown
+    dep_city: unknown
+    dep_country: unknown
+    arr_city: unknown
+    arr_country: unknown
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未出现保护航班信息'}
+    protection_check: {'result': '不适用', 'reason': '材料中未出现保护航班信息'}
+    alternate: {'alt_dep': 'unknown', 'alt_arr': 'unknown', 'alt_flight_no': 'unknown', 'alt_source': '材料中未出现替代/改签航班信息', 'is_connecting_missed': 'unknown', 'is_connecting_rebooking': 'unknown'}
+    extraction_notes: 材料中仅识别到一张登机牌，显示航班号为 QZ646，日期为 2026-01-29。行程单/电子客票未在提供的材料中出现。登机牌上未显示出发和到达机场三字码。行李延误证明、行李签收时间证明、托运行李牌照片等行李延误相关凭证也未在提供的材料中出现。被保险人姓名为季司诚，与案件基本信息一致。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未出现承运人出具的行李延误证明文件
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-01-29
+    flight_actual_arrival_time: 2026-01-29 23:59/unknown
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: False
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 季司诚
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 案件基本信息中的 Date_of_Accident 为 2026-01-30，但材料中提取的事故日期（登机牌日期）为 2026-01-29，存在 1 天差异。建议补充行李延误证明或行李签收时间证明以确认准确延误日期。材料中仅有一张登机牌，未见其他关键理赔材料（如 PIR 报告、行李签收单等）。
+    _vision_scan_stats: {'total_source_files': 16, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (16个):
+    file_001.bin  (.bin, 838KB)
+    file_002.bin  (.bin, 77KB)
+    file_003.bin  (.bin, 746KB)
+    file_004.bin  (.bin, 359KB)
+    file_005.bin  (.bin, 286KB)
+    file_006.bin  (.bin, 1044KB)
+    file_007.bin  (.bin, 810KB)
+    file_008.bin  (.bin, 601KB)
+    file_009.bin  (.bin, 578KB)
+    file_010.bin  (.bin, 1999KB)
+    file_011.bin  (.bin, 342KB)
+    file_012.bin  (.bin, 315KB)
+    file_013.bin  (.bin, 578KB)
+    file_014.bin  (.bin, 1182KB)
+    file_015.bin  (.bin, 488KB)
+    file_016.pdf  (.pdf, 1087KB)
+
+============================================================
+案件: a0nC800000ICHXNIA5
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 零结关案
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'unknown', 'date': '2026-02-18', 'dep_iata': 'PEK', 'arr_iata': 'MAD', 'source': 'itinerary', 'role_hint': '原航班'}, {'flight_no': 'unknown', 'date': '2026-02-19', 'dep_iata': 'MAD', 'arr_iata': 'unknown', 'source': 'boarding_pass', 'role_hint': '改签/替代航班'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'unknown', 'original_date': '2026-02-18', 'original_dep_iata': 'PEK', 'original_arr_iata': 'MAD', 'original_status': 'unknown', 'original_status_source': '行程单显示为原定航班，未明确状态'}]
+    flight_no: unknown
+    flight_date: 2026-02-18
+    dep_iata: PEK
+    arr_iata: MAD
+    dep_city: 北京
+    dep_country: 中国
+    arr_city: 马德里
+    arr_country: 西班牙
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用（无保护航班）', 'reason': '材料中未出现保护航班信息'}
+    alternate: {'alt_dep': '2026-02-19', 'alt_arr': 'unknown', 'alt_flight_no': 'unknown', 'alt_source': '登机牌显示为改签航班', 'is_connecting_missed': 'false', 'is_connecting_rebooking': 'true'}
+    extraction_notes: 1. 原航班号因OCR识别限制无法确定具体数字，仅知为从北京大兴机场(Pek)至马德里机场(Mad)的航班，计划起飞日期为2026-02-18。2. 改签航班登机牌显示出发日期为2026-02-19，与原航班日期不同，确认为改签航班。3. 材料中未见明确的保护航班信息。4. 行李延误证明文件（PIR报告）和行李签收时间证明未在提供的材料中出现。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-19
+    flight_actual_arrival_time: 2026-02-19
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: False
+    has_passport: True
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: XIE ZHIYI
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 1. 被保险人姓名为 XIE ZHIYI，护照号码 EK7470481，在申请表中可见。2. 材料中提供了被保险人的护照照片页，符合要求。3. 未见行李延误证明文件（如 PIR 报告）、行李签收时间证明、托运行李牌等理赔所需凭证。4. 改签航班登机牌显示出发日期为2026-02-19，与案件基本信息中的事故日期一致。5. 材料中未见银行账户信息用于赔款打款验证。
+    _vision_scan_stats: {'total_source_files': 18, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (18个):
+    file_001.bin  (.bin, 263KB)
+    file_002.bin  (.bin, 388KB)
+    file_003.bin  (.bin, 207KB)
+    file_004.bin  (.bin, 3235KB)
+    file_005.bin  (.bin, 4061KB)
+    file_006.bin  (.bin, 307KB)
+    file_007.bin  (.bin, 2596KB)
+    file_008.bin  (.bin, 2743KB)
+    file_009.bin  (.bin, 1529KB)
+    file_010.bin  (.bin, 1418KB)
+    file_011.bin  (.bin, 1229KB)
+    file_012.bin  (.bin, 2121KB)
+    file_013.bin  (.bin, 2200KB)
+    file_014.bin  (.bin, 489KB)
+    file_015.bin  (.bin, 2311KB)
+    file_016.bin  (.bin, 1999KB)
+    file_017.bin  (.bin, 489KB)
+    file_018.pdf  (.pdf, 1091KB)
+
+============================================================
+案件: a0nC800000IBWjlIAH
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'QZ646', 'date': '2026-02-11', 'dep_iata': 'KUL', 'arr_iata': 'HEL', 'source': 'boarding_pass', 'role_hint': '原航班'}, {'flight_no': 'IB1651', 'date': '2026-02-12', 'dep_iata': 'HEL', 'arr_iata': 'BCN', 'source': 'boarding_pass', 'role_hint': '行程变动后的新航班'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'QZ646', 'original_date': '2026-02-11', 'original_dep_iata': 'KUL', 'original_arr_iata': 'HEL', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，但根据描述为原定航班'}, {'segment_no': 2, 'original_flight_no': 'IB1651', 'original_date': '2026-02-12', 'original_dep_iata': 'HEL', 'original_arr_iata': 'BCN', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，但根据描述为客户实际乘坐的航班'}]
+    flight_no: QZ646
+    flight_date: 2026-02-11
+    dep_iata: KUL
+    arr_iata: HEL
+    dep_city: 吉隆坡
+    dep_country: 马来西亚
+    arr_city: 赫尔辛基
+    arr_country: 芬兰
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用（无保护航班）', 'reason': '材料中未出现保护航班信息'}
+    alternate: {'alt_dep': '2026-02-12 08:30', 'alt_arr': '2026-02-12 12:30', 'alt_flight_no': 'IB1651', 'alt_source': '登机牌', 'is_connecting_missed': 'true', 'is_connecting_rebooking': 'true'}
+    extraction_notes: 航班号 'QZ646' 和 'IB1651' 均通过OCR字符级扫描确认。'QZ646' 为原航班，'IB1651' 为客户实际乘坐的替代航班。登机牌上的出发时间为 2026-02-12 08:30，到达时间为 2026-02-12 12:30。机场三字码 KUL (吉隆坡)、HEL (赫尔辛基)、BCN (巴塞罗那) 均从登机牌上提取。材料中未见保护航班信息。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-12
+    flight_actual_arrival_time: 2026-02-12 12:30
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: True
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 陈颖怡
+    has_bank_card_proof: False
+    risk_flags: ['multilang']
+    notes: 被保险人姓名 '陈颖怡' 从案件基本信息和申请表中确认。身份证件已提供，护照未见。材料中未见行李延误证明、行李签收时间证明或行李牌贴纸。延误时长因缺少行李签收时间无法计算。多语言材料（中文/英文）存在，需注意字段识别准确性。
+    _vision_scan_stats: {'total_source_files': 16, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (16个):
+    file_001.bin  (.bin, 260KB)
+    file_002.bin  (.bin, 311KB)
+    file_003.bin  (.bin, 144KB)
+    file_004.bin  (.bin, 2386KB)
+    file_005.bin  (.bin, 2172KB)
+    file_006.bin  (.bin, 3693KB)
+    file_007.bin  (.bin, 3223KB)
+    file_008.bin  (.bin, 1855KB)
+    file_009.bin  (.bin, 295KB)
+    file_010.bin  (.bin, 2290KB)
+    file_011.bin  (.bin, 394KB)
+    file_012.bin  (.bin, 445KB)
+    file_013.bin  (.bin, 206KB)
+    file_014.bin  (.bin, 489KB)
+    file_015.bin  (.bin, 149KB)
+    file_016.pdf  (.pdf, 1090KB)
+
+============================================================
+案件: a0nC800000Ib5ZTIAZ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 事后理赔拒赔
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'JU989', 'date': '2026-02-16 22:52', 'dep_iata': 'CAN', 'arr_iata': 'BEG', 'source': 'boarding_pass', 'role_hint': '登机牌'}, {'flight_no': 'JU988', 'date': '2026-02-16 22:45', 'dep_iata': 'CAN', 'arr_iata': 'BEG', 'source': 'itinerary', 'role_hint': '行程单/电子客票'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'JU988', 'original_date': '2026-02-16 22:45', 'original_dep_iata': 'CAN', 'original_arr_iata': 'BEG', 'original_status': 'unknown', 'original_status_source': '行程单显示为原定航班，未明确状态'}]
+    flight_no: JU988
+    flight_date: 2026-02-16
+    dep_iata: CAN
+    arr_iata: BEG
+    dep_city: 广州
+    dep_country: 中国
+    arr_city: 贝尔格莱德
+    arr_country: 塞尔维亚
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用', 'reason': '材料中未提及保护航班'}
+    alternate: {'alt_dep': '2026-02-16 22:52', 'alt_arr': '2026-02-17 03:53', 'alt_flight_no': 'JU989', 'alt_source': '登机牌', 'is_connecting_missed': 'unknown', 'is_connecting_rebooking': 'unknown'}
+    extraction_notes: 所有航班号和日期均依据OCR预识别文本及图片内容逐字符核对。JU988为行程单上的原定航班，JU989为登机牌上的实际乘坐航班，两者存在改签关系。登机牌显示实际起飞时间为2026-02-16 22:52，实际到达时间为2026-02-17 03:53。行程单上的计划起飞时间为2026-02-16 22:45GMT+8（即北京时间2026-02-16 22:45）。材料中未出现保护航班信息。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-16
+    flight_actual_arrival_time: 2026-02-17 03:53
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: True
+    has_passport: True
+    has_exit_entry_record: True
+    exit_datetime: 2026-02-16 22:45
+    insured_name_in_materials: 黄燕玲
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 被保险人姓名为黄燕玲，与案件基本信息一致。材料中包含身份证和护照，符合要求。出入境记录显示2026年2月16日出境，与航班日期吻合。行李延误时长因缺少行李签收时间证明，无法计算。
+    _vision_scan_stats: {'total_source_files': 32, 'pdf_count': 1, 'image_count': 2, 'docx_count': 0, 'total_attachments_sent': 4, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (32个):
+    file_001.bin  (.bin, 85KB)
+    file_002.bin  (.bin, 98KB)
+    file_003.bin  (.bin, 161KB)
+    file_004.bin  (.bin, 1255KB)
+    file_005.bin  (.bin, 2465KB)
+    file_006.bin  (.bin, 1255KB)
+    file_007.bin  (.bin, 2017KB)
+    file_008.bin  (.bin, 290KB)
+    file_009.bin  (.bin, 1449KB)
+    file_010.bin  (.bin, 1402KB)
+    file_011.bin  (.bin, 489KB)
+    file_012.bin  (.bin, 1221KB)
+    file_013.bin  (.bin, 1036KB)
+    file_014.bin  (.bin, 971KB)
+    file_015.bin  (.bin, 1179KB)
+    file_016.bin  (.bin, 27KB)
+    file_017.pdf  (.pdf, 1090KB)
+    file_018.bin  (.bin, 293KB)
+    file_019.bin  (.bin, 27KB)
+    file_020.bin  (.bin, 2023KB)
+    file_021.bin  (.bin, 458KB)
+    file_022.bin  (.bin, 141KB)
+    file_023.bin  (.bin, 27KB)
+    file_024.bin  (.bin, 2023KB)
+    file_025.bin  (.bin, 458KB)
+    file_026.bin  (.bin, 141KB)
+    file_027.bin  (.bin, 2023KB)
+    file_028.bin  (.bin, 27KB)
+    file_029.bin  (.bin, 458KB)
+    file_030.bin  (.bin, 141KB)
+    file_031.png  (.png, 285KB)
+    file_032.png  (.png, 297KB)
+
+============================================================
+案件: a0nC800000I9eOxIAJ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'QZ646', 'date': '2026-02-12 00:00', 'dep_iata': 'PAR', 'arr_iata': 'BCN', 'source': 'boarding_pass', 'role_hint': '原航班'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'QZ646', 'original_date': '2026-02-12 00:00', 'original_dep_iata': 'PAR', 'original_arr_iata': 'BCN', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，但作为原定航班存在'}]
+    flight_no: QZ646
+    flight_date: 2026-02-12
+    dep_iata: PAR
+    arr_iata: BCN
+    dep_city: 巴黎
+    dep_country: 法国
+    arr_city: 巴塞罗那
+    arr_country: 西班牙
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用（无保护航班）', 'reason': '材料中未提及保护航班，因此不进行校验'}
+    alternate: {'alt_dep': 'unknown', 'alt_arr': 'unknown', 'alt_flight_no': 'unknown', 'alt_source': '材料中未提及改签或替代航班', 'is_connecting_missed': 'unknown', 'is_connecting_rebooking': 'unknown'}
+    extraction_notes: 案件基本信息中的 Date_of_Accident 为 2026-02-12，与登机牌上显示的出发日期一致。登机牌上的航班号 QZ646 与案件信息中的航班号一致，且出发机场 PAR（巴黎）和到达机场 BCN（巴塞罗那）也与案件描述相符。材料中未见保护航班或替代航班信息。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件（如 PIR 报告、行李运输事故单等）
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-12
+    flight_actual_arrival_time: 2026-02-12 00:00
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: True
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 张铁汉
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 被保险人姓名 '张铁汉' 与案件基本信息一致。材料中提供了被保险人的身份证件（ID Type: 身份证, ID Number: 350102199510121910），符合要求。登机牌显示航班号 QZ646，出发日期 2026-02-12，与案件信息一致。材料中未见行李延误证明、行李签收时间证明、托运行李牌照片或航空公司官方行李记录，这些可能需要后续补充。
+    _vision_scan_stats: {'total_source_files': 16, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (16个):
+    file_001.bin  (.bin, 170KB)
+    file_002.bin  (.bin, 162KB)
+    file_003.bin  (.bin, 234KB)
+    file_004.bin  (.bin, 1954KB)
+    file_005.bin  (.bin, 1907KB)
+    file_006.bin  (.bin, 231KB)
+    file_007.bin  (.bin, 293KB)
+    file_008.bin  (.bin, 1513KB)
+    file_009.bin  (.bin, 259KB)
+    file_010.bin  (.bin, 175KB)
+    file_011.bin  (.bin, 1979KB)
+    file_012.bin  (.bin, 2135KB)
+    file_013.bin  (.bin, 175KB)
+    file_014.bin  (.bin, 332KB)
+    file_015.bin  (.bin, 487KB)
+    file_016.pdf  (.pdf, 1086KB)
+
+============================================================
+案件: a0nC800000I9eOuIAJ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'QZ646', 'date': '2026-02-14', 'dep_iata': 'PVG', 'arr_iata': 'HKT', 'source': 'boarding_pass', 'role_hint': '登机牌'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'QZ646', 'original_date': '2026-02-14', 'original_dep_iata': 'PVG', 'original_arr_iata': 'HKT', 'original_status': 'unknown', 'original_status_source': '材料未明确说明原航班状态'}]
+    flight_no: QZ646
+    flight_date: 2026-02-14
+    dep_iata: PVG
+    arr_iata: HKT
+    dep_city: 上海
+    dep_country: 中国
+    arr_city: 香港
+    arr_country: 中国
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未出现保护航班信息'}
+    protection_check: {'result': '不适用（无保护航班）', 'reason': '材料中未提及保护航班'}
+    alternate: {'alt_dep': 'unknown', 'alt_arr': 'unknown', 'alt_flight_no': 'unknown', 'alt_source': 'unknown', 'is_connecting_missed': 'unknown', 'is_connecting_rebooking': 'unknown'}
+    extraction_notes: 材料中仅识别到一张登机牌，航班号为 QZ646，计划起飞日期为 2026-02-14。未发现其他航班信息、保护航班、改签航班或行程变动通知。行李延误证明、行李签收时间证明、托运行李牌等材料均未在提供的图片中找到。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-14
+    flight_actual_arrival_time: 2026-02-14 18:30
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: True
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 佟辛雨
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 被保险人姓名为佟辛雨，身份证件已在材料中提供。登机牌显示航班号 QZ646，计划从上海浦东机场 (PVG) 飞往香港国际机场 (HKT)，计划起飞时间为 2026-02-14。未发现行李延误证明、行李签收时间证明或托运行李牌等材料。行李延误时长无法计算，因缺乏行李签收时间。
+    _vision_scan_stats: {'total_source_files': 16, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (16个):
+    file_001.bin  (.bin, 70KB)
+    file_002.bin  (.bin, 70KB)
+    file_003.bin  (.bin, 1113KB)
+    file_004.bin  (.bin, 1875KB)
+    file_005.bin  (.bin, 2097KB)
+    file_006.bin  (.bin, 1978KB)
+    file_007.bin  (.bin, 2318KB)
+    file_008.bin  (.bin, 2231KB)
+    file_009.bin  (.bin, 1585KB)
+    file_010.bin  (.bin, 1975KB)
+    file_011.bin  (.bin, 1842KB)
+    file_012.bin  (.bin, 2182KB)
+    file_013.bin  (.bin, 320KB)
+    file_014.bin  (.bin, 487KB)
+    file_015.bin  (.bin, 506KB)
+    file_016.pdf  (.pdf, 1085KB)
+
+============================================================
+案件: a0nC800000I7iQHIAZ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: false
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'LH1879', 'date': '2026-02-11', 'dep_iata': 'NCE', 'arr_iata': 'MUC', 'source': 'boarding_pass', 'role_hint': '第1程'}, {'flight_no': 'LH726', 'date': '2026-02-11', 'dep_iata': 'MUC', 'arr_iata': 'PVG', 'source': 'boarding_pass', 'role_hint': '第2程'}, {'flight_no': 'CA1836', 'date': '2026-02-12', 'dep_iata': 'PVG', 'arr_iata': 'PEK', 'source': 'boarding_pass', 'role_hint': '第3程'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'LH1879', 'original_date': '2026-02-11', 'original_dep_iata': 'NCE', 'original_arr_iata': 'MUC', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，登机牌显示为正常乘坐'}, {'segment_no': 2, 'original_flight_no': 'LH726', 'original_date': '2026-02-11', 'original_dep_iata': 'MUC', 'original_arr_iata': 'PVG', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，登机牌显示为正常乘坐'}, {'segment_no': 3, 'original_flight_no': 'CA1836', 'original_date': '2026-02-12', 'original_dep_iata': 'PVG', 'original_arr_iata': 'PEK', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未明确显示状态，登机牌显示为正常乘坐'}]
+    flight_no: LH1879
+    flight_date: 2026-02-11
+    dep_iata: NCE
+    arr_iata: MUC
+    dep_city: 那不勒斯
+    dep_country: 意大利
+    arr_city: 慕尼黑
+    arr_country: 德国
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用', 'reason': '材料中未提及保护航班'}
+    alternate: {'alt_dep': '2026-02-11 14:50', 'alt_arr': '2026-02-11 17:30', 'alt_flight_no': 'LH726', 'alt_source': '登机牌显示的实际乘坐航班', 'is_connecting_missed': 'false', 'is_connecting_rebooking': 'false'}
+    extraction_notes: 所有航班号均通过OCR预识别文本逐字符核对，与图片视觉完全一致。行程单/电子客票未明确显示原航班状态，但登机牌显示各程航班均为正常乘坐。替代航班为LH726，实际出发时间为2026-02-11 14:50，抵达时间为2026-02-11 17:30。
+    has_boarding_or_ticket: true
+    has_baggage_delay_proof: false
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件（如PIR报告、行李运输事故单等）
+    has_baggage_receipt_time_proof: false
+    has_baggage_tag_proof: false
+    has_airline_baggage_record: false
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-12
+    flight_actual_arrival_time: 2026-02-12 17:30
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: true
+    has_passport: false
+    has_exit_entry_record: false
+    exit_datetime: unknown
+    insured_name_in_materials: 罗抒
+    has_bank_card_proof: false
+    risk_flags: []
+    notes: 被保险人姓名为罗抒，身份证件已提供。材料中未见行李延误证明、行李签收时间证明及托运行李牌照片。行李延误时长因缺少行李签收时间无法计算。
+    _vision_scan_stats: {'total_source_files': 40, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (40个):
+    file_001.bin  (.bin, 545KB)
+    file_002.bin  (.bin, 320KB)
+    file_003.bin  (.bin, 545KB)
+    file_004.bin  (.bin, 320KB)
+    file_005.bin  (.bin, 1984KB)
+    file_006.bin  (.bin, 2042KB)
+    file_007.bin  (.bin, 2056KB)
+    file_008.bin  (.bin, 202KB)
+    file_009.bin  (.bin, 71KB)
+    file_010.bin  (.bin, 2458KB)
+    file_011.bin  (.bin, 292KB)
+    file_012.bin  (.bin, 368KB)
+    file_013.bin  (.bin, 242KB)
+    file_014.bin  (.bin, 284KB)
+    file_015.bin  (.bin, 1868KB)
+    file_016.bin  (.bin, 1870KB)
+    file_017.bin  (.bin, 1946KB)
+    file_018.bin  (.bin, 2226KB)
+    file_019.bin  (.bin, 271KB)
+    file_020.bin  (.bin, 277KB)
+    file_021.bin  (.bin, 2217KB)
+    file_022.bin  (.bin, 200KB)
+    file_023.bin  (.bin, 72KB)
+    file_024.bin  (.bin, 1556KB)
+    file_025.bin  (.bin, 212KB)
+    file_026.bin  (.bin, 74KB)
+    file_027.bin  (.bin, 1603KB)
+    file_028.bin  (.bin, 184KB)
+    file_029.bin  (.bin, 68KB)
+    file_030.bin  (.bin, 197KB)
+    file_031.bin  (.bin, 73KB)
+    file_032.bin  (.bin, 76KB)
+    file_033.bin  (.bin, 216KB)
+    file_034.bin  (.bin, 1662KB)
+    file_035.bin  (.bin, 488KB)
+    file_036.bin  (.bin, 415KB)
+    file_037.bin  (.bin, 503KB)
+    file_038.bin  (.bin, 1924KB)
+    file_039.bin  (.bin, 2030KB)
+    file_040.pdf  (.pdf, 1089KB)
+
+============================================================
+案件: a0nC800000HqpJBIAZ
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': '3U3996', 'date': '2026-02-08', 'dep_iata': 'KUL', 'arr_iata': 'TFU', 'source': 'boarding_pass', 'role_hint': '登机牌'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': '3U3996', 'original_date': '2026-02-08', 'original_dep_iata': 'KUL', 'original_arr_iata': 'TFU', 'original_status': 'unknown', 'original_status_source': '行程单/电子客票未提供，以登机牌和案件描述为准'}]
+    flight_no: 3U3996
+    flight_date: 2026-02-08
+    dep_iata: KUL
+    arr_iata: TFU
+    dep_city: 吉隆坡
+    dep_country: 马来西亚
+    arr_city: 成都
+    arr_country: 中国
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用', 'reason': '材料中未提及保护航班'}
+    alternate: {'alt_dep': 'unknown', 'alt_arr': 'unknown', 'alt_flight_no': 'unknown', 'alt_source': '材料中未提及改签或替代航班', 'is_connecting_missed': 'unknown', 'is_connecting_rebooking': 'unknown'}
+    extraction_notes: 所有航班信息均来源于登机牌（file_019_p2_q.jpg）及案件基本信息。航班号3U3996在登机牌上清晰可见，出发机场为吉隆坡（KUL），到达机场为天府机场（TFU）。日期为2026年2月8日，与案件描述一致。未发现保护航班或改签航班信息。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件（如PIR报告、行李运输事故单等）
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-02-08
+    flight_actual_arrival_time: 2026-02-08 23:59
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: False
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 徐佳丽
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 被保险人姓名为徐佳丽，与案件基本信息一致。材料中未见身份证、护照或出入境记录。行李延误证明、行李签收时间证明、托运行李牌均未在提供的材料中出现。延误时长因缺乏行李签收时间无法计算。
+    _vision_scan_stats: {'total_source_files': 19, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (19个):
+    file_001.bin  (.bin, 192KB)
+    file_002.bin  (.bin, 200KB)
+    file_003.bin  (.bin, 231KB)
+    file_004.bin  (.bin, 1280KB)
+    file_005.bin  (.bin, 1283KB)
+    file_006.bin  (.bin, 1000KB)
+    file_007.bin  (.bin, 2009KB)
+    file_008.bin  (.bin, 558KB)
+    file_009.bin  (.bin, 243KB)
+    file_010.bin  (.bin, 274KB)
+    file_011.bin  (.bin, 2413KB)
+    file_012.bin  (.bin, 2065KB)
+    file_013.bin  (.bin, 1854KB)
+    file_014.bin  (.bin, 394KB)
+    file_015.bin  (.bin, 1036KB)
+    file_016.bin  (.bin, 3629KB)
+    file_017.bin  (.bin, 2487KB)
+    file_018.bin  (.bin, 485KB)
+    file_019.pdf  (.pdf, 1085KB)
+
+============================================================
+案件: a0nC800000JZU0NIAX
+============================================================
+  BenefitName: 行李延误
+  Description: 
+  Final_Status: 支付成功
+
+  审核结论: 
+  Remark: 需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明
+  Payout: 
+
+  ai_parsed:
+    has_baggage_tag_proof: True
+    has_baggage_delay_proof: True
+    has_baggage_receipt_time_proof: False
+    delay_hours: unknown
+    baggage_delay_hours: None
+
+  vision_extract 字段:
+    all_flights_found: [{'flight_no': 'AY0992', 'date': '2026-03-01', 'dep_iata': 'KEF', 'arr_iata': 'HEL', 'source': 'itinerary', 'role_hint': '原航班'}, {'flight_no': 'HO1608', 'date': '2026-03-02', 'dep_iata': 'HEL', 'arr_iata': 'HKT', 'source': 'boarding_pass', 'role_hint': '改签/替代航班'}]
+    itinerary_segments: [{'segment_no': 1, 'original_flight_no': 'AY0992', 'original_date': '2026-03-01', 'original_dep_iata': 'KEF', 'original_arr_iata': 'HEL', 'original_status': '延误', 'original_status_source': '案件基本信息描述：因AY0992航班延误，导致后续没有在芬兰机场跟上转机'}, {'segment_no': 2, 'original_flight_no': 'HO1608', 'original_date': '2026-03-02', 'original_dep_iata': 'HEL', 'original_arr_iata': 'HKT', 'original_status': 'unknown', 'original_status_source': '行程单未明确状态，但实际乘坐了该航班'}]
+    flight_no: AY0992
+    flight_date: 2026-03-01
+    dep_iata: KEF
+    arr_iata: HEL
+    dep_city: 雷克雅未克
+    dep_country: 冰岛
+    arr_city: 赫尔辛基
+    arr_country: 芬兰
+    protection_flight: {'flight_no': 'unknown', 'date': 'unknown', 'dep_iata': 'unknown', 'arr_iata': 'unknown', 'source': '材料中未提及保护航班'}
+    protection_check: {'result': '不适用（无保护航班）', 'reason': '材料中未出现保护航班信息'}
+    alternate: {'alt_dep': '2026-03-02 14:50', 'alt_arr': '2026-03-02 17:30', 'alt_flight_no': 'HO1608', 'alt_source': '登机牌显示的实际乘坐航班', 'is_connecting_missed': True, 'is_connecting_rebooking': True}
+    extraction_notes: 所有航班号均依据OCR预识别文本逐字符核对。行程单（itinerary）显示原航班为AY0992，登机牌（boarding_pass）显示实际乘坐航班为HO1608，构成改签。出发机场KEF（冰岛雷克雅未克）和到达机场HEL（芬兰赫尔辛基）均从行程单获取。材料中未见保护航班信息，故保护航班检查不适用。
+    has_boarding_or_ticket: True
+    has_baggage_delay_proof: False
+    baggage_delay_proof_source: 材料中未见承运人出具的行李延误证明文件（如PIR报告、行李运输事故单等）
+    has_baggage_receipt_time_proof: False
+    has_baggage_tag_proof: False
+    has_airline_baggage_record: False
+    airline_baggage_record_name: unknown
+    airline_baggage_record_flight: unknown
+    airline_baggage_record_pieces: unknown
+    accident_date_in_materials: 2026-03-02
+    flight_actual_arrival_time: 2026-03-02 17:30
+    baggage_receipt_time: unknown
+    receipt_times: []
+    delay_hours: unknown
+    has_id_proof: False
+    has_passport: False
+    has_exit_entry_record: False
+    exit_datetime: unknown
+    insured_name_in_materials: 张其康
+    has_bank_card_proof: False
+    risk_flags: []
+    notes: 被保险人姓名张其康与案件基本信息一致。材料中未见托运行李牌（行李牌贴纸或电子行李牌）、行李延误证明文件（如PIR报告）、行李签收时间证明文件。延误时长无法计算，因缺少行李签收时间。建议补充PIR报告或行李签收证明以支持理赔。
+    _vision_scan_stats: {'total_source_files': 16, 'pdf_count': 1, 'image_count': 0, 'docx_count': 0, 'total_attachments_sent': 2, 'batch_size': 10, 'total_batches': 1, 'scanned_all_attachments': True}
+
+  材料文件 (16个):
+    file_001.bin  (.bin, 867KB)
+    file_002.bin  (.bin, 998KB)
+    file_003.bin  (.bin, 156KB)
+    file_004.bin  (.bin, 1585KB)
+    file_005.bin  (.bin, 1506KB)
+    file_006.bin  (.bin, 1373KB)
+    file_007.bin  (.bin, 2036KB)
+    file_008.bin  (.bin, 1651KB)
+    file_009.bin  (.bin, 2137KB)
+    file_010.bin  (.bin, 1555KB)
+    file_011.bin  (.bin, 488KB)
+    file_012.pdf  (.pdf, 1089KB)
+    file_013.bin  (.bin, 189KB)
+    file_014.bin  (.bin, 942KB)
+    file_015.bin  (.bin, 221KB)
+    file_016.bin  (.bin, 555KB)
+
+
+=== 完成 ===

@@ -141,15 +141,10 @@ class OutputCoordinator:
                 is_additional=review_result.get("IsAdditional", "N"),
                 key_conclusions=str(review_result.get("KeyConclusions", [])),
                 raw_result=str(review_result),
-                review_status="completed",
+                audit_status="completed",
                 final_decision=review_result.get("final_decision"),
                 decision_reason=review_result.get("decision_reason"),
                 forwarded_to_frontend=False,
-                metadata={
-                    "review_timestamp": datetime.now().isoformat(),
-                    "source": "ai_review",
-                    "version": "2.0"
-                }
             )
 
             # 保存到数据库
@@ -355,7 +350,6 @@ async def run_output_dispatch(forceid: str, review_result: Dict[str, Any]):
 
 if __name__ == '__main__':
     # 测试
-    import asyncio
 
     async def test():
         coordinator = OutputCoordinator()

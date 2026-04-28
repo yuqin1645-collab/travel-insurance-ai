@@ -7,8 +7,10 @@ OpenRouter API客户端
 """
 
 import os
+import re
 import json
 import sys
+import logging
 
 # Windows GBK stdout 无法打印 emoji，统一设置为 utf-8
 if sys.stdout.encoding and sys.stdout.encoding.lower() in ('gbk', 'cp936', 'gb2312', 'gb18030'):
@@ -17,10 +19,13 @@ if sys.stderr.encoding and sys.stderr.encoding.lower() in ('gbk', 'cp936', 'gb23
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 import requests
 import asyncio
+import time
 import aiohttp
-from typing import Dict, List, Optional, Literal
+from typing import Dict, List, Optional
 from enum import Enum
 from app.config import config
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _try_repair_truncated_json(content: str) -> Optional[Dict]:
@@ -48,7 +53,6 @@ def _try_fix_json_string_escapes(content: str) -> Optional[Dict]:
     2. 对值内部的换行符替换为 \\n
     3. 对值内部的双引号替换为 \\"
     """
-    import re
 
     # 尝试直接解析
     try:
@@ -84,6 +88,47 @@ def _try_fix_json_string_escapes(content: str) -> Optional[Dict]:
         return json.loads(fixed_content)
     except json.JSONDecodeError:
         return None
+
+
+def _parse_json_with_fallbacks(
+    content: str,
+    attempt: int,
+    max_retries: int,
+    sleep_fn,
+) -> Dict:
+    """
+    统一 JSON 解析 + 修复逻辑（同步/异步共享）。
+
+    返回: (parsed_dict, should_retry)
+    - parsed_dict 非 None 时解析成功
+    - should_retry 表示是否应该继续重试（解析失败但还有重试机会）
+    """
+    try:
+        return json.loads(content), False
+    except json.JSONDecodeError as e:
+        LOGGER.warning(f"[attempt={attempt}] JSON解析失败: {e}, 内容: {content[:500]}...")
+
+    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+    if json_match:
+        try:
+            return json.loads(json_match.group()), False
+        except json.JSONDecodeError:
+            pass
+
+    fixed = _try_fix_json_string_escapes(content)
+    if fixed is not None:
+        LOGGER.info(f"[attempt={attempt}] JSON转义修复成功")
+        return fixed, False
+
+    repaired = _try_repair_truncated_json(content)
+    if repaired is not None:
+        LOGGER.info(f"[attempt={attempt}] JSON截断修复成功")
+        return repaired, False
+
+    should_retry = attempt < max_retries
+    if should_retry:
+        sleep_fn(1 * attempt)
+    return None, should_retry
 
 
 class TaskDifficulty(Enum):
@@ -194,12 +239,10 @@ class OpenRouterClient:
             return response.json()
         
         except requests.exceptions.RequestException as e:
-            print(f"OpenRouter API调用失败: {e}")
-            print(f"模型: {model}")
-            print(f"Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
+            LOGGER.error(f"API调用失败: {e}, 模型: {model}")
+            LOGGER.debug(f"Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
             if hasattr(e, 'response') and e.response is not None:
-                print(f"状态码: {e.response.status_code}")
-                print(f"响应内容: {e.response.text}")
+                LOGGER.error(f"状态码: {e.response.status_code}, 响应: {e.response.text}")
             raise
     
     async def chat_completion_async(
@@ -212,10 +255,10 @@ class OpenRouterClient:
         response_format: Optional[Dict] = None,
         session: Optional[aiohttp.ClientSession] = None
     ) -> Dict:
-        """异步调用OpenRouter聊天完成API"""
+        """异步调用OpenRouter聊天完成API（无内部重试，重试由调用方管理）"""
         if model is None:
             model = config.get_model_by_difficulty(difficulty.value)
-        
+
         temperature = temperature if temperature is not None else config.TEMPERATURE
 
         payload = {
@@ -227,7 +270,7 @@ class OpenRouterClient:
         # 为支持 reasoning 的模型添加 reasoning 参数
         if self._model_supports_reasoning(model):
             payload["reasoning"] = {
-                "effort": "low"  # 使用低推理强度以节省时间和成本
+                "effort": "low"
             }
 
         if response_format:
@@ -236,22 +279,10 @@ class OpenRouterClient:
         # 如果没有提供session,创建临时session（使用系统代理）
         close_session = False
         if session is None:
-            # 从环境变量获取代理设置
-            http_proxy = os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
-            https_proxy = os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
-            
-            # 使用代理创建 connector
-            if http_proxy or https_proxy:
-                connector = aiohttp.TCPConnector()
-                session = aiohttp.ClientSession(
-                    connector=connector,
-                    trust_env=True  # 使用环境变量中的代理
-                )
-            else:
-                connector = aiohttp.TCPConnector()
-                session = aiohttp.ClientSession(connector=connector)
+            connector = aiohttp.TCPConnector()
+            session = aiohttp.ClientSession(connector=connector, trust_env=True)
             close_session = True
-        
+
         # 代理：仅 OpenRouter 国外服务使用代理，DashScope/Qwen 直连
         proxy = None
         if self.provider != 'dashscope':
@@ -261,38 +292,18 @@ class OpenRouterClient:
             ) or None
 
         try:
-            last_exc: Exception = RuntimeError("未执行任何请求")
-            for _attempt in range(3):
-                try:
-                    async with session.post(
-                        f"{self.base_url}/chat/completions",
-                        headers=self.headers,
-                        json=payload,
-                        proxy=proxy,
-                        timeout=aiohttp.ClientTimeout(total=config.TIMEOUT)
-                    ) as response:
-                        if response.status != 200:
-                            error_text = await response.text()
-                            print(f"异步调用错误详情:")
-                            print(f"  状态码: {response.status}")
-                            print(f"  响应: {error_text[:500]}")
-                        response.raise_for_status()
-                        return await response.json()
-                except Exception as e:
-                    last_exc = e
-                    # 连接类错误自动重试；HTTP 4xx 业务错误不重试
-                    err_str = str(e).lower()
-                    is_conn_err = any(k in err_str for k in ("ssl", "connect", "timeout", "connection", "reset"))
-                    if not is_conn_err or _attempt >= 2:
-                        print(f"OpenRouter API异步调用失败: {e}")
-                        print(f"模型: {model}")
-                        print(f"Payload keys: {list(payload.keys())}")
-                        if 'reasoning' in payload:
-                            print(f"Reasoning: {payload['reasoning']}")
-                        raise
-                    import asyncio as _asyncio
-                    await _asyncio.sleep(2 * (_attempt + 1))
-            raise last_exc
+            async with session.post(
+                f"{self.base_url}/chat/completions",
+                headers=self.headers,
+                json=payload,
+                proxy=proxy,
+                timeout=aiohttp.ClientTimeout(total=config.TIMEOUT)
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    LOGGER.warning(f"异步调用错误: 状态码={response.status}, 响应: {error_text[:500]}")
+                response.raise_for_status()
+                return await response.json()
         finally:
             if close_session:
                 await session.close()
@@ -303,36 +314,28 @@ class OpenRouterClient:
             # 安全提取 choices[0].message.content
             choices = response.get('choices', [])
             if not choices:
-                print(f"[{stage_name}] ⚠️ 警告: 响应中没有 choices 字段")
-                print(f"[{stage_name}] 响应结构: {list(response.keys())}")
+                LOGGER.warning(f"[{stage_name}] 响应中没有 choices 字段, 结构: {list(response.keys())}")
                 raise KeyError("choices 为空")
 
             first_choice = choices[0]
             message = first_choice.get('message', {})
             if not message:
-                print(f"[{stage_name}] ⚠️ 警告: choices[0] 中没有 message 字段")
-                print(f"[{stage_name}] choice 内容: {first_choice}")
+                LOGGER.warning(f"[{stage_name}] choices[0] 中没有 message 字段, 内容: {first_choice}")
                 raise KeyError("message 为空")
 
             content = message.get('content', '')
             if not content:
-                print(f"[{stage_name}] ⚠️ 警告: message.content 为空")
-                print(f"[{stage_name}] message 完整内容: {message}")
+                LOGGER.warning(f"[{stage_name}] message.content 为空, message: {message}")
 
             # 记录原始 LLM 响应内容
-            print(f"[{stage_name}] 📝 LLM原始响应内容 ({len(content)} 字符):")
-            print(f"--- 开始 LLM 响应 ---")
-            print(content[:2000] if len(content) > 2000 else content)
-            print(f"--- 结束 LLM 响应 ---")
+            LOGGER.debug(f"[{stage_name}] LLM原始响应内容 ({len(content)} 字符):\n{content[:2000] if len(content) > 2000 else content}")
 
-            import re
             json_match = re.search(r'\{.*\}', content, re.DOTALL)
             if json_match:
                 return json_match.group()
             return content
         except (KeyError, IndexError) as e:
-            print(f"[{stage_name}] ❌ 解析响应失败: {e}")
-            print(f"[{stage_name}] 响应内容: {json.dumps(response, indent=2, ensure_ascii=False)[:1000]}")
+            LOGGER.error(f"[{stage_name}] 解析响应失败: {e}, 响应: {json.dumps(response, indent=2, ensure_ascii=False)[:1000]}")
             raise
     
     def chat_completion_json(
@@ -360,41 +363,17 @@ class OpenRouterClient:
 
                 content = self.extract_content(response, stage_name=f"chat_completion_json[attempt={attempt}]")
 
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError as e:
-                    last_error = e
-                    print(f"[attempt={attempt}] JSON解析失败: {e}")
-                    print(f"[attempt={attempt}] 原始内容: {content[:500]}...")
-                    import re
-                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                    if json_match:
-                        try:
-                            return json.loads(json_match.group())
-                        except:
-                            pass
-                    # 尝试修复字符串未转义问题（换行符、引号等）
-                    fixed = _try_fix_json_string_escapes(content)
-                    if fixed is not None:
-                        print(f"[attempt={attempt}] JSON转义修复成功")
-                        return fixed
-                    # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
-                    repaired = _try_repair_truncated_json(content)
-                    if repaired is not None:
-                        print(f"[attempt={attempt}] JSON截断修复成功")
-                        return repaired
-
-                    if attempt < max_retries:
-                        import time
-                        time.sleep(1 * attempt)  # 递增等待
-                        continue
-                    raise
+                result, should_retry = _parse_json_with_fallbacks(content, attempt, max_retries, time.sleep)
+                if result is not None:
+                    return result
+                if should_retry:
+                    continue
+                raise json.JSONDecodeError("全部修复尝试失败", content, 0)
 
             except Exception as e:
                 last_error = e
-                print(f"[attempt={attempt}] API调用异常: {e}")
+                LOGGER.warning(f"[attempt={attempt}] API调用异常: {e}")
                 if attempt < max_retries:
-                    import time
                     time.sleep(1 * attempt)
                     continue
 
@@ -427,41 +406,17 @@ class OpenRouterClient:
 
                 content = self.extract_content(response, stage_name=f"chat_completion_json_async[attempt={attempt}]")
 
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError as e:
-                    last_error = e
-                    print(f"[attempt={attempt}] JSON解析失败: {e}")
-                    print(f"[attempt={attempt}] 原始内容: {content[:500]}...")
-                    import re
-                    json_match = re.search(r'\{.*\}', content, re.DOTALL)
-                    if json_match:
-                        try:
-                            return json.loads(json_match.group())
-                        except:
-                            pass
-                    # 尝试修复字符串未转义问题（换行符、引号等）
-                    fixed = _try_fix_json_string_escapes(content)
-                    if fixed is not None:
-                        print(f"[attempt={attempt}] JSON转义修复成功")
-                        return fixed
-                    # 兜底：尝试修复截断的 JSON（末尾缺少 `}`）
-                    repaired = _try_repair_truncated_json(content)
-                    if repaired is not None:
-                        print(f"[attempt={attempt}] JSON截断修复成功")
-                        return repaired
-
-                    if attempt < max_retries:
-                        import asyncio
-                        await asyncio.sleep(1 * attempt)  # 递增等待
-                        continue
-                    raise
+                result, should_retry = _parse_json_with_fallbacks(content, attempt, max_retries, asyncio.sleep)
+                if result is not None:
+                    return result
+                if should_retry:
+                    continue
+                raise json.JSONDecodeError("全部修复尝试失败", content, 0)
 
             except Exception as e:
                 last_error = e
-                print(f"[attempt={attempt}] API调用异常: {e}")
+                LOGGER.warning(f"[attempt={attempt}] API调用异常: {e}")
                 if attempt < max_retries:
-                    import asyncio
                     await asyncio.sleep(1 * attempt)
                     continue
 

@@ -10,10 +10,10 @@
 | 3 | claim_id | VARCHAR(64) | 是 | NULL | 上游案件ID |
 | 4 | metadata | JSON | 是 | NULL | 扩展元数据 |
 
-### 被保险人信息（3个字段）
+### 申请人信息（3个字段）
 | 序号 | 字段名 | 数据类型 | 是否可空 | 默认值 | 说明 |
 |------|--------|----------|----------|---------|------|
-| 5 | passenger_name | VARCHAR(128) | 是 | NULL | 被保险人姓名 |
+| 5 | applicant_name | VARCHAR(128) | 是 | NULL | 申请人姓名（来自claim_info.json） |
 | 6 | passenger_id_type | VARCHAR(32) | 是 | NULL | 证件类型 |
 | 7 | passenger_id_number | VARCHAR(64) | 是 | NULL | 证件号码 |
 

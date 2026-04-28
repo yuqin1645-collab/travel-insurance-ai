@@ -16,6 +16,7 @@ import json
 import asyncio
 import os
 import argparse
+import pymysql
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,7 +26,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import aiohttp
-import pymysql
 from app.config import config
 from app.output.frontend_pusher import push_to_frontend
 from app.production.main_workflow import ProductionWorkflow
@@ -87,7 +87,7 @@ async def cmd_push_forceid(forceids: list):
     workflow = ProductionWorkflow()
     claim_info_cache = _build_claim_info_cache()
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env=True) as session:
         for fid in forceids:
             result_file = next(REVIEW_DIR.rglob(f"{fid}_ai_review.json"), None)
             if not result_file:
@@ -134,7 +134,7 @@ async def cmd_push_all(claim_type: str):
     claim_info_cache = _build_claim_info_cache()
 
     ok_frontend = ok_db = 0
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env=True) as session:
         for i, fid in enumerate(forceids, 1):
             result_file = baggage_dir / f"{fid}_ai_review.json"
             try:
@@ -187,7 +187,6 @@ def cmd_sync_db(dry_run: bool = False):
         print(f"(dry-run 模式，共 {len(results)} 条)")
         return
 
-    import pymysql
     conn = pymysql.connect(
         host=os.getenv("DB_HOST", ""),
         port=int(os.getenv("DB_PORT", "3306")),
