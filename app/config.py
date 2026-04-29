@@ -82,11 +82,10 @@ class Config:
     DOC_CACHE_DIR: Path = Path(os.getenv('DOC_CACHE_DIR', '.cache/docs'))
     DOC_CACHE_EXPIRE_DAYS: int = int(os.getenv('DOC_CACHE_EXPIRE_DAYS', '30'))
 
-    # 启用的险种类型（逗号分隔，默认只开航班延误）
-    # 生产环境：ENABLED_CLAIM_TYPES=flight_delay
-    # 全量开启：ENABLED_CLAIM_TYPES=flight_delay,baggage_delay
+    # 启用的险种类型（逗号分隔，默认航班延误+行李延误）
+    # 生产环境可按需调整：ENABLED_CLAIM_TYPES=flight_delay 或 flight_delay,baggage_delay
     ENABLED_CLAIM_TYPES: List[str] = [
-        t.strip() for t in os.getenv('ENABLED_CLAIM_TYPES', 'flight_delay').split(',') if t.strip()
+        t.strip() for t in os.getenv('ENABLED_CLAIM_TYPES', 'flight_delay,baggage_delay').split(',') if t.strip()
     ]
     
     # 审核配置

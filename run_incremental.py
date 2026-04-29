@@ -16,6 +16,7 @@ import asyncio
 import aiohttp
 import argparse
 import time
+import pymysql
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -259,6 +260,56 @@ async def run(dry_run: bool = False, no_download: bool = False):
                             f"  推送失败: {forceid} | {push_result.get('response', '')[:100]}",
                             extra=_log_extra(forceid=forceid, stage="incremental"),
                         )
+
+                # 同步数据库（主表 + 子表）
+                if not dry_run:
+                    try:
+                        from app.production.main_workflow import ProductionWorkflow
+                        workflow = ProductionWorkflow()
+                        claim_info_for_db = info
+                        main_fields, flight_fields, baggage_fields = workflow._extract_review_fields(result, claim_info_for_db)
+                        conn = pymysql.connect(
+                            host=os.getenv("DB_HOST", ""), port=int(os.getenv("DB_PORT", "3306")),
+                            user=os.getenv("DB_USER", ""), password=os.getenv("DB_PASSWORD", ""),
+                            database=os.getenv("DB_NAME", "ai"), charset="utf8mb4",
+                        )
+                        try:
+                            with conn.cursor() as cur:
+                                keys = list(main_fields.keys())
+                                placeholders = ", ".join(["%s"] * len(keys))
+                                update_clause = ", ".join([f"{k}=VALUES({k})" for k in keys if k != "forceid"])
+                                sql = (
+                                    f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                                    f"VALUES ({placeholders}) "
+                                    f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
+                                )
+                                cur.execute(sql, list(main_fields.values()))
+
+                                ct = main_fields.get("claim_type", "")
+                                if ct == "flight_delay" and flight_fields:
+                                    fkeys = list(flight_fields.keys())
+                                    fph = ", ".join(["%s"] * len(fkeys))
+                                    fup = ", ".join([f"{k}=VALUES({k})" for k in fkeys if k != "forceid"])
+                                    fsql = (
+                                        f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
+                                        f"VALUES ({fph}) ON DUPLICATE KEY UPDATE {fup}"
+                                    )
+                                    cur.execute(fsql, list(flight_fields.values()))
+                                elif ct == "baggage_delay" and baggage_fields:
+                                    bkeys = list(baggage_fields.keys())
+                                    bph = ", ".join(["%s"] * len(bkeys))
+                                    bup = ", ".join([f"{k}=VALUES({k})" for k in bkeys if k != "forceid"])
+                                    bsql = (
+                                        f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
+                                        f"VALUES ({bph}) ON DUPLICATE KEY UPDATE {bup}"
+                                    )
+                                    cur.execute(bsql, list(baggage_fields.values()))
+                            conn.commit()
+                            LOGGER.info(f"  数据库同步成功: {forceid}", extra=_log_extra(forceid=forceid, stage="incremental"))
+                        finally:
+                            conn.close()
+                    except Exception as db_err:
+                        LOGGER.warning(f"  数据库同步失败: {forceid}: {db_err}", extra=_log_extra(forceid=forceid, stage="incremental"))
 
                 # 注册到 claim_status 表（兜底，防止 start_production.py 扫描不到）
                 try:

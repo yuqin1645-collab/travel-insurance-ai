@@ -527,7 +527,6 @@ class StatusManager:
             key_conclusions=json.dumps(review_result.get("KeyConclusions", []), ensure_ascii=False) if review_result.get("KeyConclusions") is not None else None,
             raw_result=str(review_result),
             audit_status=review_status,
-            supplementary_count=review_result.get("supplementary_count", 0),
             supplementary_reason=review_result.get("supplementary_reason"),
             final_decision=review_result.get("final_decision"),
             decision_reason=review_result.get("decision_reason"),
@@ -539,10 +538,6 @@ class StatusManager:
             insurer=review_result.get("_ci_insurer"),
             insured_amount=_safe_float(review_result.get("_ci_insured_amount")),
             remaining_coverage=_safe_float(review_result.get("_ci_remaining_coverage")),
-            metadata={
-                "review_timestamp": datetime.now().isoformat(),
-                "source": "ai_review"
-            }
         )
 
         # 保存到数据库

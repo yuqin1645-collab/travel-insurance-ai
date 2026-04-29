@@ -250,38 +250,59 @@ class ProductionWorkflow:
                         claim_info = info_cache.get(forceid, {})
                         main_fields, flight_fields, baggage_fields = self._extract_review_fields(data, claim_info)
 
+                        # 主表：防止 update_clause 为空导致 SQL 语法错误
                         keys = list(main_fields.keys())
                         placeholders = ", ".join(["%s"] * len(keys))
-                        update_clause = ", ".join(
-                            [f"{k}=VALUES({k})" for k in keys if k != "forceid"]
-                        )
-                        sql = (
-                            f"INSERT INTO ai_review_result ({', '.join(keys)}) "
-                            f"VALUES ({placeholders}) "
-                            f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
-                        )
+                        update_keys = [k for k in keys if k != "forceid"]
+                        update_clause = ", ".join([f"{k}=VALUES({k})" for k in update_keys])
+                        if update_clause:
+                            sql = (
+                                f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                                f"VALUES ({placeholders}) "
+                                f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
+                            )
+                        else:
+                            sql = (
+                                f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                                f"VALUES ({placeholders}) "
+                                f"ON DUPLICATE KEY UPDATE updated_at=CURRENT_TIMESTAMP"
+                            )
                         cur.execute(sql, list(main_fields.values()))
 
                         claim_type = main_fields.get("claim_type", "")
                         if claim_type == "flight_delay" and flight_fields:
                             fkeys = list(flight_fields.keys())
+                            fupdate_keys = [k for k in fkeys if k != "forceid"]
+                            fupdate = ", ".join([f"{k}=VALUES({k})" for k in fupdate_keys])
                             fplaceholders = ", ".join(["%s"] * len(fkeys))
-                            fupdate = ", ".join([f"{k}=VALUES({k})" for k in fkeys if k != "forceid"])
-                            fsql = (
-                                f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
-                                f"VALUES ({fplaceholders}) "
-                                f"ON DUPLICATE KEY UPDATE {fupdate}"
-                            )
+                            if fupdate:
+                                fsql = (
+                                    f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
+                                    f"VALUES ({fplaceholders}) "
+                                    f"ON DUPLICATE KEY UPDATE {fupdate}"
+                                )
+                            else:
+                                fsql = (
+                                    f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
+                                    f"VALUES ({fplaceholders})"
+                                )
                             cur.execute(fsql, list(flight_fields.values()))
                         elif claim_type == "baggage_delay" and baggage_fields:
                             bkeys = list(baggage_fields.keys())
+                            bupdate_keys = [k for k in bkeys if k != "forceid"]
+                            bupdate = ", ".join([f"{k}=VALUES({k})" for k in bupdate_keys])
                             bplaceholders = ", ".join(["%s"] * len(bkeys))
-                            bupdate = ", ".join([f"{k}=VALUES({k})" for k in bkeys if k != "forceid"])
-                            bsql = (
-                                f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
-                                f"VALUES ({bplaceholders}) "
-                                f"ON DUPLICATE KEY UPDATE {bupdate}"
-                            )
+                            if bupdate:
+                                bsql = (
+                                    f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
+                                    f"VALUES ({bplaceholders}) "
+                                    f"ON DUPLICATE KEY UPDATE {bupdate}"
+                                )
+                            else:
+                                bsql = (
+                                    f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
+                                    f"VALUES ({bplaceholders})"
+                                )
                             cur.execute(bsql, list(baggage_fields.values()))
 
                         success += 1
