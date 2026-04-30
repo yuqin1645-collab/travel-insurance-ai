@@ -297,13 +297,39 @@ async def cmd_rerun(forceids: List[str]):
                     from scripts.find_claim_by_forceid import fetch_by_forceid
                     claim_data = fetch_by_forceid(fid)
                     downloader = ClaimDownloader(
-                        api_url=API_URL, output_dir=str(CLAIMS_DIR), force_refresh=False,
+                        api_url=API_URL, output_dir=str(CLAIMS_DIR), force_refresh=True,
                     )
                     downloader.process_claim(claim_data)
                     folder = find_claim_folder(fid)
                 except Exception as e:
                     print(f"  下载失败: {e}")
                     continue
+            else:
+                # 目录已存在但可能缺少附件文件，用本地 claim_info.json 中的 FileList 补下载
+                if not has_material_files(folder):
+                    print(f"  目录存在但无附件: {fid}，尝试补下载...")
+                    try:
+                        from scripts.download_claims import ClaimDownloader
+                        info = json.loads((folder / "claim_info.json").read_text(encoding="utf-8"))
+                        downloader = ClaimDownloader(
+                            api_url=API_URL, output_dir=str(CLAIMS_DIR), force_refresh=True,
+                        )
+                        downloader.process_claim(info)
+                        folder = find_claim_folder(fid)
+                    except Exception as e:
+                        print(f"  补下载失败: {e}")
+                        # 本地 FileList 下载失败，再尝试 API 查询
+                        try:
+                            from scripts.find_claim_by_forceid import fetch_by_forceid
+                            claim_data = fetch_by_forceid(fid)
+                            downloader = ClaimDownloader(
+                                api_url=API_URL, output_dir=str(CLAIMS_DIR), force_refresh=True,
+                            )
+                            downloader.process_claim(claim_data)
+                            folder = find_claim_folder(fid)
+                        except Exception as e2:
+                            print(f"  API补下载也失败: {e2}")
+                            continue
 
             if not folder:
                 print(f"  跳过: {fid}（未找到目录）")

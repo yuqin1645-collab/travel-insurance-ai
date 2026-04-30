@@ -305,7 +305,7 @@ async def review_baggage_delay_async(
         )
     elif aviation_failure_type == "evidence_gap":
         conclusions.append(
-            {"checkpoint": "官方航班数据", "Eligible": "需补件",
+            {"checkpoint": "官方航班数据", "Eligible": "需补齐资料",
              "Remark": "官方航班数据未命中，需补充可核验航班号/日期/航段信息"}
         )
     elif aviation_lookup.get("success") is True:
@@ -387,8 +387,8 @@ async def review_baggage_delay_async(
 
     debug["missing_materials"] = missing_materials
     if missing_materials:
-        conclusions.append({"checkpoint": "材料完整性", "Eligible": "需补件", "Remark": "；".join(missing_materials)})
-        return _result(forceid, "需补件：" + "；".join(missing_materials), "Y", conclusions, debug)
+        conclusions.append({"checkpoint": "材料完整性", "Eligible": "需补齐资料", "Remark": "；".join(missing_materials)})
+        return _result(forceid, "需补齐资料：" + "；".join(missing_materials), "Y", conclusions, debug)
     conclusions.append({"checkpoint": "材料完整性", "Eligible": "是", "Remark": "视觉识别确认关键材料已提供"})
 
     # 人工复核触发
@@ -415,20 +415,20 @@ async def review_baggage_delay_async(
         delay_hours_str = f"{delay_hours:.2f}小时" if delay_hours is not None else "未知"
         conclusions.append({
             "checkpoint": "行李签收时间",
-            "Eligible": "需补件",
+            "Eligible": "需补齐资料",
             "Remark": f"以行李签收证明中的明确日期/时间为准；无签收证明时，以后续转运航班到达时间为辅助参考，待补件后按实际签收时间修正。当前估算延误时长{delay_hours_str}。",
         })
         return _result(
             forceid,
-            f"需补件：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误{delay_hours_str}，待补件后按实际签收时间修正。",
+            f"需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误{delay_hours_str}，待补件后按实际签收时间修正。",
             "Y", conclusions, debug,
         )
     debug["delay_calc"] = delay_calc
     if delay_hours is None:
         if aviation_failure_type == "system_error":
             return _result(forceid, "转人工复核：官方航班数据查询异常，无法完成时长核算", "Y", conclusions, debug)
-        conclusions.append({"checkpoint": "延误时长", "Eligible": "需补件", "Remark": "未识别到明确延误时长或签收时间信息"})
-        return _result(forceid, "需补件：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明", "Y", conclusions, debug)
+        conclusions.append({"checkpoint": "延误时长", "Eligible": "需补齐资料", "Remark": "未识别到明确延误时长或签收时间信息"})
+        return _result(forceid, "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明", "Y", conclusions, debug)
     if delay_hours < 6:
         conclusions.append({"checkpoint": "赔付门槛", "Eligible": "否", "Remark": f"延误时长{delay_hours:.2f}小时，未达到6小时"})
         return _result(forceid, "拒赔：行李延误时长未达到6小时赔付门槛", "N", conclusions, debug)
@@ -485,8 +485,8 @@ async def review_baggage_delay_async(
             missing_materials = sorted(set(missing_materials))
             debug["missing_materials"] = missing_materials
         if ai_audit_result == "需补齐资料" and missing_materials:
-            conclusions.append({"checkpoint": "AI审计补件", "Eligible": "需补件", "Remark": "；".join(missing_materials)})
-            return _result(forceid, "需补件：" + "；".join(missing_materials), "Y", conclusions, debug)
+            conclusions.append({"checkpoint": "AI审计补件", "Eligible": "需补齐资料", "Remark": "；".join(missing_materials)})
+            return _result(forceid, "需补齐资料：" + "；".join(missing_materials), "Y", conclusions, debug)
         elif ai_audit_result == "拒绝":
             reason = str(ai_audit.get("reason") or ai_audit.get("explanation") or "AI审核拒赔")
             conclusions.append({"checkpoint": "AI审计", "Eligible": "否", "Remark": reason})

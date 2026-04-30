@@ -31,7 +31,7 @@ def map_audit_result_to_status(audit_result: str) -> str:
     将审核结果映射为审批状态
 
     Args:
-        audit_result: 审核结果 (通过/拒绝/需补件/supplementary_needed等)
+        audit_result: 审核结果 (通过/拒绝/需补齐资料/supplementary_needed等)
 
     Returns:
         审批状态: "1"=通过, "0"=拒赔, "2"=补件
@@ -45,7 +45,7 @@ def map_audit_result_to_status(audit_result: str) -> str:
         return "1"  # 审批通过
     elif audit_result in ['拒绝', 'rejected', '拒赔']:
         return "0"  # 拒赔
-    elif audit_result in ['需补件', '补件', 'supplementary_needed', '需补齐资料']:
+    elif audit_result in ['需补齐资料', 'supplementary_needed']:
         return "2"  # 补件
     else:
         return "0"  # 默认拒赔

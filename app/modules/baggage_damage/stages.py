@@ -1,10 +1,13 @@
 ﻿from __future__ import annotations
 
+import asyncio
 import json
+import random
 from pathlib import Path
 from typing import Any, Dict
 
 from app.config import config
+from app.logging_utils import LOGGER, log_extra
 from app.openrouter_client import TaskDifficulty
 from app.modules.baggage_damage.extractors import (
     extract_purchase_amount_and_date,
@@ -139,9 +142,11 @@ async def ai_check_materials_async(
 
         for bi in range(0, len(all_attachments), batch_size):
             batch = all_attachments[bi:bi + batch_size]
+            batch_index = bi // batch_size + 1
+            batch_total = (len(all_attachments) + batch_size - 1) // batch_size
             batch_manifest = {
-                "batch_index": bi // batch_size + 1,
-                "batch_total": (len(all_attachments) + batch_size - 1) // batch_size,
+                "batch_index": batch_index,
+                "batch_total": batch_total,
                 "attachments": [a.path.name for a in batch],
                 "source_hint": [a.source_file.name for a in batch],
             }
@@ -153,11 +158,46 @@ async def ai_check_materials_async(
                 accident_date=claim_info.get("Date_of_Accident") or "未知",
                 batch_manifest=json.dumps(batch_manifest, ensure_ascii=False, indent=2),
             )
-            batch_res = await reviewer.vision_client.review_materials_with_vision(
-                material_files=[a.path for a in batch],
-                prompt=prompt,
-                session=session,
-            )
+
+            # 带重试的批次调用
+            batch_res: Dict[str, Any] = {}
+            max_attempts = max(1, int(getattr(config, "VISION_RETRY_NETWORK_MAX_ATTEMPTS", 3) or 3))
+            base_delay = float(getattr(config, "VISION_RETRY_BASE_DELAY", 2.0) or 2.0)
+            max_delay = float(getattr(config, "VISION_RETRY_MAX_DELAY", 20.0) or 20.0)
+            jitter_ratio = max(0.0, float(getattr(config, "VISION_RETRY_JITTER", 0.35) or 0.0))
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    batch_res = await reviewer.vision_client.review_materials_with_vision(
+                        material_files=[a.path for a in batch],
+                        prompt=prompt,
+                        session=session,
+                    )
+                    break
+                except Exception as e:
+                    err_str = str(e).lower()
+                    retryable = any(k in err_str for k in (
+                        "ssl", "connect", "timeout", "connection", "reset",
+                        "temporarily unavailable", "invalid control character",
+                        "json", "balance", "brace", "parse", "decode",
+                        "expecting", "delimiter", "unterminated", "extra data",
+                    ))
+                    if retryable and attempt < max_attempts:
+                        backoff = min(max_delay, base_delay * (2 ** (attempt - 1)))
+                        wait_seconds = backoff + random.uniform(0, backoff * jitter_ratio)
+                        LOGGER.warning(
+                            f"baggage_damage vision batch {batch_index}/{batch_total} attempt {attempt}/{max_attempts} 失败，{wait_seconds:.1f}s 后重试: {e}",
+                            extra=log_extra(forceid=claim_info.get("forceid", ""), stage="baggage_damage_material_check"),
+                        )
+                        await asyncio.sleep(wait_seconds)
+                    else:
+                        LOGGER.warning(
+                            f"baggage_damage vision batch {batch_index}/{batch_total} 最终失败(attempt {attempt}/{max_attempts}): {e}",
+                            extra=log_extra(forceid=claim_info.get("forceid", ""), stage="baggage_damage_material_check"),
+                        )
+                        break
+
+            if not batch_res:
+                continue
 
             present = batch_res.get("present") or {}
             evidence = batch_res.get("evidence") or {}

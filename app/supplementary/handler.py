@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 补件处理器
-处理AI返回"需补件"的案件
+处理AI返回"需补齐资料"的案件
 """
 
 import logging
@@ -46,7 +46,7 @@ class SupplementaryHandler:
         review_result: Dict[str, Any]
     ) -> Tuple[bool, str]:
         """
-        处理"需补件"结果
+        处理"需补齐资料"结果
 
         Args:
             forceid: 案件唯一ID
@@ -55,7 +55,7 @@ class SupplementaryHandler:
         Returns:
             (是否成功, 消息)
         """
-        LOGGER.info(f"处理需补件案件: {forceid}")
+        LOGGER.info(f"处理需补齐资料案件: {forceid}")
 
         # 1. 获取当前案件状态
         status_record = await self.status_manager.claim_status_dao.get_status_by_forceid(forceid)
@@ -76,7 +76,7 @@ class SupplementaryHandler:
         deadline = datetime.now() + timedelta(hours=self.deadline_hours)
 
         # 4. 构建补件原因
-        supplementary_reason = review_result.get("Remark", "需补件")
+        supplementary_reason = review_result.get("Remark", "需补齐资料")
         missing_materials = self._extract_missing_materials(review_result)
 
         # 5. 创建补件记录
@@ -111,7 +111,7 @@ class SupplementaryHandler:
 
         except Exception as e:
             error_msg = str(e)
-            LOGGER.error(f"处理需补件失败: {forceid}, 错误: {error_msg}")
+            LOGGER.error(f"处理需补齐资料失败: {forceid}, 错误: {error_msg}")
             return False, f"处理失败: {error_msg}"
 
     async def check_supplementary_deadline(self) -> Tuple[int, str]:

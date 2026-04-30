@@ -114,7 +114,7 @@ STATUS_DESCRIPTIONS = {
     ReviewStatus.PROCESSING: "审核中",
     ReviewStatus.COMPLETED: "审核完成",
     ReviewStatus.FAILED: "审核失败",
-    ReviewStatus.SUPPLEMENTARY_NEEDED: "需补件",
+    ReviewStatus.SUPPLEMENTARY_NEEDED: "需补齐资料",
 
     # 补件状态
     SupplementaryStatus.PENDING: "等待补件",
@@ -132,7 +132,7 @@ STATUS_DESCRIPTIONS = {
     ClaimStatus.REVIEW_PENDING: "等待审核",
     ClaimStatus.REVIEWING: "审核中",
     ClaimStatus.REVIEWED: "审核完成",
-    ClaimStatus.SUPPLEMENTARY_NEEDED: "需补件",
+    ClaimStatus.SUPPLEMENTARY_NEEDED: "需补齐资料",
     ClaimStatus.PENDING_SUPPLEMENTARY: "等待补件",
     ClaimStatus.SUPPLEMENTARY_RECEIVED: "已收到补件",
     ClaimStatus.APPROVED: "审核通过",
@@ -151,7 +151,7 @@ STATUS_DESCRIPTIONS = {
     # 决定类型
     DecisionType.APPROVED: "通过",
     DecisionType.REJECTED: "拒绝",
-    DecisionType.SUPPLEMENTARY_NEEDED: "需补件",
+    DecisionType.SUPPLEMENTARY_NEEDED: "需补齐资料",
     DecisionType.PENDING: "待决定",
 }
 

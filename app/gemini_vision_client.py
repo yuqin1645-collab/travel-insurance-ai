@@ -20,6 +20,7 @@ if sys.stderr.encoding and sys.stderr.encoding.lower() in ('gbk', 'cp936', 'gb23
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import aiohttp
+from json_repair import repair_json
 from app.config import config
 
 LOGGER = logging.getLogger(__name__)
@@ -107,11 +108,10 @@ class GeminiVisionClient:
         payload = {
             "model": vision_model,
             "messages": messages,
-            "temperature": 0.1,
+            "temperature": 0.0,
             "max_tokens": 8100,
+            "response_format": {"type": "json_object"},
         }
-        if self.provider == 'openrouter':
-            payload["response_format"] = {"type": "json_object"}
 
         close_session = False
         if session is None:
@@ -149,15 +149,7 @@ class GeminiVisionClient:
                             LOGGER.warning(f"Vision API error(provider={self.provider}): status={response.status}, response: {error_text[:500]}")
                         response.raise_for_status()
                         raw_bytes = await response.read()
-                        try:
-                            result = json.loads(raw_bytes.decode('utf-8'))
-                        except json.JSONDecodeError as _je:
-                            if "control character" in str(_je).lower():
-                                cleaned = raw_bytes.decode('utf-8', errors='replace')
-                                cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
-                                result = json.loads(cleaned)
-                            else:
-                                raise
+                        result = self._robust_json_loads(raw_bytes)
 
                         content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
                         return self._parse_json_object_from_content(content)
@@ -172,10 +164,42 @@ class GeminiVisionClient:
             if close_session:
                 await session.close()
 
+    def _robust_json_loads(self, raw_bytes: bytes) -> Dict:
+        """
+        多策略恢复含控制字符的 API 响应 JSON。
+        策略1: 直接 utf-8 解码 + json.loads
+        策略2: json_repair 修复
+        策略3: 逐字符替换解码 + 剥离控制字符
+        """
+        last_err = None
+        try:
+            return json.loads(raw_bytes.decode('utf-8'))
+        except json.JSONDecodeError as je:
+            if "control character" not in str(je).lower():
+                raise
+            last_err = je
+
+        # 策略2: json_repair 修复
+        try:
+            text = raw_bytes.decode('utf-8', errors='replace')
+            return json.loads(repair_json(text))
+        except Exception as e:
+            last_err = e
+
+        # 策略3: 全量替换解码 + 正则剥离控制字符
+        try:
+            cleaned = raw_bytes.decode('utf-8', errors='replace')
+            cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", cleaned)
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            last_err = e
+
+        raise last_err
+
     def _parse_json_object_from_content(self, content: str) -> Dict:
         """
-        尽量稳健地从模型返回内容中提取并解析 JSON object。
-        目标：避免因贪婪截取导致的 json.loads 语法错误（如 Expecting ',' delimiter）。
+        从模型返回内容中提取并解析 JSON object。
+        优先使用 json_repair 库修复常见格式问题，手写状态机作为最后兜底。
         """
 
         if content is None:
@@ -185,13 +209,19 @@ class GeminiVisionClient:
         # 去掉代码围栏（```json ... ```）
         text = re.sub(r"```(?:json)?", "", text, flags=re.IGNORECASE)
         text = text.replace("```", "").strip()
-        # 过滤控制字符，防止模型输出中含 \x00-\x08/\x0b/\x0c/\x0e-\x1f 等导致 json.loads 报 "Invalid control character"
-        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
         def _is_empty_dict(obj: Any) -> bool:
             return isinstance(obj, dict) and len(obj) == 0
 
-        # 1) 先直接尝试（response_format=json_object 理论上应当可直接 parse）
+        # 1) json_repair 优先：覆盖控制字符、未转义换行、尾部逗号、缺引号等
+        try:
+            obj = json.loads(repair_json(text))
+            if not _is_empty_dict(obj):
+                return obj
+        except Exception:
+            pass
+
+        # 2) 直接 json.loads（response_format=json_object 时应当可直接 parse）
         try:
             obj = json.loads(text)
             if not _is_empty_dict(obj):
@@ -199,32 +229,19 @@ class GeminiVisionClient:
         except Exception:
             pass
 
-        # 2) 再尝试：从第一个到最后一个 '}' 之间截取
+        # 3) 从第一个到最后一个 '}' 之间截取
         start = text.find("{")
         end = text.rfind("}")
         if start != -1 and end != -1 and end > start:
             candidate = text[start : end + 1]
             try:
-                obj = json.loads(candidate)
+                obj = json.loads(repair_json(candidate))
                 if not _is_empty_dict(obj):
                     return obj
             except Exception:
                 pass
 
-        # 3) 兜底：从第一个 '{' 开始，尝试多个候选结束位置（尽量找到可解析的 JSON object）
-        if start != -1:
-            # 只尝试最后若干个 '}'，避免 O(n^2) 太慢
-            ends = [m.start() for m in re.finditer(r"}", text)]
-            for end_i in sorted(ends, reverse=True)[:25]:
-                candidate = text[start : end_i + 1]
-                try:
-                    obj = json.loads(candidate)
-                    if not _is_empty_dict(obj):
-                        return obj
-                except Exception:
-                    continue
-
-        # 4) 最后兜底：用“括号深度 + 字符串状态”做平衡截取（避免前后文本干扰）
+        # 4) 括号深度 + 字符串状态机做平衡截取（最后兜底）
         start = text.find("{")
         if start == -1:
             raise ValueError("vision response: no '{' found to extract json object")
@@ -262,5 +279,8 @@ class GeminiVisionClient:
             raise ValueError("vision response: failed to balance json braces")
 
         candidate = text[start : end_idx + 1]
-        obj = json.loads(candidate)
+        try:
+            obj = json.loads(repair_json(candidate))
+        except Exception:
+            obj = json.loads(candidate)
         return obj

@@ -98,8 +98,22 @@ def _merge_aviation_into_parsed(parsed: Dict[str, Any], aviation: Dict[str, Any]
         _force_fill(["schedule_local", "planned_dep"], aviation.get("planned_dep"))
         _force_fill(["schedule_local", "planned_arr"], aviation.get("planned_arr"))
 
-    _force_fill(["actual_local", "actual_dep"], aviation.get("actual_dep"))
-    _force_fill(["actual_local", "actual_arr"], aviation.get("actual_arr"))
+    # 写入 actual_local 前校验路线匹配：
+    # 飞常准返回的 dep/arr iata 必须与 parsed.route 一致，否则查到了错误的航段
+    # （如联票前置段 EVE→OSL 代替了理赔段 OSL→LHR）
+    route = p.get("route") or {}
+    route_dep = str(route.get("dep_iata") or "").strip().upper()
+    route_arr = str(route.get("arr_iata") or "").strip().upper()
+    avi_dep = str(aviation.get("dep_iata") or "").strip().upper()
+    avi_arr = str(aviation.get("arr_iata") or "").strip().upper()
+    route_matches = (
+        not route_dep or not route_arr          # route 未知时不过滤
+        or not avi_dep or not avi_arr           # 飞常准未返回路线时不过滤
+        or (avi_dep == route_dep and avi_arr == route_arr)  # 完全匹配
+    )
+    if route_matches:
+        _force_fill(["actual_local", "actual_dep"], aviation.get("actual_dep"))
+        _force_fill(["actual_local", "actual_arr"], aviation.get("actual_arr"))
 
     _fill(["flight", "operating_carrier"], aviation.get("operating_carrier"))
 

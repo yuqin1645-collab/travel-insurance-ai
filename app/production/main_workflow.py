@@ -1124,7 +1124,7 @@ class ProductionWorkflow:
 
             # 3. 处理结果
             if review_result.get("IsAdditional") == "Y":
-                # 需补件
+                # 需补齐资料
                 await self.supplementary_handler.handle_supplementary_needed(forceid, review_result)
                 results["steps"].append({"step": "supplementary", "status": "success"})
             else:

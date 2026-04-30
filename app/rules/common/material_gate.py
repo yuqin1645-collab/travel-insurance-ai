@@ -18,7 +18,7 @@ PROMPT_BLOCK = """
 通过在文本内容和附件文件名中搜索关键词来判断必备材料是否已提交。
 - 每类必备材料对应一组关键词，任意关键词命中即视为已提供。
 - 全部必备材料命中 → 材料完整。
-- 存在未命中的必备材料 → 需补件，需在补件说明中列出缺失材料名称。
+- 存在未命中的必备材料 → 需补齐资料，需在补件说明中列出缺失材料名称。
 """.strip()
 
 # 航班延误险必备材料关键词映射
@@ -79,7 +79,7 @@ def check(
         return RuleResult(
             passed=False,
             action="supplement",
-            reason="需补件：" + "；".join(missing),
+            reason="需补齐资料：" + "；".join(missing),
             detail={"missing": missing},
         )
 

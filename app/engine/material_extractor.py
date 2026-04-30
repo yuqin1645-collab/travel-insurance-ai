@@ -352,6 +352,31 @@ class MaterialExtractor:
 
             if batch_data:
                 vision_data = self._merge_vision_data(vision_data, batch_data)
+            else:
+                # 批次完全失败，逐文件兜底重试（batch_size=1）
+                LOGGER.warning(
+                    f"material extract [Vision] batch {batch_index}/{total_batches} 完全失败，启动逐文件兜底",
+                    extra=log_extra(forceid=self._forceid, stage="material_extractor"),
+                )
+                for fp in batch_paths:
+                    single_data: Dict[str, Any] = {}
+                    for sa in range(1, 3):  # 每个文件最多重试2次
+                        try:
+                            single_data = await self._reviewer.vision_client.review_materials_with_vision(
+                                material_files=[fp],
+                                prompt=prompt,
+                                session=session,
+                            )
+                            break
+                        except Exception as se:
+                            LOGGER.warning(
+                                f"material extract [Vision] 逐文件兜底失败(file={fp.name}, attempt {sa}/2): {se}",
+                                extra=log_extra(forceid=self._forceid, stage="material_extractor"),
+                            )
+                            if sa < 2:
+                                await asyncio.sleep(2.0 * sa)
+                    if single_data:
+                        vision_data = self._merge_vision_data(vision_data, single_data)
 
         # 扫描统计信息：用于排查“是否扫全”
         src_files = [

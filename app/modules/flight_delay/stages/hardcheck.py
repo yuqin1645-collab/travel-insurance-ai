@@ -435,10 +435,54 @@ def _run_hardcheck(
         rebooking_override = False
         overbooking_override = False
         aviation_delay_proof_override = False
+        prev_seg_arrived_ok = False  # 前程正常到达（飞常准确认）
 
         if is_missed_connection and (avi_status == "取消" or is_conn_rebooking_flag) and has_rebooking:
             is_missed_connection = False
             rebooking_override = True
+
+        # 联程场景：用飞常准前程数据判断末段延误是否由前程延误引起
+        # 若前程正常到达（actual_arr 在末段计划出发之前），则末段是独立事件，不触发误机免责
+        # 若前程本身严重延误（actual_arr 晚于末段计划出发），则是前程延误导致，触发误机免责
+        connecting_segments = (parsed or {}).get("connecting_segments_data") or []
+        last_seg_dep_utc = None
+        sched_local = (parsed or {}).get("schedule_local") or {}
+        last_seg_dep_iata_val = str(sched_local.get("last_seg_dep_iata") or "").strip()
+        if connecting_segments and last_seg_dep_iata_val:
+            # 找最后一程的计划出发时间（即中转机场的起飞时间）
+            # 从飞常准数据中取末段的 planned_dep
+            for seg in connecting_segments:
+                if str(seg.get("arr_iata") or "").strip().upper() == last_seg_dep_iata_val.upper():
+                    # 这段的到达机场 = 末段的出发机场（即中转点）
+                    # 前程 actual_arr = 旅客到达中转机场时间
+                    prev_actual_arr_raw = str(seg.get("actual_arr") or "").strip()
+                    try:
+                        if prev_actual_arr_raw and prev_actual_arr_raw.lower() not in ("", "unknown", "none"):
+                            prev_actual_arr_dt = datetime.fromisoformat(prev_actual_arr_raw)
+                            # 末段计划出发时间（从 schedule_local.planned_dep 或 itinerary_segments 里取）
+                            # last_seg_dep 存在于 itinerary_segments 的最后一段 original_date
+                            v_segs = (vision_extract or {}).get("itinerary_segments") or []
+                            last_seg_planned_dep_raw = ""
+                            for vs in v_segs:
+                                if str(vs.get("original_dep_iata") or "").strip().upper() == last_seg_dep_iata_val.upper():
+                                    last_seg_planned_dep_raw = str(vs.get("original_date") or "").strip()
+                                    break
+                            if last_seg_planned_dep_raw:
+                                # 尝试用前程的时区解析末段计划出发
+                                last_seg_tz = prev_actual_arr_dt.utcoffset()
+                                if last_seg_tz is not None:
+                                    from datetime import timezone, timedelta
+                                    date_part = last_seg_planned_dep_raw[:16]  # "YYYY-MM-DD HH:MM"
+                                    last_seg_dep_dt = datetime.strptime(date_part, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(last_seg_tz))
+                                    # 前程准时到达 = actual_arr 在末段计划出发之前
+                                    if prev_actual_arr_dt <= last_seg_dep_dt:
+                                        prev_seg_arrived_ok = True
+                    except Exception:
+                        pass
+
+        # 若前程正常到达，且末段是独立取消（非前程延误导致），则不触发误机免责
+        if is_missed_connection and prev_seg_arrived_ok:
+            is_missed_connection = False
 
         _overbooking_keywords = ["超售", "overbooking", "overbooked", "denied boarding", "denied_boarding", "拒绝登机"]
         _all_texts = " ".join([
@@ -460,18 +504,23 @@ def _run_hardcheck(
             "aviation_delay_proof_override": aviation_delay_proof_override,
             "overbooking_override": overbooking_override,
             "rebooking_override": rebooking_override,
+            "prev_seg_arrived_ok": prev_seg_arrived_ok,
             "note": (
                 "前序航班延误导致无法搭乘后续接驳航班，属于免责情形4，不予赔付" if is_missed_connection
                 else (
                     "原航班取消后承运人整体改签，旅客未乘坐原联程航班，不适用中转接驳免责"
                     if rebooking_override
                     else (
-                        "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
-                        if aviation_delay_proof_override
+                        "飞常准确认前程正常到达中转机场，末段独立取消/延误，不属于前程延误导致的误机，不适用联程免责"
+                        if prev_seg_arrived_ok
                         else (
-                            "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
-                            if overbooking_override
-                            else "未检测到中转接驳延误特征"
+                            "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
+                            if aviation_delay_proof_override
+                            else (
+                                "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
+                                if overbooking_override
+                                else "未检测到中转接驳延误特征"
+                            )
                         )
                     )
                 )

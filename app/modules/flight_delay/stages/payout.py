@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from app.logging_utils import LOGGER, log_extra
-from app.skills.compensation import calculate_payout, parse_tier_config_from_terms
+from app.skills.compensation import calculate_payout
 
 
 def _run_payout_calc(
@@ -22,7 +22,6 @@ def _run_payout_calc(
         if not isinstance(final_minutes, int) or final_minutes <= 0:
             return {"status": "not_applicable", "note": "延误时长未知或为0，不进入金额计算", "final_amount": None}
 
-        final_hours = final_minutes / 60.0
         claim_amount = str(claim_info.get("Insured_Amount") or claim_info.get("insured_amount") or "")
         cap = None
         if claim_amount:
@@ -31,15 +30,11 @@ def _run_payout_calc(
             except Exception:
                 cap = None
 
-        try:
-            terms_config = parse_tier_config_from_terms(policy_excerpt)
-        except Exception:
-            terms_config = None
-
         payout_result = calculate_payout(
-            delay_hours=final_hours,
-            claim_amount=cap,
-            tier_config=terms_config,
+            delay_minutes=final_minutes,
+            claim_amount=None,
+            insured_amount=cap,
+            policy_terms_excerpt=policy_excerpt,
         )
 
         return {"status": "calculated", **payout_result}

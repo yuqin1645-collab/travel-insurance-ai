@@ -147,6 +147,13 @@ class IncrementalDownloadScheduler:
                 force_refresh=False,
             )
             _supplementary_forceids = set()
+            # 终态集合：已到达最终状态的案件不应再被补件逻辑重新触发
+            _final_states = {
+                ClaimStatus.APPROVED,
+                ClaimStatus.REJECTED,
+                ClaimStatus.COMPLETED,
+                ClaimStatus.MAX_RETRIES_EXCEEDED,
+            }
             for _claim in _api_claims:
                 _final_status = str(_claim.get("Final_Status") or _claim.get("final_status") or "").strip()
                 _case_no = str(
@@ -155,6 +162,20 @@ class IncrementalDownloadScheduler:
                 ).strip()
                 _forceid = str(_claim.get("forceid") or _claim.get("Id") or "").strip()
                 if _final_status in SUPPLEMENTARY_SUBMITTED_STATUS and _case_no in downloader.progress:
+                    # 先查状态机：已终态的案件不再重复下载
+                    if _forceid:
+                        try:
+                            _existing = await self.status_manager.get_claim_status(_forceid)
+                            if _existing is not None:
+                                _current = getattr(_existing, "current_status", None)
+                                if _current in _final_states:
+                                    LOGGER.info(
+                                        f"案件已处于终态 {_current}，跳过补件重新下载: "
+                                        f"{_case_no} (forceid={_forceid})"
+                                    )
+                                    continue
+                        except Exception:
+                            pass
                     # 清空下载记录，让 ClaimDownloader 重新下载补件材料
                     downloader.progress[_case_no]["downloadedFiles"] = []
                     downloader.progress[_case_no]["failedFiles"] = []

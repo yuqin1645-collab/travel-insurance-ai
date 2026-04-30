@@ -144,8 +144,8 @@ def _extract_file_names(claim_info: Dict[str, Any]) -> List[str]:
 def _result(forceid: str, remark: str, is_additional: str, conclusions: List[Dict[str, str]], debug: Dict[str, Any]) -> Dict[str, Any]:
     if remark.startswith("审核通过") or remark.startswith("赔付"):
         audit_result = "通过"
-    elif is_additional == "Y" or remark.startswith("需补件") or remark.startswith("转人工"):
-        audit_result = "需补件"
+    elif is_additional == "Y" or remark.startswith("需补齐资料") or remark.startswith("转人工"):
+        audit_result = "需补齐资料"
     else:
         audit_result = "拒绝"
     return {

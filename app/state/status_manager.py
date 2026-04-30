@@ -310,7 +310,7 @@ class StatusManager:
             await self.update_claim_status(
                 forceid,
                 ClaimStatus.SUPPLEMENTARY_NEEDED,
-                "需补件"
+                "需补齐资料"
             )
             # 创建补件记录
             await self._create_supplementary_record(forceid, review_result)
@@ -561,7 +561,7 @@ class StatusManager:
             forceid=forceid,
             supplementary_number=status_record.supplementary_count,
             requested_at=datetime.now(),
-            requested_reason=review_result.get("Remark", "需补件"),
+            requested_reason=review_result.get("Remark", "需补齐资料"),
             required_materials=review_result.get("missing_materials", []),
             deadline=datetime.now() + timedelta(hours=config.SUPPLEMENTARY_DEADLINE_HOURS),
             status=SupplementaryStatus.REQUESTED

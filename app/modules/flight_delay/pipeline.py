@@ -244,9 +244,26 @@ async def review_flight_delay_async(
                 itin_node["is_connecting_or_transit"] = "true"
                 itin_node["mentions_missed_connection"] = "true"
             if is_conn_booking:
-                itin_node = parsed.setdefault("itinerary", {})
-                itin_node["is_connecting_or_transit"] = "true"
-                itin_node["is_connecting_rebooking"] = "true"
+                # 校验：itinerary_segments 只有1段且替代航班与原航班同路线时，
+                # 不标记联程改签（Vision 可能误判，如携程APP变动截图含后续行程段）
+                v_segments = vision_extract.get("itinerary_segments") or []
+                orig_dep = str(vision_extract.get("dep_iata") or "").strip().upper()
+                orig_arr = str(vision_extract.get("arr_iata") or "").strip().upper()
+                v_alt_dep_iata = str(v_alt.get("dep_iata") or "").strip().upper()
+                v_alt_arr_iata = str(v_alt.get("arr_iata") or "").strip().upper()
+                # 同路线判定：替代航班 dep/arr 与原航班一致（说明只是改期，非联程改签）
+                same_route = (
+                    not _is_unknown(v_alt_dep_iata) and not _is_unknown(v_alt_arr_iata)
+                    and not _is_unknown(orig_dep) and not _is_unknown(orig_arr)
+                    and v_alt_dep_iata == orig_dep and v_alt_arr_iata == orig_arr
+                )
+                # 单段判定：itinerary_segments 只有1个原始航段
+                single_segment = isinstance(v_segments, list) and len(v_segments) <= 1
+                is_conn_booking_validated = is_conn_booking and not (same_route or single_segment)
+                if is_conn_booking_validated:
+                    itin_node = parsed.setdefault("itinerary", {})
+                    itin_node["is_connecting_or_transit"] = "true"
+                    itin_node["is_connecting_rebooking"] = "true"
 
         # 4) evidence
         v_evidence = vision_extract.get("evidence") or {}
@@ -359,6 +376,9 @@ async def review_flight_delay_async(
                     if len(cf_candidates) >= 2:
                         break
 
+    route_dep_iata = str((parsed.get("route") or {}).get("dep_iata") or "").strip().upper()
+    route_arr_iata = str((parsed.get("route") or {}).get("arr_iata") or "").strip().upper()
+
     for candidate_fn, candidate_dep, candidate_arr, candidate_date in cf_candidates:
         if not candidate_fn or not candidate_date:
             continue
@@ -373,8 +393,16 @@ async def review_flight_delay_async(
             )
             aviation_results_all.append({"candidate": (candidate_fn, candidate_date, candidate_dep, candidate_arr), "result": one_result})
             if one_result.get("success"):
+                avi_dep = str(one_result.get("dep_iata") or "").strip().upper()
+                avi_arr = str(one_result.get("arr_iata") or "").strip().upper()
+                # 判断飞常准返回的路线是否与理赔路线一致
+                route_match = (
+                    not route_dep_iata or not route_arr_iata
+                    or not avi_dep or not avi_arr
+                    or (avi_dep == route_dep_iata and avi_arr == route_arr_iata)
+                )
                 LOGGER.info(
-                    f"[{forceid}] 飞常准查询成功（候选={candidate_fn} {candidate_date}）: -> {one_result.get('status')}",
+                    f"[{forceid}] 飞常准查询成功（候选={candidate_fn} {candidate_date}）: -> {one_result.get('status')} [{avi_dep}->{avi_arr}] route_match={route_match}",
                     extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
                 )
                 parsed = _merge_aviation_into_parsed(parsed, one_result)
@@ -382,9 +410,47 @@ async def review_flight_delay_async(
                 if isinstance(parsed["evidence"], dict):
                     parsed["evidence"]["aviation_delay_proof"] = True
                     parsed["evidence"]["aviation_delay_proof_source"] = f"飞常准: {one_result.get('status','')} {one_result.get('source','')}"
+
+                # 联程场景：飞常准查到了末段航班（arr_iata 与终点一致，但 dep 是中转机场）
+                # 把末段的 planned_arr 和 dep/arr iata 存入 schedule_local，供延误计算使用
+                arr_match = route_arr_iata and avi_arr and avi_arr == route_arr_iata
+                dep_mismatch = route_dep_iata and avi_dep and avi_dep != route_dep_iata
+                if arr_match and dep_mismatch:
+                    sched_node = parsed.setdefault("schedule_local", {})
+                    # 末段计划到达时间（终点到达，非中转出发）
+                    last_planned_arr = one_result.get("planned_arr")
+                    if last_planned_arr and not _is_unknown(str(last_planned_arr)):
+                        sched_node["planned_arr"] = str(last_planned_arr)
+                        LOGGER.info(
+                            f"[{forceid}] 联程末段 planned_arr 更新为飞常准数据: {last_planned_arr}",
+                            extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
+                        )
+                    # 记录末段机场供 delay_calc 机场匹配
+                    sched_node["last_seg_dep_iata"] = avi_dep
+                    sched_node["last_seg_arr_iata"] = avi_arr
+
+                # 联程场景：飞常准查到了前程（dep 与出发一致，arr 是中转机场）
+                # 把前程飞常准数据存入 parsed，供 hardcheck 判断前程是否正常到达
+                dep_matches_route = route_dep_iata and avi_dep and avi_dep == route_dep_iata
+                arr_is_transit = route_arr_iata and avi_arr and avi_arr != route_arr_iata
+                if dep_matches_route and arr_is_transit:
+                    seg_entry = {
+                        "flight_no": one_result.get("flight_no"),
+                        "dep_iata": avi_dep,
+                        "arr_iata": avi_arr,
+                        "planned_dep": one_result.get("planned_dep"),
+                        "planned_arr": one_result.get("planned_arr"),
+                        "actual_dep": one_result.get("actual_dep"),
+                        "actual_arr": one_result.get("actual_arr"),
+                        "status": one_result.get("status"),
+                    }
+                    parsed.setdefault("connecting_segments_data", []).append(seg_entry)
+
                 ctx["flight_delay_parse"] = parsed
                 aviation_result = one_result
-                if cf_fn and candidate_fn.upper() == cf_fn.upper():
+                # 路线匹配时才终止：找到了正确航段，无需再查其他候选
+                # 路线不匹配时继续，让后续候选有机会查到正确航段
+                if route_match:
                     break
             else:
                 LOGGER.info(
@@ -454,6 +520,15 @@ async def review_flight_delay_async(
                 f"[{forceid}] 联程首班替代航班查询失败（降级）: {_first_ae}",
                 extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
             )
+            # 飞常准查询失败，用 Vision 提取的首段计划起飞时间兜底
+            first_alt_planned_dep = str(first_alt.get("planned_dep") or "").strip()
+            if first_alt_planned_dep and first_alt_planned_dep.lower() not in ("unknown", ""):
+                parsed.setdefault("alternate_local", {})["alt_dep"] = first_alt_planned_dep
+                parsed.setdefault("actual_local", {})["actual_dep"] = first_alt_planned_dep
+                LOGGER.info(
+                    f"[{forceid}] 联程首班 alt_dep/actual_dep 已用 Vision 提取时间兜底: {first_alt_planned_dep}",
+                    extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
+                )
 
     if (
         alt_fn and alt_fn.lower() not in ("unknown", "null", "")
@@ -475,6 +550,15 @@ async def review_flight_delay_async(
                     f"[{forceid}] 接驳航班飞常准查询成功: {alt_fn} {alt_dep_date} -> {alt_aviation.get('status')}",
                     extra=log_extra(forceid=forceid, stage="fd_alt_aviation_lookup", attempt=0),
                 )
+                # 把替代航班路线信息存入 alternate_local，供 delay_calc 机场匹配使用
+                avi_dep_iata = str(alt_aviation.get("dep_iata") or "").strip().upper()
+                avi_arr_iata = str(alt_aviation.get("arr_iata") or "").strip().upper()
+                if not _is_unknown(avi_dep_iata):
+                    parsed.setdefault("alternate_local", {})["alt_dep_iata"] = avi_dep_iata
+                if not _is_unknown(avi_arr_iata):
+                    parsed.setdefault("alternate_local", {})["alt_arr_iata"] = avi_arr_iata
+
+                is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
                 actual_arr = alt_aviation.get("actual_arr")
                 alt_arr_current = str(alt_local.get("alt_arr") or "")
                 alt_arr_needs_fill = (
@@ -484,7 +568,10 @@ async def review_flight_delay_async(
                 )
                 if actual_arr and alt_arr_needs_fill:
                     parsed.setdefault("alternate_local", {})["alt_arr"] = actual_arr
-                    parsed.setdefault("actual_local", {})["actual_arr"] = actual_arr
+                    # 联程改签时，替代末段航班的实际到达才是旅客的终到时间
+                    # 非联程改签时，actual_local.actual_arr 应保留原航班的飞常准数据，不覆盖
+                    if is_conn_rebooking:
+                        parsed.setdefault("actual_local", {})["actual_arr"] = actual_arr
 
                 actual_dep = alt_aviation.get("actual_dep")
                 alt_dep_current = str(alt_local.get("alt_dep") or "")
@@ -506,11 +593,11 @@ async def review_flight_delay_async(
                 alt_dep_to_fill = actual_dep or alt_aviation.get("planned_dep")
                 if alt_dep_to_fill:
                     is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
-                    alt_dep_has_tz = _has_timezone(alt_dep_current)
-                    if is_conn_rebooking and not alt_dep_has_tz:
-                        parsed.setdefault("alternate_local", {})["alt_dep"] = alt_dep_to_fill
-                        parsed.setdefault("actual_local", {})["actual_dep"] = alt_dep_to_fill
-                    elif alt_dep_needs_fill and not is_conn_rebooking:
+                    # 联程改签场景：alt_dep/actual_dep 已由首段航班覆盖，末段只覆盖 alt_arr/actual_arr
+                    # 不再用末段起飞时间覆盖 alt_dep/actual_dep（否则延误时长虚高）
+                    if is_conn_rebooking:
+                        pass
+                    elif alt_dep_needs_fill:
                         parsed.setdefault("alternate_local", {})["alt_dep"] = alt_dep_to_fill
                         parsed.setdefault("actual_local", {})["actual_dep"] = alt_dep_to_fill
                 ctx["flight_delay_parse"] = parsed

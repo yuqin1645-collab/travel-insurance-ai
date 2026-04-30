@@ -23,6 +23,7 @@ import time
 import aiohttp
 from typing import Dict, List, Optional
 from enum import Enum
+from json_repair import repair_json
 from app.config import config
 
 LOGGER = logging.getLogger(__name__)
@@ -98,28 +99,39 @@ def _parse_json_with_fallbacks(
 ) -> Dict:
     """
     统一 JSON 解析 + 修复逻辑（同步/异步共享）。
+    json_repair 优先，手写修复作为补充。
 
     返回: (parsed_dict, should_retry)
     - parsed_dict 非 None 时解析成功
     - should_retry 表示是否应该继续重试（解析失败但还有重试机会）
     """
+    # 1) json_repair 优先
+    try:
+        return json.loads(repair_json(content)), False
+    except Exception:
+        pass
+
+    # 2) 直接 json.loads
     try:
         return json.loads(content), False
     except json.JSONDecodeError as e:
         LOGGER.warning(f"[attempt={attempt}] JSON解析失败: {e}, 内容: {content[:500]}...")
 
+    # 3) 正则提取 {.*}
     json_match = re.search(r'\{.*\}', content, re.DOTALL)
     if json_match:
         try:
-            return json.loads(json_match.group()), False
-        except json.JSONDecodeError:
+            return json.loads(repair_json(json_match.group())), False
+        except Exception:
             pass
 
+    # 4) 手写转义修复
     fixed = _try_fix_json_string_escapes(content)
     if fixed is not None:
         LOGGER.info(f"[attempt={attempt}] JSON转义修复成功")
         return fixed, False
 
+    # 5) 截断修复
     repaired = _try_repair_truncated_json(content)
     if repaired is not None:
         LOGGER.info(f"[attempt={attempt}] JSON截断修复成功")

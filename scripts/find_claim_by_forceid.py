@@ -33,6 +33,24 @@ API_URL = os.getenv("CLAIMS_API_URL", "https://nanyan.sites.sfcrmapps.cn/service
 
 def fetch_by_forceid(forceid: str, api_url: str = API_URL) -> Dict:
     """从 API 按 forceid 拉取单个案件数据，返回 claim dict"""
+    # 先尝试只传 forceid 精确查询
+    resp = requests.post(api_url, json={"forceid": forceid}, timeout=30)
+    resp.raise_for_status()
+    raw = resp.json()
+    claims = []
+    if isinstance(raw, list):
+        claims = raw
+    elif isinstance(raw, dict):
+        claims = raw.get("records") or raw.get("data") or raw.get("claims") or []
+        # 单条返回
+        if not claims and (raw.get("forceid") or raw.get("Id")):
+            claims = [raw]
+
+    for c in claims:
+        if str(c.get("forceid") or c.get("Id") or "") == forceid:
+            return c
+
+    # 精确查询未命中，降级为全量拉取再匹配
     resp = requests.post(api_url, json={}, timeout=30)
     resp.raise_for_status()
     raw = resp.json()

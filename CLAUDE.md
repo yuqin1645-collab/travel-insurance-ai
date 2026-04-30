@@ -101,7 +101,7 @@ def check(claim_info: dict) -> RuleResult:
 ```python
 @dataclass
 class RuleResult:
-    passed: bool    # True=通过，False=拒赔/需补件
+    passed: bool    # True=通过，False=拒赔/需补齐资料
     action: str     # "approve" | "reject" | "supplement" | "continue"
     reason: str     # 人类可读原因（可直接用于 Remark 字段）
     detail: dict    # 调试信息（写入 DebugInfo）
@@ -147,6 +147,25 @@ app/modules/<claim_type>/
 ## 常用运维脚本
 
 执行前确保已激活虚拟环境：`venv\Scripts\python.exe` (Windows) 或 `python`（已激活 venv）。
+
+### 重跑案件（强制规则）
+
+**重跑案件必须使用 `scripts/review.py --forceid`**，该脚本会自动完成：
+1. 重新审核
+2. 推送前端
+3. 同步数据库
+
+**禁止**单独用 `push.py --forceid` 做数据库同步（历史 bug：`_extract_review_fields()` 返回三元组，push.py 曾直接传元组给 `_sync_to_db()` 导致同步失败，现已修复但 review.py 是更可靠的入口）。
+
+### AI vs 人工差异追踪
+
+每次重跑后必须检查 [docs/issue_cluster_tracker.md](docs/issue_cluster_tracker.md)，该文档记录了：
+- P0/P1/P2 分类及数量
+- 数据库一致性统计
+- 根因分析和修复历程
+- 趋势数据
+
+重跑导致结论变化时，必须同步更新该文档。
 
 ### 统一入口脚本（推荐）
 

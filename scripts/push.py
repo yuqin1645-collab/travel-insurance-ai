@@ -107,8 +107,8 @@ async def cmd_push_forceid(forceids: list):
 
             # 写数据库
             claim_info = claim_info_cache.get(fid, {})
-            fields = workflow._extract_review_fields(result, claim_info)
-            db_ok = _sync_to_db(fields)
+            main_fields, _, _ = workflow._extract_review_fields(result, claim_info)
+            db_ok = _sync_to_db(main_fields)
             print(f"  数据库: {'成功' if db_ok else '失败'}")
 
 
@@ -153,8 +153,8 @@ async def cmd_push_all(claim_type: str):
             # 写数据库
             try:
                 claim_info = claim_info_cache.get(fid, {})
-                fields = workflow._extract_review_fields(result, claim_info)
-                if _sync_to_db(fields):
+                main_fields, _, _ = workflow._extract_review_fields(result, claim_info)
+                if _sync_to_db(main_fields):
                     ok_db += 1
             except Exception:
                 pass
