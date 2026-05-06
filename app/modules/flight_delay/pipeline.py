@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import copy
-import re
-from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import aiohttp
 
@@ -12,41 +9,17 @@ from app.logging_utils import LOGGER, log_extra
 from app.engine.workflow import StageRunner
 from app.engine.stage_fallbacks import build_stage_error_return
 from app.engine.material_extractor import ExtractionStrategy, MaterialExtractor
-from app.vision_preprocessor import prepare_attachments_for_claim
 
-from app.modules.flight_delay.stages.utils import (
-    _policy_excerpt_or_default,
-    _is_unknown,
-    _merge_vision_into_parsed,
-    _merge_aviation_into_parsed,
-    _truthy,
-    _has_timezone,
-    _parse_threshold_minutes,
-    _extract_delay_minutes_from_text,
-)
-from app.modules.flight_delay.stages.hardcheck import (
-    _check_foreseeability_fraud,
-    _run_hardcheck,
-)
+from app.modules.flight_delay.stages.utils import _policy_excerpt_or_default
+from app.modules.flight_delay.stages.hardcheck import _run_hardcheck
 from app.modules.flight_delay.stages.payout import _run_payout_calc
-from app.modules.flight_delay.stages.delay_calc import (
-    _compute_delay_minutes,
-    _augment_with_computed_delay,
-)
+from app.modules.flight_delay.stages.delay_calc import _augment_with_computed_delay
 from app.modules.flight_delay.stages.postprocess import _postprocess_audit_result
-from app.modules.flight_delay.stages.duplicate import (
-    _is_concluded_status,
-    _is_same_event,
-    _check_duplicate_claim,
-)
-from app.modules.flight_delay.stages.validators import (
-    _check_inheritance_scenario,
-    _check_legal_capacity,
-    _check_name_match,
-    _check_same_day_policy,
-    _check_coverage_area_text,
-    _check_hardcheck_exclusion,
-)
+from app.modules.flight_delay.stages.duplicate import _check_duplicate_claim
+from app.modules.flight_delay.stages.validators import _check_hardcheck_exclusion
+from app.modules.flight_delay.stages.vision_merge import merge_vision_into_parsed
+from app.modules.flight_delay.stages.aviation_lookup import lookup_aviation_data
+from app.modules.flight_delay.stages.alt_flight_lookup import lookup_alt_flight_data
 
 
 async def review_flight_delay_async(
@@ -136,476 +109,34 @@ async def review_flight_delay_async(
     ctx["flight_delay_parse"] = parsed
 
     # ========== stage1.2: 合并 Vision 抽取结果 ==========
-    if vision_extract:
-        # 0) 理赔焦点航段识别
-        v_claim_focus = vision_extract.get("claim_focus") or {}
-        if isinstance(v_claim_focus, dict):
-            cf_node = parsed.setdefault("claim_focus", {})
-            for k, v in v_claim_focus.items():
-                v_str = str(v).strip() if v is not None else ""
-                if not _is_unknown(v_str) and _is_unknown(cf_node.get(k)):
-                    cf_node[k] = v_str
-
-        # 0.5) schedule_revision_chain
-        v_chain = vision_extract.get("schedule_revision_chain") or []
-        if isinstance(v_chain, list) and v_chain:
-            parsed["schedule_revision_chain"] = v_chain
-            first_rev = v_chain[0] if v_chain else {}
-            if isinstance(first_rev, dict):
-                sched_node = parsed.setdefault("schedule_local", {})
-                rev_planned_dep = str(first_rev.get("planned_dep") or "").strip()
-                rev_planned_arr = str(first_rev.get("planned_arr") or "").strip()
-                rev_dep_tz = str(first_rev.get("dep_timezone_hint") or "").strip()
-                rev_arr_tz = str(first_rev.get("arr_timezone_hint") or "").strip()
-                if "/" in rev_planned_dep:
-                    rev_planned_dep = rev_planned_dep.split("/")[0].strip()
-                if "/" in rev_planned_arr:
-                    rev_planned_arr = rev_planned_arr.split("/")[0].strip()
-                if not _is_unknown(rev_planned_dep) and _is_unknown(sched_node.get("planned_dep")):
-                    sched_node["planned_dep"] = rev_planned_dep
-                if not _is_unknown(rev_planned_arr) and _is_unknown(sched_node.get("planned_arr")):
-                    sched_node["planned_arr"] = rev_planned_arr
-                if not _is_unknown(rev_dep_tz):
-                    sched_node["dep_timezone_hint"] = rev_dep_tz
-                if not _is_unknown(rev_arr_tz):
-                    sched_node["arr_timezone_hint"] = rev_arr_tz
-            last_rev = v_chain[-1] if len(v_chain) > 1 else first_rev
-            if isinstance(last_rev, dict):
-                alt_node = parsed.setdefault("alternate_local", {})
-                last_dep = str(last_rev.get("planned_dep") or "").strip()
-                last_arr = str(last_rev.get("planned_arr") or "").strip()
-                if not _is_unknown(last_dep) and _is_unknown(alt_node.get("alt_dep")):
-                    alt_node["alt_dep"] = last_dep
-                if not _is_unknown(last_arr) and _is_unknown(alt_node.get("alt_arr")):
-                    alt_node["alt_arr"] = last_arr
-
-        # 0.6) aviation_scheduled
-        v_avi_sched = vision_extract.get("aviation_scheduled") or {}
-        if isinstance(v_avi_sched, dict):
-            avi_node = parsed.setdefault("aviation_scheduled", {})
-            for k, v in v_avi_sched.items():
-                v_str = str(v).strip() if v is not None else ""
-                if not _is_unknown(v_str) and _is_unknown(avi_node.get(k)):
-                    avi_node[k] = v_str
-
-        # 1) 航班号
-        cf_flight = str((parsed.get("claim_focus") or {}).get("flight_no") or "").strip()
-        if not _is_unknown(cf_flight):
-            flight_node = parsed.setdefault("flight", {})
-            flight_node["ticket_flight_no"] = cf_flight
-        else:
-            v_flight_no = str(vision_extract.get("flight_no") or "").strip()
-            if not _is_unknown(v_flight_no):
-                flight_node = parsed.setdefault("flight", {})
-                if _is_unknown(flight_node.get("ticket_flight_no")):
-                    flight_node["ticket_flight_no"] = v_flight_no
-
-        # 1.5) claim_focus dep/arr_iata
-        cf_dep = str((parsed.get("claim_focus") or {}).get("dep_iata") or "").strip().upper()
-        cf_arr = str((parsed.get("claim_focus") or {}).get("arr_iata") or "").strip().upper()
-        route_node = parsed.setdefault("route", {})
-        if not _is_unknown(cf_dep) and _is_unknown(route_node.get("dep_iata")):
-            route_node["dep_iata"] = cf_dep
-        if not _is_unknown(cf_arr) and _is_unknown(route_node.get("arr_iata")):
-            route_node["arr_iata"] = cf_arr
-
-        # 2) 计划起飞时间
-        v_flight_date = str(vision_extract.get("flight_date") or "").strip()
-        if not _is_unknown(v_flight_date):
-            sched_node = parsed.setdefault("schedule_local", {})
-            existing_dep = str(sched_node.get("planned_dep") or "").strip()
-            if _is_unknown(existing_dep):
-                sched_node["planned_dep"] = v_flight_date
-
-        # 2.5) 机场三字码
-        v_dep_iata = str(vision_extract.get("dep_iata") or "").strip().upper()
-        v_arr_iata = str(vision_extract.get("arr_iata") or "").strip().upper()
-        if not _is_unknown(v_dep_iata) and _is_unknown(route_node.get("dep_iata")):
-            route_node["dep_iata"] = v_dep_iata
-        if not _is_unknown(v_arr_iata) and _is_unknown(route_node.get("arr_iata")):
-            route_node["arr_iata"] = v_arr_iata
-
-        # 3) 替代航班时间
-        v_alt = vision_extract.get("alternate") or {}
-        if isinstance(v_alt, dict):
-            alt_node = parsed.setdefault("alternate_local", {})
-            for src_key, dst_key in [("alt_dep", "alt_dep"), ("alt_arr", "alt_arr"),
-                                      ("alt_flight_no", "alt_flight_no"), ("alt_source", "alt_source")]:
-                v_val = str(v_alt.get(src_key) or "").strip()
-                if not _is_unknown(v_val) and _is_unknown(alt_node.get(dst_key)):
-                    alt_node[dst_key] = v_val
-            is_conn_booking = _truthy(v_alt.get("is_connecting_rebooking")) is True
-            if is_conn_booking:
-                v_alt_dep = str(v_alt.get("alt_dep") or "").strip()
-                if not _is_unknown(v_alt_dep) and not _is_unknown(alt_node.get("alt_dep")):
-                    alt_node["alt_dep"] = v_alt_dep
-            if _truthy(v_alt.get("is_connecting_missed")) is True:
-                itin_node = parsed.setdefault("itinerary", {})
-                itin_node["is_connecting_or_transit"] = "true"
-                itin_node["mentions_missed_connection"] = "true"
-            if is_conn_booking:
-                # 校验：itinerary_segments 只有1段且替代航班与原航班同路线时，
-                # 不标记联程改签（Vision 可能误判，如携程APP变动截图含后续行程段）
-                v_segments = vision_extract.get("itinerary_segments") or []
-                orig_dep = str(vision_extract.get("dep_iata") or "").strip().upper()
-                orig_arr = str(vision_extract.get("arr_iata") or "").strip().upper()
-                v_alt_dep_iata = str(v_alt.get("dep_iata") or "").strip().upper()
-                v_alt_arr_iata = str(v_alt.get("arr_iata") or "").strip().upper()
-                # 同路线判定：替代航班 dep/arr 与原航班一致（说明只是改期，非联程改签）
-                same_route = (
-                    not _is_unknown(v_alt_dep_iata) and not _is_unknown(v_alt_arr_iata)
-                    and not _is_unknown(orig_dep) and not _is_unknown(orig_arr)
-                    and v_alt_dep_iata == orig_dep and v_alt_arr_iata == orig_arr
-                )
-                # 单段判定：itinerary_segments 只有1个原始航段
-                single_segment = isinstance(v_segments, list) and len(v_segments) <= 1
-                is_conn_booking_validated = is_conn_booking and not (same_route or single_segment)
-                if is_conn_booking_validated:
-                    itin_node = parsed.setdefault("itinerary", {})
-                    itin_node["is_connecting_or_transit"] = "true"
-                    itin_node["is_connecting_rebooking"] = "true"
-
-        # 4) evidence
-        v_evidence = vision_extract.get("evidence") or {}
-        if isinstance(v_evidence, dict):
-            ev_node = parsed.setdefault("evidence", {})
-            for k, v in v_evidence.items():
-                v_str = str(v).strip() if v is not None else ""
-                if not _is_unknown(v_str) and _is_unknown(ev_node.get(k)):
-                    ev_node[k] = v
-
-        # 5) delay_proof_reason_text
-        reason_text = str(v_evidence.get("delay_proof_reason_text") or "").strip()
-        if not _is_unknown(reason_text):
-            if _is_unknown(parsed.get("delay_reason")):
-                parsed["delay_reason"] = reason_text
-            if _is_unknown(parsed.get("delay_reason_is_external")):
-                _INTERNAL_KEYWORDS = ["公司原因", "商业原因", "运力调整", "计划取消", "company reason"]
-                is_internal = any(kw in reason_text.lower() for kw in _INTERNAL_KEYWORDS)
-                parsed["delay_reason_is_external"] = "false" if is_internal else "true"
-
-        # 6) delay_proof_planned_dep / delay_proof_actual_dep
-        proof_planned = str(v_evidence.get("delay_proof_planned_dep") or "").strip()
-        proof_actual = str(v_evidence.get("delay_proof_actual_dep") or "").strip()
-        if not _is_unknown(proof_planned):
-            sched_node = parsed.setdefault("schedule_local", {})
-            if _is_unknown(sched_node.get("planned_dep")):
-                sched_node["planned_dep"] = proof_planned
-        if not _is_unknown(proof_actual):
-            actual_node = parsed.setdefault("actual_local", {})
-            if _is_unknown(actual_node.get("actual_dep")):
-                actual_node["actual_dep"] = proof_actual
-
-        # 6.5) delay_proof_planned_arr / delay_proof_actual_arr
-        proof_planned_arr = str(v_evidence.get("delay_proof_planned_arr") or "").strip()
-        proof_actual_arr = str(v_evidence.get("delay_proof_actual_arr") or "").strip()
-        if not _is_unknown(proof_planned_arr):
-            sched_node = parsed.setdefault("schedule_local", {})
-            if _is_unknown(sched_node.get("planned_arr")):
-                sched_node["planned_arr"] = proof_planned_arr
-        if not _is_unknown(proof_actual_arr):
-            actual_node = parsed.setdefault("actual_local", {})
-            if _is_unknown(actual_node.get("actual_arr")):
-                actual_node["actual_arr"] = proof_actual_arr
-
-        # 7) boarding_pass_actual_dep
-        bp_actual = str(v_evidence.get("boarding_pass_actual_dep") or "").strip()
-        if not _is_unknown(bp_actual):
-            v_alt_fn = str(v_alt.get("alt_flight_no") or "").strip()
-            has_alt_flight = not _is_unknown(v_alt_fn)
-            has_chain = isinstance(v_chain, list) and len(v_chain) > 0
-            avi_status = str(parsed.get("aviation_status") or "").strip()
-            is_cancelled = avi_status in ("取消", "cancelled", "CANCELLED")
-            is_rebooking = has_alt_flight or has_chain or is_cancelled
-            if is_rebooking:
-                alt_node = parsed.setdefault("alternate_local", {})
-                if _is_unknown(alt_node.get("alt_dep")):
-                    alt_node["alt_dep"] = bp_actual
-            else:
-                actual_node = parsed.setdefault("actual_local", {})
-                if _is_unknown(actual_node.get("actual_dep")):
-                    actual_node["actual_dep"] = bp_actual
-
-        ctx["flight_delay_parse"] = parsed
+    parsed = merge_vision_into_parsed(parsed, vision_extract)
+    ctx["flight_delay_parse"] = parsed
 
     # ========== stage1.3: 飞常准航班权威数据查询 ==========
-    from app.skills.flight_lookup import get_flight_lookup_skill
-
-    aviation_result: Dict[str, Any] = {}
-    aviation_results_all: List[Dict[str, Any]] = []
-
-    all_flights = (vision_extract.get("all_flights_found") or [])
-    claim_focus = (parsed.get("claim_focus") or {})
-    cf_fn = str(claim_focus.get("flight_no") or "").strip()
-    cf_dep = str(claim_focus.get("dep_iata") or "").strip().upper()
-    cf_arr = str(claim_focus.get("arr_iata") or "").strip().upper()
-
-    chain = (parsed.get("schedule_revision_chain") or [])
-    chain_date = ""
-    if chain and isinstance(chain[0], dict):
-        chain_dep_raw = str(chain[0].get("planned_dep") or "").strip()
-        if chain_dep_raw and chain_dep_raw.lower() not in ("unknown", ""):
-            chain_date = chain_dep_raw[:10]
-
-    v_flight_date = str(vision_extract.get("flight_date") or "").strip()
-    v_flight_date = v_flight_date[:10] if v_flight_date and v_flight_date.lower() not in ("unknown", "") else ""
-
-    planned_dep_raw = str((parsed.get("schedule_local") or {}).get("planned_dep") or "").strip()
-    planned_dep_date = planned_dep_raw[:10] if planned_dep_raw and planned_dep_raw.lower() not in ("unknown", "") else ""
-
-    flight_date = chain_date or v_flight_date or planned_dep_date
-
-    cf_candidates = []
-    if cf_fn and cf_fn.lower() not in ("unknown", ""):
-        cf_candidates.append((cf_fn, cf_dep, cf_arr, flight_date))
-
-    ticket_fn = str((parsed.get("flight") or {}).get("ticket_flight_no") or "").strip()
-    if ticket_fn and ticket_fn.lower() not in ("unknown", "") and ticket_fn.upper() not in [c[0].upper() for c in cf_candidates]:
-        cf_candidates.append((ticket_fn, "", "", flight_date))
-
-    if len(cf_candidates) < 2 and all_flights and isinstance(all_flights, list):
-        for fl in all_flights:
-            if isinstance(fl, dict):
-                fn = str(fl.get("flight_no") or "").strip()
-                dep = str(fl.get("dep_iata") or "").strip().upper()
-                arr = str(fl.get("arr_iata") or "").strip().upper()
-                dt_raw = str(fl.get("date") or "").strip()
-                dt = dt_raw[:10] if dt_raw and dt_raw.lower() not in ("unknown", "") else ""
-                if fn and fn.lower() not in ("unknown", "") and fn.upper() not in [c[0].upper() for c in cf_candidates]:
-                    cf_candidates.append((fn, dep, arr, dt or flight_date))
-                    if len(cf_candidates) >= 2:
-                        break
-
-    route_dep_iata = str((parsed.get("route") or {}).get("dep_iata") or "").strip().upper()
-    route_arr_iata = str((parsed.get("route") or {}).get("arr_iata") or "").strip().upper()
-
-    for candidate_fn, candidate_dep, candidate_arr, candidate_date in cf_candidates:
-        if not candidate_fn or not candidate_date:
-            continue
-        try:
-            skill = get_flight_lookup_skill()
-            one_result = await skill.lookup_status(
-                flight_no=candidate_fn,
-                date=candidate_date,
-                dep_iata=candidate_dep if candidate_dep and candidate_dep.lower() != "unknown" else None,
-                arr_iata=candidate_arr if candidate_arr and candidate_arr.lower() != "unknown" else None,
-                session=session,
-            )
-            aviation_results_all.append({"candidate": (candidate_fn, candidate_date, candidate_dep, candidate_arr), "result": one_result})
-            if one_result.get("success"):
-                avi_dep = str(one_result.get("dep_iata") or "").strip().upper()
-                avi_arr = str(one_result.get("arr_iata") or "").strip().upper()
-                # 判断飞常准返回的路线是否与理赔路线一致
-                route_match = (
-                    not route_dep_iata or not route_arr_iata
-                    or not avi_dep or not avi_arr
-                    or (avi_dep == route_dep_iata and avi_arr == route_arr_iata)
-                )
-                LOGGER.info(
-                    f"[{forceid}] 飞常准查询成功（候选={candidate_fn} {candidate_date}）: -> {one_result.get('status')} [{avi_dep}->{avi_arr}] route_match={route_match}",
-                    extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
-                )
-                parsed = _merge_aviation_into_parsed(parsed, one_result)
-                parsed.setdefault("evidence", {})
-                if isinstance(parsed["evidence"], dict):
-                    parsed["evidence"]["aviation_delay_proof"] = True
-                    parsed["evidence"]["aviation_delay_proof_source"] = f"飞常准: {one_result.get('status','')} {one_result.get('source','')}"
-
-                # 联程场景：飞常准查到了末段航班（arr_iata 与终点一致，但 dep 是中转机场）
-                # 把末段的 planned_arr 和 dep/arr iata 存入 schedule_local，供延误计算使用
-                arr_match = route_arr_iata and avi_arr and avi_arr == route_arr_iata
-                dep_mismatch = route_dep_iata and avi_dep and avi_dep != route_dep_iata
-                if arr_match and dep_mismatch:
-                    sched_node = parsed.setdefault("schedule_local", {})
-                    # 末段计划到达时间（终点到达，非中转出发）
-                    last_planned_arr = one_result.get("planned_arr")
-                    if last_planned_arr and not _is_unknown(str(last_planned_arr)):
-                        sched_node["planned_arr"] = str(last_planned_arr)
-                        LOGGER.info(
-                            f"[{forceid}] 联程末段 planned_arr 更新为飞常准数据: {last_planned_arr}",
-                            extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
-                        )
-                    # 记录末段机场供 delay_calc 机场匹配
-                    sched_node["last_seg_dep_iata"] = avi_dep
-                    sched_node["last_seg_arr_iata"] = avi_arr
-
-                # 联程场景：飞常准查到了前程（dep 与出发一致，arr 是中转机场）
-                # 把前程飞常准数据存入 parsed，供 hardcheck 判断前程是否正常到达
-                dep_matches_route = route_dep_iata and avi_dep and avi_dep == route_dep_iata
-                arr_is_transit = route_arr_iata and avi_arr and avi_arr != route_arr_iata
-                if dep_matches_route and arr_is_transit:
-                    seg_entry = {
-                        "flight_no": one_result.get("flight_no"),
-                        "dep_iata": avi_dep,
-                        "arr_iata": avi_arr,
-                        "planned_dep": one_result.get("planned_dep"),
-                        "planned_arr": one_result.get("planned_arr"),
-                        "actual_dep": one_result.get("actual_dep"),
-                        "actual_arr": one_result.get("actual_arr"),
-                        "status": one_result.get("status"),
-                    }
-                    parsed.setdefault("connecting_segments_data", []).append(seg_entry)
-
-                ctx["flight_delay_parse"] = parsed
-                aviation_result = one_result
-                # 路线匹配时才终止：找到了正确航段，无需再查其他候选
-                # 路线不匹配时继续，让后续候选有机会查到正确航段
-                if route_match:
-                    break
-            else:
-                LOGGER.info(
-                    f"[{forceid}] 飞常准候选未返回数据: {candidate_fn} {candidate_date}, error={one_result.get('error', '')}",
-                    extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
-                )
-        except Exception as _ae:
-            LOGGER.warning(
-                f"[{forceid}] 飞常准查询异常（降级跳过）: {_ae}",
-                extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
-            )
-
-    ctx["flight_delay_aviation_lookup"] = aviation_result
-    ctx["flight_delay_aviation_all_candidates"] = aviation_results_all
+    aviation_data = await lookup_aviation_data(
+        parsed=parsed,
+        vision_extract=vision_extract,
+        forceid=forceid,
+        session=session,
+    )
+    parsed = aviation_data["parsed"]
+    ctx["flight_delay_parse"] = parsed
+    ctx["flight_delay_aviation_lookup"] = aviation_data["aviation_result"]
+    ctx["flight_delay_aviation_all_candidates"] = aviation_data["aviation_results_all"]
+    cf_candidates = aviation_data["cf_candidates"]
 
     # ========== stage1.4: 接驳/替代航班飞常准查询 ==========
-    is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
-    chain = (parsed or {}).get("schedule_revision_chain") or []
-    first_alt_flight_no = None
-    first_alt_date = None
-    if is_conn_rebooking and isinstance(chain, list) and len(chain) >= 2:
-        first_alt = chain[1]
-        first_alt_flight_no = str(first_alt.get("original_flight_no") or "").strip()
-        first_alt_date = str(first_alt.get("original_date") or "").strip()
-        if first_alt_date and first_alt_date.lower() not in ("unknown", ""):
-            first_alt_date = first_alt_date[:10]
-
-    alt_local = parsed.get("alternate_local") or {}
-    alt_fn = str(alt_local.get("alt_flight_no") or "").strip()
-    alt_dep_raw = str(alt_local.get("alt_dep") or "").strip()
-    alt_dep_date = alt_dep_raw[:10] if alt_dep_raw and alt_dep_raw.lower() not in ("unknown", "") else ""
-
-    _already_queried = [c[0].upper() for c in cf_candidates] if cf_candidates else []
-
-    if (
-        is_conn_rebooking
-        and first_alt_flight_no
-        and first_alt_flight_no.lower() not in ("unknown", "null", "")
-        and first_alt_date
-        and first_alt_flight_no.upper() not in _already_queried
-    ):
-        try:
-            skill = get_flight_lookup_skill()
-            first_alt_aviation = await skill.lookup_status(
-                flight_no=first_alt_flight_no,
-                date=first_alt_date,
-                dep_iata=None,
-                arr_iata=None,
-                session=session,
-            )
-            ctx["flight_delay_first_alt_aviation_lookup"] = first_alt_aviation
-            if first_alt_aviation.get("success"):
-                LOGGER.info(
-                    f"[{forceid}] 联程首班替代航班飞常准查询成功: {first_alt_flight_no} {first_alt_date} -> {first_alt_aviation.get('status')}",
-                    extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
-                )
-                first_actual_dep = first_alt_aviation.get("actual_dep")
-                if first_actual_dep:
-                    parsed.setdefault("alternate_local", {})["alt_dep"] = first_actual_dep
-                    parsed.setdefault("actual_local", {})["actual_dep"] = first_actual_dep
-                    LOGGER.info(
-                        f"[{forceid}] 联程首班 alt_dep/actual_dep 已覆盖为: {first_actual_dep}",
-                        extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
-                    )
-        except Exception as _first_ae:
-            LOGGER.warning(
-                f"[{forceid}] 联程首班替代航班查询失败（降级）: {_first_ae}",
-                extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
-            )
-            # 飞常准查询失败，用 Vision 提取的首段计划起飞时间兜底
-            first_alt_planned_dep = str(first_alt.get("planned_dep") or "").strip()
-            if first_alt_planned_dep and first_alt_planned_dep.lower() not in ("unknown", ""):
-                parsed.setdefault("alternate_local", {})["alt_dep"] = first_alt_planned_dep
-                parsed.setdefault("actual_local", {})["actual_dep"] = first_alt_planned_dep
-                LOGGER.info(
-                    f"[{forceid}] 联程首班 alt_dep/actual_dep 已用 Vision 提取时间兜底: {first_alt_planned_dep}",
-                    extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
-                )
-
-    if (
-        alt_fn and alt_fn.lower() not in ("unknown", "null", "")
-        and alt_dep_date
-        and alt_fn.upper() not in _already_queried
-    ):
-        try:
-            skill = get_flight_lookup_skill()
-            alt_aviation = await skill.lookup_status(
-                flight_no=alt_fn,
-                date=alt_dep_date,
-                dep_iata=None,
-                arr_iata=None,
-                session=session,
-            )
-            ctx["flight_delay_alt_aviation_lookup"] = alt_aviation
-            if alt_aviation.get("success"):
-                LOGGER.info(
-                    f"[{forceid}] 接驳航班飞常准查询成功: {alt_fn} {alt_dep_date} -> {alt_aviation.get('status')}",
-                    extra=log_extra(forceid=forceid, stage="fd_alt_aviation_lookup", attempt=0),
-                )
-                # 把替代航班路线信息存入 alternate_local，供 delay_calc 机场匹配使用
-                avi_dep_iata = str(alt_aviation.get("dep_iata") or "").strip().upper()
-                avi_arr_iata = str(alt_aviation.get("arr_iata") or "").strip().upper()
-                if not _is_unknown(avi_dep_iata):
-                    parsed.setdefault("alternate_local", {})["alt_dep_iata"] = avi_dep_iata
-                if not _is_unknown(avi_arr_iata):
-                    parsed.setdefault("alternate_local", {})["alt_arr_iata"] = avi_arr_iata
-
-                is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
-                actual_arr = alt_aviation.get("actual_arr")
-                alt_arr_current = str(alt_local.get("alt_arr") or "")
-                alt_arr_needs_fill = (
-                    _is_unknown(alt_local.get("alt_arr"))
-                    or "unknown" in alt_arr_current.lower()
-                    or not _has_timezone(alt_arr_current)
-                )
-                if actual_arr and alt_arr_needs_fill:
-                    parsed.setdefault("alternate_local", {})["alt_arr"] = actual_arr
-                    # 联程改签时，替代末段航班的实际到达才是旅客的终到时间
-                    # 非联程改签时，actual_local.actual_arr 应保留原航班的飞常准数据，不覆盖
-                    if is_conn_rebooking:
-                        parsed.setdefault("actual_local", {})["actual_arr"] = actual_arr
-
-                actual_dep = alt_aviation.get("actual_dep")
-                alt_dep_current = str(alt_local.get("alt_dep") or "")
-                alt_dep_is_text_extracted = bool(re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?![:+\-])", alt_dep_current))
-                alt_dep_needs_fill = (
-                    _is_unknown(alt_local.get("alt_dep"))
-                    or "unknown" in alt_dep_current.lower()
-                    or (not _has_timezone(alt_dep_current) and not alt_dep_is_text_extracted)
-                )
-                try:
-                    alt_dep_dt = datetime.fromisoformat(alt_dep_current.replace(" ", "T"))
-                    alt_arr_dt_str = str(alt_local.get("alt_arr") or "")
-                    if alt_arr_dt_str and alt_arr_dt_str.lower() not in ("unknown", ""):
-                        alt_arr_dt = datetime.fromisoformat(alt_arr_dt_str.replace(" ", "T"))
-                        if alt_dep_dt > alt_arr_dt:
-                            alt_dep_needs_fill = False
-                except Exception:
-                    pass
-                alt_dep_to_fill = actual_dep or alt_aviation.get("planned_dep")
-                if alt_dep_to_fill:
-                    is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
-                    # 联程改签场景：alt_dep/actual_dep 已由首段航班覆盖，末段只覆盖 alt_arr/actual_arr
-                    # 不再用末段起飞时间覆盖 alt_dep/actual_dep（否则延误时长虚高）
-                    if is_conn_rebooking:
-                        pass
-                    elif alt_dep_needs_fill:
-                        parsed.setdefault("alternate_local", {})["alt_dep"] = alt_dep_to_fill
-                        parsed.setdefault("actual_local", {})["actual_dep"] = alt_dep_to_fill
-                ctx["flight_delay_parse"] = parsed
-        except Exception as _alt_ae:
-            LOGGER.warning(
-                f"[{forceid}] 接驳航班查询异常（降级跳过）: {_alt_ae}",
-                extra=log_extra(forceid=forceid, stage="fd_alt_aviation_lookup", attempt=0),
-            )
+    alt_data = await lookup_alt_flight_data(
+        parsed=parsed,
+        vision_extract=vision_extract,
+        cf_candidates=cf_candidates,
+        forceid=forceid,
+        session=session,
+    )
+    parsed = alt_data["parsed"]
+    ctx["flight_delay_parse"] = parsed
+    for key, val in alt_data["alt_results"].items():
+        ctx[f"flight_delay_{key}"] = val
 
     policy_excerpt = _policy_excerpt_or_default(claim_info, policy_terms)
     parsed = _augment_with_computed_delay(parsed=parsed, policy_terms_excerpt=policy_excerpt, free_text=free_text)

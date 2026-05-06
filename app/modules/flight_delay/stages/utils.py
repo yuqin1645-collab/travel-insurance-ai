@@ -12,10 +12,13 @@ from typing import Any, Dict, Optional
 
 from app.logging_utils import LOGGER, log_extra
 
+# 模块级常量
+POLICY_EXCERPT_MAX_CHARS = 4000
+
 
 def _policy_excerpt_or_default(claim_info: Dict[str, Any], policy_terms: str) -> str:
     if policy_terms:
-        return policy_terms[:4000]
+        return policy_terms[:POLICY_EXCERPT_MAX_CHARS]
     insured_amount = str(claim_info.get("Insured_Amount") or claim_info.get("insured_amount") or "")
     return (
         "【缺少条款全文，按默认兜底】\n"
@@ -295,3 +298,43 @@ def _extract_delay_minutes_from_text(free_text: str) -> Optional[int]:
         return int(float(m.group(1)) * 60)
 
     return None
+
+
+def _iata(val: Any) -> str:
+    """标准化 IATA 机场三字码：转大写，过滤 UNKNOWN/NULL/NONE。"""
+    s = str(val or "").strip().upper()
+    return s if s and s not in ("UNKNOWN", "NULL", "NONE") else ""
+
+
+def _parse_date_str(s: str) -> Optional[Any]:
+    """解析日期字符串，返回 date 对象或 None。"""
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(s[:10], fmt).date()
+        except Exception:
+            continue
+    return None
+
+
+def _parse_date_any(s: str) -> Optional[datetime]:
+    """解析日期时间字符串（支持多种格式），返回 datetime 或 None。"""
+    ss = str(s or "").strip()
+    if not ss or ss.lower() in ("unknown", "null", "none"):
+        return None
+    if re.fullmatch(r"\d{14}", ss):
+        return datetime.strptime(ss, "%Y%m%d%H%M%S")
+    if re.fullmatch(r"\d{8}", ss):
+        return datetime.strptime(ss, "%Y%m%d")
+    if "-" in ss or "/" in ss:
+        s0 = ss[:10]
+        for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(s0, fmt)
+            except Exception:
+                continue
+    try:
+        return datetime.fromisoformat(ss)
+    except Exception:
+        return None

@@ -22,6 +22,8 @@ from .handlers import (
     _check_info_consistency,
     _check_airline_baggage_record_exception,
     _check_exclusions,
+    _check_domestic_flight,
+    _check_actual_arrival_vs_policy,
     _try_transfer_flight_receipt_time,
 )
 
@@ -30,6 +32,8 @@ from .calculator import (
     _compute_payout_with_rules,
     _compute_tier_amount,
 )
+
+from .vision_merge import _merge_vision_to_parsed
 
 __all__ = [
     # utils
@@ -40,8 +44,11 @@ __all__ = [
     # handlers
     "_check_policy_validity", "_material_gate", "_check_special_materials",
     "_check_info_consistency", "_check_airline_baggage_record_exception",
-    "_check_exclusions", "_try_transfer_flight_receipt_time",
+    "_check_exclusions", "_check_domestic_flight",
+    "_check_actual_arrival_vs_policy", "_try_transfer_flight_receipt_time",
     # calculator
     "_compute_delay_hours_by_rule", "_compute_payout_with_rules",
     "_compute_tier_amount",
+    # vision_merge
+    "_merge_vision_to_parsed",
 ]

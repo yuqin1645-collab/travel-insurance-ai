@@ -218,7 +218,11 @@ async def _try_transfer_flight_receipt_time(
     vision_extract: Dict[str, Any],
     session: aiohttp.ClientSession,
 ) -> Dict[str, Any]:
-    """当行李签收时间缺失但转运航班信息存在时，查询转运航班实际到达时间作为签收时间代理。"""
+    """当行李签收时间缺失但转运航班信息存在时，查询转运航班实际到达时间作为签收时间代理。
+
+    注意：本函数会直接修改入参 ai_parsed 字典（设置 baggage_receipt_time 和 receipt_times 字段），
+    调用方依赖此副作用来更新后续延误计算的输入数据。
+    """
     debug: Dict[str, Any] = {
         "attempted": False,
         "flights_queried": [],

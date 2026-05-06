@@ -1,4 +1,4 @@
-import re
+import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -8,13 +8,13 @@ from app.engine.workflow import StageRunner
 from app.engine.material_extractor import ExtractionStrategy, MaterialExtractor
 from app.logging_utils import LOGGER, log_extra
 from app.skills.flight_lookup import get_flight_lookup_skill
-from app.vision_preprocessor import prepare_attachments_for_claim
 
 from app.modules.baggage_delay.stages.utils import (
     _extract_date_yyyy_mm_dd,
     _classify_aviation_failure,
     _extract_file_names,
     _result,
+    _safe_float,
 )
 from app.modules.baggage_delay.stages.handlers import (
     _check_policy_validity,
@@ -32,6 +32,12 @@ from app.modules.baggage_delay.stages.calculator import (
     _compute_payout_with_rules,
     _compute_tier_amount,
 )
+from app.modules.baggage_delay.stages.vision_merge import _merge_vision_to_parsed
+from app.modules.flight_delay.stages.duplicate import _check_duplicate_claim
+
+# 模块级常量
+BAGGAGE_DELAY_THRESHOLD_HOURS = 6
+POLICY_EXCERPT_MAX_CHARS = 1000
 
 
 async def review_baggage_delay_async(
@@ -52,7 +58,7 @@ async def review_baggage_delay_async(
     file_names = _extract_file_names(claim_info)
 
     debug: Dict[str, Any] = {
-        "policy_terms_excerpt": (policy_terms or "")[:1000],
+        "policy_terms_excerpt": (policy_terms or "")[:POLICY_EXCERPT_MAX_CHARS],
         "claim_folder": str(claim_folder),
         "file_count": len(file_names),
         "file_names_sample": file_names[:10],
@@ -65,6 +71,15 @@ async def review_baggage_delay_async(
         extra=log_extra(forceid=forceid, stage="baggage_delay_start", attempt=0),
     )
     conclusions: List[Dict[str, str]] = []
+
+    # stage0_duplicate: 重复理赔检测
+    duplicate_check = _check_duplicate_claim(claim_info=claim_info, forceid=forceid)
+    if duplicate_check:
+        LOGGER.info(
+            f"[{index}/{total}] 重复理赔检测命中: {duplicate_check.get('reason', '')}",
+            extra=log_extra(forceid=forceid, stage="bd_duplicate_check", attempt=0),
+        )
+        return duplicate_check
 
     # 0) 视觉识别
     vision_extract: Dict[str, Any] = {}
@@ -112,158 +127,15 @@ async def review_baggage_delay_async(
 
     # 合并视觉识别结果到 ai_parsed
     if vision_extract and isinstance(ai_parsed, dict):
-        for key in (
-            "has_boarding_or_ticket", "has_baggage_delay_proof", "has_baggage_receipt_time_proof",
-            "has_baggage_tag_proof",
-            "has_airline_baggage_record", "airline_baggage_record_name",
-            "airline_baggage_record_flight", "airline_baggage_record_pieces",
-            "flight_actual_arrival_time", "baggage_receipt_time", "receipt_times", "delay_hours",
-            "has_id_proof", "has_passport", "has_exit_entry_record", "exit_datetime",
-            "has_bank_card_proof", "risk_flags",
-            "all_flights_found",
-        ):
-            vision_val = vision_extract.get(key)
-            parsed_val = ai_parsed.get(key)
-            if vision_val is not None and str(vision_val).lower() not in ("unknown", "", "[]"):
-                ai_parsed[key] = vision_val
-            elif parsed_val is None:
-                ai_parsed[key] = vision_val
-        for key in ("flight_no", "flight_date", "dep_iata", "arr_iata"):
-            vision_val = vision_extract.get(key)
-            if vision_val and str(vision_val).lower() not in ("unknown", ""):
-                existing = ai_parsed.get(key)
-                if existing is None or str(existing).lower() in ("unknown", ""):
-                    ai_parsed[key] = vision_val
-
-        # 安全网：交叉校验
-        proof_source = vision_extract.get("baggage_delay_proof_source") or ""
-        if proof_source and str(proof_source).lower() not in ("unknown", ""):
-            hd_val = ai_parsed.get("has_baggage_delay_proof")
-            if not hd_val or str(hd_val).lower() == "false":
-                ai_parsed["has_baggage_delay_proof"] = True
-                debug.setdefault("auto_corrected", []).append("has_baggage_delay_proof: PIR报告存在但 vision 误判为 false，已自动纠正")
-            ht_val = ai_parsed.get("has_baggage_tag_proof")
-            if not ht_val or str(ht_val).lower() == "false":
-                ai_parsed["has_baggage_tag_proof"] = True
-                debug.setdefault("auto_corrected", []).append("has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正")
-
-        receipt_time = vision_extract.get("baggage_receipt_time") or ""
-        if receipt_time and str(receipt_time).lower() not in ("unknown", ""):
-            low_confidence_markers = ["/unknown", "/未知", "~", "约", "左右", "estimated", "大概"]
-            is_low_confidence = any(m in str(receipt_time) for m in low_confidence_markers)
-            if not is_low_confidence:
-                hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
-                if not hr_val or str(hr_val).lower() == "false":
-                    ai_parsed["has_baggage_receipt_time_proof"] = True
-                    debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
-            else:
-                ai_parsed["baggage_receipt_time"] = None
-                # 同时清除 delay_hours：无有效签收时间时，delay_hours 是模型估算值，不可靠
-                ai_parsed["delay_hours"] = None
-                debug.setdefault("auto_corrected", []).append(f"baggage_receipt_time: 清除低置信度时间值 {receipt_time}")
-
-        vision_notes = str(vision_extract.get("notes") or "").strip()
-
-        # 校验：如果 vision notes 明确说行李延误证明缺失，纠正 has_baggage_delay_proof 为 false
-        # Vision 模型有时会因 PIR 报告或物品清单而判定 has_baggage_delay_proof=True，
-        # 但 notes 中又明确说"行李延误证明文件缺失"——这是矛盾的，应以 notes 为准
-        delay_proof_missing_markers = [
-            "行李延误证明文件缺失", "行李延误证明缺失", "行李延误证明.*缺失",
-            "未见行李延误证明", "无行李延误证明",
-        ]
-        for marker in delay_proof_missing_markers:
-            if re.search(marker, vision_notes):
-                if ai_parsed.get("has_baggage_delay_proof") not in (None, False):
-                    ai_parsed["has_baggage_delay_proof"] = False
-                    ai_parsed["delay_hours"] = None
-                    debug.setdefault("auto_corrected", []).append(
-                        f"has_baggage_delay_proof: vision notes明确行李延误证明缺失，纠正为 false"
-                    )
-                break
-
-        # 校验：如果 vision notes 明确说明签收时间来自航空公司邮件通知/转运航班预计到达时间，
-        # 说明并非真正的行李签收证明，应将 has_baggage_receipt_time_proof 纠正为 false
-        receipt_time_email_markers = [
-            "航空公司邮件", "邮件通知", "邮件预计", "邮件预计",
-            "转运航班", "行李搭乘", "预计.*到达", "行李将搭乘",
-            "luggage will arrive", "baggage will arrive",
-        ]
-        if ai_parsed.get("has_baggage_receipt_time_proof") and vision_notes:
-            for marker in receipt_time_email_markers:
-                if re.search(marker, vision_notes):
-                    ai_parsed["has_baggage_receipt_time_proof"] = False
-                    ai_parsed["baggage_receipt_time"] = None
-                    ai_parsed["delay_hours"] = None
-                    debug["no_receipt_proof_confirmed"] = True
-                    debug.setdefault("auto_corrected", []).append(
-                        f"has_baggage_receipt_time_proof: vision notes明确时间来自邮件/转运航班，非实际签收证明，纠正为 false"
-                    )
-                    break
-
-        # 校验：Vision 模型内部矛盾检测 —— document_sources 中标记为 absent 但顶层 flag 为 true
-        doc_sources = vision_extract.get("document_sources") or {}
-        if isinstance(doc_sources, dict):
-            _source_flag_map = {
-                "baggage_delay_proof": ("has_baggage_delay_proof", "行李延误证明"),
-                "baggage_receipt_time_proof": ("has_baggage_receipt_time_proof", "行李签收时间证明"),
-                "baggage_tag_proof": ("has_baggage_tag_proof", "托运行李牌"),
-                "boarding_pass": ("has_boarding_or_ticket", "登机牌/机票"),
-            }
-            for source_key, (flag_key, label) in _source_flag_map.items():
-                source_status = str(doc_sources.get(source_key, {}).get("status") or "").strip().lower()
-                flag_val = str(ai_parsed.get(flag_key) or "").strip().lower()
-                if source_status == "absent" and flag_val == "true":
-                    ai_parsed[flag_key] = False
-                    if flag_key in ("has_baggage_delay_proof", "has_baggage_receipt_time_proof"):
-                        ai_parsed["delay_hours"] = None
-                    debug.setdefault("auto_corrected", []).append(
-                        f"{flag_key}: document_sources.{source_key}=absent 与顶层 flag=true 矛盾，以 document_sources 为准纠正为 false"
-                    )
-
-        # PIR二次聚焦提取
-        needs_pir_extract = (
-            ai_parsed.get("has_baggage_delay_proof") is True
-            and not debug.get("no_receipt_proof_confirmed")
-            and (not ai_parsed.get("baggage_receipt_time")
-                 or str(ai_parsed.get("baggage_receipt_time")).lower() in ("unknown", ""))
-            and (not ai_parsed.get("delay_hours")
-                 or str(ai_parsed.get("delay_hours")).lower() in ("unknown", ""))
+        ai_parsed = await _merge_vision_to_parsed(
+            vision_extract=vision_extract,
+            ai_parsed=ai_parsed,
+            claim_info=claim_info,
+            claim_folder=claim_folder,
+            debug=debug,
+            reviewer=reviewer,
+            session=session,
         )
-        if needs_pir_extract:
-            try:
-                processed_attachments, _ = prepare_attachments_for_claim(
-                    claim_folder, claim_info=claim_info, max_attachments=0
-                )
-                attachment_paths = [a.path for a in processed_attachments]
-                if not attachment_paths:
-                    debug["pir_receipt_extract"] = {"attempted": False, "reason": "无可用图片附件"}
-                else:
-                    pir_extract = await reviewer._ai_pir_receipt_time_extract_async(
-                        attachment_paths=attachment_paths,
-                        claim_info=claim_info,
-                        session=session,
-                    )
-                    if isinstance(pir_extract, dict):
-                        receipt = pir_extract.get("baggage_receipt_time")
-                        confidence = str(pir_extract.get("confidence") or "").lower()
-                        if receipt and str(receipt).lower() not in ("unknown", "") and confidence in ("high", "medium"):
-                            ai_parsed["baggage_receipt_time"] = receipt
-                            if pir_extract.get("receipt_times"):
-                                ai_parsed["receipt_times"] = pir_extract["receipt_times"]
-                            pir_delay = pir_extract.get("delay_hours")
-                            if pir_delay and str(pir_delay).lower() != "unknown":
-                                ai_parsed["delay_hours"] = pir_delay
-                            debug.setdefault("auto_corrected", []).append(
-                                f"baggage_receipt_time: PIR二次提取成功 {receipt}（置信度: {confidence}）"
-                            )
-                        else:
-                            debug["pir_receipt_extract"] = {
-                                "attempted": True, "result": "未提取到有效签收时间",
-                                "confidence": confidence,
-                            }
-            except Exception as e:
-                debug["pir_receipt_extract_warning"] = str(e)[:200]
-
     elif vision_extract and not isinstance(ai_parsed, dict):
         ai_parsed = dict(vision_extract)
 
@@ -330,28 +202,37 @@ async def review_baggage_delay_async(
             if not _valid_flight_no and _candidates:
                 debug["flight_no_corrected"] = f"{flight_no} -> {_candidates[0][0]}（格式校验失败，从 all_flights_found 回退）"
 
-            for _fn, _fd, _dep, _arr in _candidates[:5]:  # 最多尝试5个候选
-                if _fn and _fd:
-                    skill = get_flight_lookup_skill()
-                    aviation_lookup = await skill.lookup_status(
+            # 过滤有效候选并并行查询
+            _valid_candidates = [(_fn, _fd, _dep, _arr) for _fn, _fd, _dep, _arr in _candidates[:5] if _fn and _fd]
+            if _valid_candidates:
+                skill = get_flight_lookup_skill()
+                tasks = [
+                    skill.lookup_status(
                         flight_no=_fn,
                         date=_fd,
                         dep_iata=_dep if _dep and _dep != "UNKNOWN" else None,
                         arr_iata=_arr if _arr and _arr != "UNKNOWN" else None,
                         session=session,
                     )
-                    if aviation_lookup.get("success"):
-                        actual_arr = aviation_lookup.get("actual_arr")
+                    for _fn, _fd, _dep, _arr in _valid_candidates
+                ]
+                raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+                for (_fn, _fd, _dep, _arr), raw in zip(_valid_candidates, raw_results):
+                    if isinstance(raw, Exception):
+                        one_result = {"success": False, "error": str(raw), "_exception": True}
+                    else:
+                        one_result = raw
+                    if one_result.get("success"):
+                        actual_arr = one_result.get("actual_arr")
                         if actual_arr:
                             ai_parsed["flight_actual_arrival_time"] = actual_arr
                             debug["arrival_source"] = "variflight_actual_arr"
+                        aviation_lookup = one_result
                         break
                     debug.setdefault("aviation_candidates_tried", []).append(
                         {"flight_no": _fn, "date": _fd, "success": False,
-                         "error": str(aviation_lookup.get("error") or "")[:80]}
+                         "error": str(one_result.get("error") or "")[:80]}
                     )
-                else:
-                    break  # 候选信息不完整，不再尝试后续
 
             if not aviation_lookup.get("success"):
                 debug["arrival_source"] = "material_or_llm_fallback"
@@ -492,11 +373,9 @@ async def review_baggage_delay_async(
             return _result(forceid, "转人工复核：存在材料识别或真实性争议", "Y", conclusions, debug)
 
     # 延误时长核算与门槛
-    delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
-    delay_hours = delay_calc.get("delay_hours")
     if debug.get("transfer_flight_receipt", {}).get("receipt_time_set"):
-        delay_calc["receipt_time_source"] = "transfer_flight_arrival"
         delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
+        delay_calc["receipt_time_source"] = "transfer_flight_arrival"
         delay_hours = delay_calc.get("delay_hours")
         delay_hours_str = f"{delay_hours:.2f}小时" if delay_hours is not None else "未知"
         conclusions.append({
@@ -509,22 +388,21 @@ async def review_baggage_delay_async(
             f"需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误{delay_hours_str}，待补件后按实际签收时间修正。",
             "Y", conclusions, debug,
         )
+    delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
+    delay_hours = delay_calc.get("delay_hours")
     debug["delay_calc"] = delay_calc
     if delay_hours is None:
         if aviation_failure_type == "system_error":
             return _result(forceid, "转人工复核：官方航班数据查询异常，无法完成时长核算", "Y", conclusions, debug)
         conclusions.append({"checkpoint": "延误时长", "Eligible": "需补齐资料", "Remark": "未识别到明确延误时长或签收时间信息"})
         return _result(forceid, "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明", "Y", conclusions, debug)
-    if delay_hours < 6:
-        conclusions.append({"checkpoint": "赔付门槛", "Eligible": "否", "Remark": f"延误时长{delay_hours:.2f}小时，未达到6小时"})
+    if delay_hours < BAGGAGE_DELAY_THRESHOLD_HOURS:
+        conclusions.append({"checkpoint": "赔付门槛", "Eligible": "否", "Remark": f"延误时长{delay_hours:.2f}小时，未达到{BAGGAGE_DELAY_THRESHOLD_HOURS}小时"})
         return _result(forceid, "拒赔：行李延误时长未达到6小时赔付门槛", "N", conclusions, debug)
     conclusions.append({"checkpoint": "赔付门槛", "Eligible": "是", "Remark": f"延误时长{delay_hours:.2f}小时，达到赔付门槛"})
 
-    # 信息一致性校验
-    consistency_violation = _check_info_consistency(claim_info, ai_parsed or {})
-    if consistency_violation:
-        conclusions.append({"checkpoint": "信息一致性", "Eligible": "否", "Remark": consistency_violation})
-        return _result(forceid, consistency_violation, "N", conclusions, debug)
+    # 信息一致性校验（已在身份一致性阶段完成，此处不再重复调用）
+    # consistency_violation = _check_info_consistency(claim_info, ai_parsed or {})
 
     # AI审核意见
     ai_audit, audit_err = await runner.run(
@@ -579,7 +457,6 @@ async def review_baggage_delay_async(
             return _result(forceid, f"拒赔：{reason}", "N", conclusions, debug)
 
     # 赔付核算
-    from app.modules.baggage_delay.stages.utils import _safe_float
     claim_amount = _safe_float(claim_info.get("Amount"))
     insured_amount = _safe_float(claim_info.get("Insured_Amount"))
     remaining_coverage = _safe_float(claim_info.get("Remaining_Coverage"))

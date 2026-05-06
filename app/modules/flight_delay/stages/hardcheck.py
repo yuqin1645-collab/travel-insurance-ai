@@ -19,7 +19,7 @@ from app.skills.policy_booking import (
     check_delay_in_coverage_area,
 )
 
-from .utils import _truthy, _is_unknown
+from .utils import _truthy, _is_unknown, _iata, _parse_date_str, _parse_date_any
 from .validators import (
     _check_inheritance_scenario,
     _check_legal_capacity,
@@ -27,6 +27,9 @@ from .validators import (
     _check_same_day_policy,
     _check_coverage_area_text,
 )
+
+# 模块级常量
+FRAUD_SUSPECT_DAYS_THRESHOLD = 3  # 投保/订票时间距事故日期≤3天，触发可预见因素欺诈嫌疑
 
 
 def _check_foreseeability_fraud(
@@ -55,26 +58,6 @@ def _check_foreseeability_fraud(
         accident_date_raw = str(claim_info.get("Date_of_Accident") or claim_info.get("date_of_accident") or "").strip()
         delay_reason = str((parsed or {}).get("delay_reason") or "").lower()
 
-        def _parse_date_any(s: str) -> Optional[datetime]:
-            ss = str(s or "").strip()
-            if not ss or ss.lower() in ("unknown", "null", "none"):
-                return None
-            if re.fullmatch(r"\d{14}", ss):
-                return datetime.strptime(ss, "%Y%m%d%H%M%S")
-            if re.fullmatch(r"\d{8}", ss):
-                return datetime.strptime(ss, "%Y%m%d")
-            if "-" in ss or "/" in ss:
-                s0 = ss[:10]
-                for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y"):
-                    try:
-                        return datetime.strptime(s0, fmt)
-                    except Exception:
-                        continue
-            try:
-                return datetime.fromisoformat(ss)
-            except Exception:
-                return None
-
         invest_dt = _parse_date_any(invest_date_raw)
         accident_dt = _parse_date_any(accident_date_raw)
         invest_date = invest_dt.date() if invest_dt else None
@@ -102,10 +85,6 @@ def _check_foreseeability_fraud(
 
         try:
             route = (parsed or {}).get("route") or {}
-
-            def _iata(val: Any) -> str:
-                s = str(val or "").strip().upper()
-                return s if s and s not in ("UNKNOWN", "NULL", "NONE") else ""
 
             dep_iata = _iata(route.get("dep_iata"))
             arr_iata = _iata(route.get("arr_iata"))
@@ -138,7 +117,7 @@ def _check_foreseeability_fraud(
 
         if invest_date and accident_date:
             days_before = (accident_date - invest_date).days
-            if days_before <= 3:
+            if days_before <= FRAUD_SUSPECT_DAYS_THRESHOLD:
                 result["fraud_suspected"] = True
                 result["fraud_level"] = "suspect"
                 result["reason"] = (
@@ -163,7 +142,7 @@ def _run_hardcheck(
     claim_info: Dict[str, Any],
     policy_excerpt: str,
     free_text: str = "",
-    vision_extract: Dict[str, Any] = None,
+    vision_extract: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """代码侧硬校验集合（不依赖AI，确定性判定）。"""
     result: Dict[str, Any] = {
@@ -186,25 +165,11 @@ def _run_hardcheck(
         route = (parsed or {}).get("route") or {}
         itinerary = (parsed or {}).get("itinerary") or {}
 
-        def _iata(val: Any) -> str:
-            s = str(val or "").strip().upper()
-            return s if s and s not in ("UNKNOWN", "NULL", "NONE") else ""
-
         dep_iata = _iata(route.get("dep_iata"))
         arr_iata = _iata(route.get("arr_iata"))
         transit_iata = _iata(route.get("transit_iata")) or _iata(itinerary.get("transit_iata"))
 
         accident_date_raw = str(claim_info.get("Date_of_Accident") or claim_info.get("date_of_accident") or "").strip()
-
-        def _parse_date_str(s: str) -> Optional[Any]:
-            if not s:
-                return None
-            for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y"):
-                try:
-                    return datetime.strptime(s[:10], fmt).date()
-                except Exception:
-                    continue
-            return None
 
         check_date = _parse_date_str(accident_date_raw)
 
@@ -561,15 +526,15 @@ def _run_hardcheck(
             if has_id_proof is False:
                 if str(claim_info.get("ID_Type") or "").strip() and str(claim_info.get("ID_Number") or "").strip():
                     has_id_proof = True
-        except Exception:
-            pass
+        except Exception as e:
+            result["debug_notes"].append(f"has_application_form/id_proof兜底校验降级: {e}")
 
         try:
             if has_delay_proof is not True:
                 if _truthy(evidence.get("aviation_delay_proof")) is True:
                     has_delay_proof = True
-        except Exception:
-            pass
+        except Exception as e:
+            result["debug_notes"].append(f"aviation_delay_proof兜底校验降级: {e}")
 
         try:
             if has_delay_proof is False:
@@ -589,8 +554,8 @@ def _run_hardcheck(
                     if flight_no in desc.upper() or flight_no in desc:
                         if has_boarding_pass is True or has_application_form is True or has_id_proof is True:
                             has_delay_proof = True
-        except Exception:
-            pass
+        except Exception as e:
+            result["debug_notes"].append(f"delay_proof文本兜底校验降级: {e}")
 
         try:
             claim_policy_no = str(claim_info.get("PolicyNo") or "").strip()
@@ -604,8 +569,8 @@ def _run_hardcheck(
                     and has_id_proof is True
                 ):
                     has_insurance_certificate = True
-        except Exception:
-            pass
+        except Exception as e:
+            result["debug_notes"].append(f"insurance_certificate兜底校验降级: {e}")
 
         scan_stats = (vision_extract or {}).get("_vision_scan_stats") or {}
         scanned_all_attachments = bool(scan_stats.get("scanned_all_attachments") is True)
