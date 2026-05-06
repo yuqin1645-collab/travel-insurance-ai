@@ -27,7 +27,7 @@ class CircuitBreaker:
     三态熔断器（CLOSED -> OPEN -> HALF_OPEN -> CLOSED）
 
     参数：
-        name            熔断器名称（如 "openrouter"）
+        name            熔断器名称（如 "dashscope"）
         fail_threshold  连续失败多少次后熔断（默认5次）
         reset_timeout   熔断后多少秒进入 HALF_OPEN 探测期（默认30秒）
         half_open_max   HALF_OPEN 期最多允许几个请求探测（默认1个）

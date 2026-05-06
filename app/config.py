@@ -21,18 +21,11 @@ class Config:
     """配置类"""
 
     # DashScope (Qwen) API配置
-    DASHSCOPE_API_KEY: str = os.getenv('DASHSCOPE_API_KEY', os.getenv('OPENROUTER_API_KEY', ''))
+    DASHSCOPE_API_KEY: str = os.getenv('DASHSCOPE_API_KEY', '')
     DASHSCOPE_BASE_URL: str = os.getenv('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
-
-    # OpenRouter API配置 (兼容旧配置)
-    OPENROUTER_API_KEY: str = os.getenv('OPENROUTER_API_KEY', '')
-    OPENROUTER_BASE_URL: str = os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
 
     # 模型配置 - Qwen系列
     MODEL_VISION: str = os.getenv('MODEL_VISION', 'qwen-vl-plus')   # 视觉模型
-    MODEL_VISION_PROVIDER: str = os.getenv('MODEL_VISION_PROVIDER', 'dashscope')  # 视觉模型提供商: dashscope 或 openrouter
-    USE_QWEN_VISION: bool = os.getenv('USE_QWEN_VISION', 'true').lower() != 'false'  # true=Qwen, false=OpenRouter/Gemini
-    MODEL_VISION_OPENROUTER: str = os.getenv('MODEL_VISION_OPENROUTER', 'google/gemini-2.5-pro-preview')  # OpenRouter视觉模型
     MODEL_SIMPLE: str = os.getenv('MODEL_SIMPLE', 'qwen-plus')       # 简单任务
     MODEL_MEDIUM: str = os.getenv('MODEL_MEDIUM', 'qwen-plus')       # 中等任务
     MODEL_HARD: str = os.getenv('MODEL_HARD', 'qwen-plus')           # 困难任务
@@ -145,9 +138,8 @@ class Config:
     @classmethod
     def validate(cls) -> bool:
         """验证必需的配置是否存在"""
-        if not cls.DASHSCOPE_API_KEY and not cls.OPENROUTER_API_KEY:
-            LOGGER.error("错误: 未设置DASHSCOPE_API_KEY或OPENROUTER_API_KEY")
-            LOGGER.error("请至少设置其中一个（DASHSCOPE_API_KEY用于Qwen VL，OPENROUTER_API_KEY用于Gemini）")
+        if not cls.DASHSCOPE_API_KEY:
+            LOGGER.error("错误: 未设置DASHSCOPE_API_KEY")
             return False
         return True
     
@@ -166,8 +158,8 @@ class Config:
     def to_dict(cls) -> Dict:
         """转换为字典"""
         return {
-            'openrouter_api_key': '***' if cls.OPENROUTER_API_KEY else '',
-            'openrouter_base_url': cls.OPENROUTER_BASE_URL,
+            'dashscope_api_key': '***' if cls.DASHSCOPE_API_KEY else '',
+            'dashscope_base_url': cls.DASHSCOPE_BASE_URL,
             'model_simple': cls.MODEL_SIMPLE,
             'model_medium': cls.MODEL_MEDIUM,
             'model_hard': cls.MODEL_HARD,

@@ -52,26 +52,20 @@ def _detect_claim_type(benefit: str, folder_hint: str = "") -> str:
 
 
 class AIClaimReviewer:
-    """AI理赔审核器 - 使用OpenRouter API"""
+    """AI理赔审核器 - 使用 DashScope (Qwen) API"""
     
     def __init__(self, api_key: Optional[str] = None):
         """
         初始化AI审核器
-        
+
         Args:
-            api_key: OpenRouter API密钥,如果不提供则从配置读取
+            api_key: DashScope API密钥,如果不提供则从配置读取
         """
         self.client = OpenRouterClient(api_key=api_key)
         self.prompt_loader = prompt_loader
         self.privacy_masker = PrivacyMasker()
-        self.doc_processor = DocumentProcessor()  # 新增文档处理器
-        if config.USE_QWEN_VISION:
-            _vision_api_key = config.DASHSCOPE_API_KEY
-            _vision_provider = 'dashscope'
-        else:
-            _vision_api_key = config.OPENROUTER_API_KEY
-            _vision_provider = 'openrouter'
-        self.vision_client = GeminiVisionClient(api_key=_vision_api_key, provider=_vision_provider)
+        self.doc_processor = DocumentProcessor()
+        self.vision_client = GeminiVisionClient(api_key=config.DASHSCOPE_API_KEY)
         # 当前所有案件默认为随身财产模块；未来可按案件类型路由
         self.module = DEFAULT_REGISTRY.get("baggage_damage")
         self.prompt_namespace = self.module.get_context().prompt_namespace

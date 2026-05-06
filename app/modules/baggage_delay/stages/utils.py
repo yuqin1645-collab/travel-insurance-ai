@@ -78,6 +78,8 @@ def _parse_dt_flexible(value: Any) -> Optional[datetime]:
         "%Y/%m/%d %H:%M",
         "%Y/%m/%d %H:%M:%S",
         "%Y-%m-%dT%H:%M:%S",
+        "%Y%m%d%H%M%S",
+        "%Y%m%d",
     ):
         try:
             return datetime.strptime(s, fmt)

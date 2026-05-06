@@ -23,6 +23,8 @@ from app.modules.baggage_delay.stages.handlers import (
     _check_info_consistency,
     _check_airline_baggage_record_exception,
     _check_exclusions,
+    _check_domestic_flight,
+    _check_actual_arrival_vs_policy,
     _try_transfer_flight_receipt_time,
 )
 from app.modules.baggage_delay.stages.calculator import (
@@ -198,6 +200,26 @@ async def review_baggage_delay_async(
                     )
                     break
 
+        # 校验：Vision 模型内部矛盾检测 —— document_sources 中标记为 absent 但顶层 flag 为 true
+        doc_sources = vision_extract.get("document_sources") or {}
+        if isinstance(doc_sources, dict):
+            _source_flag_map = {
+                "baggage_delay_proof": ("has_baggage_delay_proof", "行李延误证明"),
+                "baggage_receipt_time_proof": ("has_baggage_receipt_time_proof", "行李签收时间证明"),
+                "baggage_tag_proof": ("has_baggage_tag_proof", "托运行李牌"),
+                "boarding_pass": ("has_boarding_or_ticket", "登机牌/机票"),
+            }
+            for source_key, (flag_key, label) in _source_flag_map.items():
+                source_status = str(doc_sources.get(source_key, {}).get("status") or "").strip().lower()
+                flag_val = str(ai_parsed.get(flag_key) or "").strip().lower()
+                if source_status == "absent" and flag_val == "true":
+                    ai_parsed[flag_key] = False
+                    if flag_key in ("has_baggage_delay_proof", "has_baggage_receipt_time_proof"):
+                        ai_parsed["delay_hours"] = None
+                    debug.setdefault("auto_corrected", []).append(
+                        f"{flag_key}: document_sources.{source_key}=absent 与顶层 flag=true 矛盾，以 document_sources 为准纠正为 false"
+                    )
+
         # PIR二次聚焦提取
         needs_pir_extract = (
             ai_parsed.get("has_baggage_delay_proof") is True
@@ -260,6 +282,12 @@ async def review_baggage_delay_async(
         conclusions.append({"checkpoint": "身份一致性", "Eligible": "否", "Remark": identity_violation})
         return _result(forceid, identity_violation, "N", conclusions, debug)
 
+    # 纯国内航班检测（优先级高于免责条款——产品类型不匹配是更根本的问题）
+    domestic_reason = _check_domestic_flight(vision_extract, ai_parsed or {})
+    if domestic_reason:
+        conclusions.append({"checkpoint": "航段检查", "Eligible": "否", "Remark": domestic_reason})
+        return _result(forceid, domestic_reason, "N", conclusions, debug)
+
     # 免责条款校验
     exclusion_reason = _check_exclusions(claim_info, text_blob, ai_parsed or {})
     if exclusion_reason:
@@ -277,22 +305,56 @@ async def review_baggage_delay_async(
                 _extract_date_yyyy_mm_dd(ai_parsed.get("flight_date"))
                 or _extract_date_yyyy_mm_dd(claim_info.get("Date_of_Accident"))
             )
-            if flight_no and flight_date:
-                skill = get_flight_lookup_skill()
-                aviation_lookup = await skill.lookup_status(
-                    flight_no=flight_no,
-                    date=flight_date,
-                    dep_iata=dep_iata if dep_iata and dep_iata != "UNKNOWN" else None,
-                    arr_iata=arr_iata if arr_iata and arr_iata != "UNKNOWN" else None,
-                    session=session,
-                )
-                if aviation_lookup.get("success"):
-                    actual_arr = aviation_lookup.get("actual_arr")
-                    if actual_arr:
-                        ai_parsed["flight_actual_arrival_time"] = actual_arr
-                        debug["arrival_source"] = "variflight_actual_arr"
+
+            # 航班号格式校验：标准格式为 2位字母 + 1~4位数字
+            import re as _re
+            _FLIGHT_NO_PATTERN = _re.compile(r'^[A-Za-z]{2}\d{1,4}$')
+            _valid_flight_no = bool(_FLIGHT_NO_PATTERN.match(flight_no)) if flight_no else False
+
+            # 收集 all_flights_found 中的候选航班号（去重保序）
+            _candidates: list = []
+            _seen = set()
+            if _valid_flight_no:
+                _candidates.append((flight_no, flight_date, dep_iata, arr_iata))
+                _seen.add(flight_no.upper())
+            for _src in (ai_parsed, vision_extract):
+                for _fl in (_src.get("all_flights_found") or []):
+                    _fn = str(_fl.get("flight_no") or "").strip()
+                    if _fn and _FLIGHT_NO_PATTERN.match(_fn) and _fn.upper() not in _seen:
+                        _fd = _extract_date_yyyy_mm_dd(_fl.get("date")) or flight_date
+                        _dep = str(_fl.get("dep_iata") or "").strip().upper()
+                        _arr = str(_fl.get("arr_iata") or "").strip().upper()
+                        _candidates.append((_fn, _fd, _dep if _dep != "UNKNOWN" else "", _arr if _arr != "UNKNOWN" else ""))
+                        _seen.add(_fn.upper())
+
+            if not _valid_flight_no and _candidates:
+                debug["flight_no_corrected"] = f"{flight_no} -> {_candidates[0][0]}（格式校验失败，从 all_flights_found 回退）"
+
+            for _fn, _fd, _dep, _arr in _candidates[:5]:  # 最多尝试5个候选
+                if _fn and _fd:
+                    skill = get_flight_lookup_skill()
+                    aviation_lookup = await skill.lookup_status(
+                        flight_no=_fn,
+                        date=_fd,
+                        dep_iata=_dep if _dep and _dep != "UNKNOWN" else None,
+                        arr_iata=_arr if _arr and _arr != "UNKNOWN" else None,
+                        session=session,
+                    )
+                    if aviation_lookup.get("success"):
+                        actual_arr = aviation_lookup.get("actual_arr")
+                        if actual_arr:
+                            ai_parsed["flight_actual_arrival_time"] = actual_arr
+                            debug["arrival_source"] = "variflight_actual_arr"
+                        break
+                    debug.setdefault("aviation_candidates_tried", []).append(
+                        {"flight_no": _fn, "date": _fd, "success": False,
+                         "error": str(aviation_lookup.get("error") or "")[:80]}
+                    )
                 else:
-                    debug["arrival_source"] = "material_or_llm_fallback"
+                    break  # 候选信息不完整，不再尝试后续
+
+            if not aviation_lookup.get("success"):
+                debug["arrival_source"] = "material_or_llm_fallback"
     except Exception as e:
         debug["aviation_lookup_warning"] = str(e)[:200]
     debug["aviation_lookup"] = aviation_lookup
@@ -304,10 +366,22 @@ async def review_baggage_delay_async(
              "Remark": f"官方航班查询异常: {str(aviation_lookup.get('error') or '')[:120]}"}
         )
     elif aviation_failure_type == "evidence_gap":
-        conclusions.append(
-            {"checkpoint": "官方航班数据", "Eligible": "需补齐资料",
-             "Remark": "官方航班数据未命中，需补充可核验航班号/日期/航段信息"}
+        # 如果Vision已确认材料中有登机牌/机票+航班信息，aviation_lookup失败不影响审核
+        has_boarding = str(ai_parsed.get("has_boarding_or_ticket") or "").strip().lower() == "true"
+        has_flight_info = bool(
+            (ai_parsed.get("flight_no") and str(ai_parsed.get("flight_no")).strip().lower() not in ("unknown", ""))
+            and (ai_parsed.get("flight_date") and str(ai_parsed.get("flight_date")).strip().lower() not in ("unknown", ""))
         )
+        if has_boarding and has_flight_info:
+            conclusions.append(
+                {"checkpoint": "官方航班数据", "Eligible": "是",
+                 "Remark": "以材料中的航班信息为准（官方航班数据源未命中，不影响审核）"}
+            )
+        else:
+            conclusions.append(
+                {"checkpoint": "官方航班数据", "Eligible": "需补齐资料",
+                 "Remark": "官方航班数据未命中，需补充可核验航班号/日期/航段信息"}
+            )
     elif aviation_lookup.get("success") is True:
         conclusions.append(
             {"checkpoint": "官方航班数据", "Eligible": "是",
@@ -319,6 +393,12 @@ async def review_baggage_delay_async(
         ai_parsed or {}, vision_extract, session,
     )
     debug["transfer_flight_receipt"] = transfer_flight_debug
+
+    # 实际到达时间 vs 保单有效期检查
+    arrival_policy_reason = _check_actual_arrival_vs_policy(claim_info, ai_parsed or {}, debug)
+    if arrival_policy_reason:
+        conclusions.append({"checkpoint": "保单有效期", "Eligible": "否", "Remark": arrival_policy_reason})
+        return _result(forceid, arrival_policy_reason, "N", conclusions, debug)
 
     # 事故类型校验
     parsed_accident_type = str((ai_parsed or {}).get("accident_type") or "").strip().lower()
@@ -393,7 +473,7 @@ async def review_baggage_delay_async(
 
     # 人工复核触发
     manual_flags = []
-    manual_keywords = ["手写", "多语言", "伪造", "ps", "涂改", "矛盾", "争议", "模糊"]
+    manual_keywords = ["手写", "多语言", "伪造", "ps", "涂改", "争议", "模糊"]
     for kw in manual_keywords:
         if kw in text_blob.lower():
             manual_flags.append(kw)
@@ -401,9 +481,15 @@ async def review_baggage_delay_async(
     if parsed_risk and parsed_risk not in {"none", "unknown"}:
         manual_flags.append(parsed_risk)
     if manual_flags:
-        debug["manual_review_flags"] = manual_flags
-        conclusions.append({"checkpoint": "人工复核触发", "Eligible": "需人工判断", "Remark": f"命中关键词: {','.join(manual_flags)}"})
-        return _result(forceid, "转人工复核：存在材料识别或真实性争议", "Y", conclusions, debug)
+        # 如果仅有 "conflict" 标记且所有材料已视觉确认，降级为警告而非阻断
+        if manual_flags == ["conflict"] and not missing_materials:
+            debug["manual_review_flags"] = manual_flags
+            debug["conflict_downgraded"] = True
+            conclusions.append({"checkpoint": "人工复核触发", "Eligible": "是", "Remark": "AI标记conflict但材料完整，降级为审核通过（非实质性责任冲突）"})
+        else:
+            debug["manual_review_flags"] = manual_flags
+            conclusions.append({"checkpoint": "人工复核触发", "Eligible": "需人工判断", "Remark": f"命中关键词: {','.join(manual_flags)}"})
+            return _result(forceid, "转人工复核：存在材料识别或真实性争议", "Y", conclusions, debug)
 
     # 延误时长核算与门槛
     delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)

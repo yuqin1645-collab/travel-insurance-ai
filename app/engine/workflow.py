@@ -48,7 +48,7 @@ class StageRunner:
         *args: Any,
         max_retries: int = 3,
         retry_sleep: float = 3.0,
-        circuit_name: str = "openrouter",
+        circuit_name: str = "dashscope",
         **kwargs: Any,
     ) -> Tuple[Optional[Any], Optional[Exception]]:
         breaker = get_circuit_breaker(

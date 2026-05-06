@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Vision API客户端
+Vision API客户端 - 基于 DashScope (Qwen VL)
 支持直接上传图片和PDF文件进行多模态审核
 """
 
@@ -31,38 +31,25 @@ _VISION_INFLIGHT = 0
 
 
 class GeminiVisionClient:
-    """视觉模型客户端 - 支持 OpenRouter (Gemini) 和 DashScope (Qwen VL)"""
+    """视觉模型客户端 - DashScope (Qwen VL)"""
 
-    def __init__(self, api_key: Optional[str] = None, provider: str = 'dashscope'):
-        """初始化客户端
-
-        Args:
-            api_key: API密钥
-            provider: 'dashscope' (Qwen VL) 或 'openrouter' (Gemini)
-        """
-        # 优先使用 DashScope (Qwen)
-        if provider == 'dashscope' or not api_key:
-            self.api_key = api_key or config.DASHSCOPE_API_KEY or config.OPENROUTER_API_KEY
-            self.base_url = config.DASHSCOPE_BASE_URL
-            self.provider = 'dashscope'
-        else:
-            self.api_key = api_key or config.OPENROUTER_API_KEY
-            self.base_url = config.OPENROUTER_BASE_URL
-            self.provider = 'openrouter'
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or config.DASHSCOPE_API_KEY
+        self.base_url = config.DASHSCOPE_BASE_URL
 
         if not self.api_key:
-            raise ValueError("请设置 DASHSCOPE_API_KEY 或 OPENROUTER_API_KEY")
+            raise ValueError("请设置 DASHSCOPE_API_KEY")
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json; charset=utf-8",
         }
-    
+
     def _encode_file_base64(self, file_path: Path) -> str:
         """将文件编码为base64"""
         with open(file_path, 'rb') as f:
             return base64.b64encode(f.read()).decode('utf-8')
-    
+
     def _get_mime_type(self, file_path: Path) -> str:
         """获取文件的MIME类型"""
         suffix = file_path.suffix.lower()
@@ -75,7 +62,7 @@ class GeminiVisionClient:
             '.pdf': 'application/pdf'
         }
         return mime_types.get(suffix, 'application/octet-stream')
-    
+
     async def review_materials_with_vision(
         self,
         material_files: List[Path],
@@ -83,7 +70,7 @@ class GeminiVisionClient:
         session: Optional[aiohttp.ClientSession] = None
     ) -> Dict:
         """
-        Review claim materials with Vision API.
+        使用 Vision API 审核理赔材料。
         """
         prompt_clean = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", prompt)
         content_parts = [{"type": "text", "text": prompt_clean}]
@@ -101,10 +88,7 @@ class GeminiVisionClient:
 
         messages = [{"role": "user", "content": content_parts}]
 
-        if self.provider == 'openrouter':
-            vision_model = getattr(config, 'MODEL_VISION_OPENROUTER', 'google/gemini-2.5-pro-preview')
-        else:
-            vision_model = getattr(config, 'MODEL_VISION', 'qwen-vl-plus')
+        vision_model = getattr(config, 'MODEL_VISION', 'qwen-vl-plus')
         payload = {
             "model": vision_model,
             "messages": messages,
@@ -123,30 +107,20 @@ class GeminiVisionClient:
             close_session = True
 
         try:
-            proxy = None
-            # DashScope/Qwen 请求直连，不走代理（国内服务）
-            if self.provider != 'dashscope':
-                proxy = (
-                    os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
-                    or os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
-                ) or None
-
             global _VISION_INFLIGHT
             async with _VISION_SEMAPHORE:
                 _VISION_INFLIGHT += 1
                 try:
-                    LOGGER.debug(f"Vision API request start(provider={self.provider}, inflight={_VISION_INFLIGHT}/{_VISION_GLOBAL_CONCURRENCY})")
+                    LOGGER.debug(f"Vision API request start(inflight={_VISION_INFLIGHT}/{_VISION_GLOBAL_CONCURRENCY})")
                     async with session.post(
                         f"{self.base_url}/chat/completions",
                         headers=self.headers,
                         json=payload,
-                        proxy=proxy,
-                        ssl=False if proxy else None,
                         timeout=aiohttp.ClientTimeout(total=300)
                     ) as response:
                         if response.status != 200:
                             error_text = await response.text()
-                            LOGGER.warning(f"Vision API error(provider={self.provider}): status={response.status}, response: {error_text[:500]}")
+                            LOGGER.warning(f"Vision API error: status={response.status}, response: {error_text[:500]}")
                         response.raise_for_status()
                         raw_bytes = await response.read()
                         result = self._robust_json_loads(raw_bytes)
@@ -157,7 +131,7 @@ class GeminiVisionClient:
                     _VISION_INFLIGHT = max(0, _VISION_INFLIGHT - 1)
 
         except Exception as e:
-            LOGGER.warning(f"Vision API call failed(provider={self.provider}): {e}")
+            LOGGER.warning(f"Vision API call failed: {e}")
             raise
 
         finally:
@@ -213,7 +187,7 @@ class GeminiVisionClient:
         def _is_empty_dict(obj: Any) -> bool:
             return isinstance(obj, dict) and len(obj) == 0
 
-        # 1) json_repair 优先：覆盖控制字符、未转义换行、尾部逗号、缺引号等
+        # 1) json_repair 优先
         try:
             obj = json.loads(repair_json(text))
             if not _is_empty_dict(obj):
@@ -221,7 +195,7 @@ class GeminiVisionClient:
         except Exception:
             pass
 
-        # 2) 直接 json.loads（response_format=json_object 时应当可直接 parse）
+        # 2) 直接 json.loads
         try:
             obj = json.loads(text)
             if not _is_empty_dict(obj):

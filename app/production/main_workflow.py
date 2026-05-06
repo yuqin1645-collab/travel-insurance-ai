@@ -284,7 +284,8 @@ class ProductionWorkflow:
                             else:
                                 fsql = (
                                     f"INSERT INTO ai_flight_delay_data ({', '.join(fkeys)}) "
-                                    f"VALUES ({fplaceholders})"
+                                    f"VALUES ({fplaceholders}) "
+                                    f"ON DUPLICATE KEY UPDATE forceid=VALUES(forceid)"
                                 )
                             cur.execute(fsql, list(flight_fields.values()))
                         elif claim_type == "baggage_delay" and baggage_fields:
@@ -301,7 +302,8 @@ class ProductionWorkflow:
                             else:
                                 bsql = (
                                     f"INSERT INTO ai_baggage_delay_data ({', '.join(bkeys)}) "
-                                    f"VALUES ({bplaceholders})"
+                                    f"VALUES ({bplaceholders}) "
+                                    f"ON DUPLICATE KEY UPDATE forceid=VALUES(forceid)"
                                 )
                             cur.execute(bsql, list(baggage_fields.values()))
 

@@ -61,14 +61,20 @@ def _sync_to_db(fields: dict) -> bool:
             with conn.cursor() as cur:
                 keys = list(fields.keys())
                 placeholders = ", ".join(["%s"] * len(keys))
-                update_clause = ", ".join(
-                    [f"{k}=VALUES({k})" for k in keys if k != "forceid"]
-                )
-                sql = (
-                    f"INSERT INTO ai_review_result ({', '.join(keys)}) "
-                    f"VALUES ({placeholders}) "
-                    f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
-                )
+                update_keys = [k for k in keys if k != "forceid"]
+                update_clause = ", ".join([f"{k}=VALUES({k})" for k in update_keys])
+                if update_clause:
+                    sql = (
+                        f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                        f"VALUES ({placeholders}) "
+                        f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
+                    )
+                else:
+                    sql = (
+                        f"INSERT INTO ai_review_result ({', '.join(keys)}) "
+                        f"VALUES ({placeholders}) "
+                        f"ON DUPLICATE KEY UPDATE updated_at=CURRENT_TIMESTAMP"
+                    )
                 cur.execute(sql, list(fields.values()))
             conn.commit()
             return True

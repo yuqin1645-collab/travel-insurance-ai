@@ -126,7 +126,7 @@
     }
   ],
 
-  "flight_no": "触发本险种的原航班号",
+  "flight_no": "触发本险种的原航班号（⚠️ 必须是 all_flights_found 中已列出的某个航班号，绝对禁止输出一个不在 all_flights_found 中的航班号）",
   "flight_date": "触发航班计划起飞时间 YYYY-MM-DD HH:MM/unknown",
   "dep_iata": "触发航班出发机场三字码/unknown",
   "arr_iata": "触发航班到达机场三字码/unknown",
