@@ -1,15 +1,15 @@
 {
-  "total_records": 1128,
+  "total_records": 1144,
   "cross_tab": [
     {
       "ai": "通过",
       "manual": "通过",
-      "count": 449
+      "count": 475
     },
     {
       "ai": "拒绝",
       "manual": "通过",
-      "count": 282
+      "count": 288
     },
     {
       "ai": "拒绝",
@@ -19,7 +19,7 @@
     {
       "ai": "需补齐资料",
       "manual": "通过",
-      "count": 77
+      "count": 45
     },
     {
       "ai": "通过",
@@ -67,9 +67,9 @@
       "count": 1
     }
   ],
-  "consistent_count": 619,
+  "consistent_count": 645,
   "total_with_both": 1068,
-  "consistency_rate": 58.0,
+  "consistency_rate": 60.4,
   "p0": [],
   "p1": [
     {
@@ -123,7 +123,7 @@
       "ai": "需补齐资料",
       "manual": "拒绝",
       "manual_note": "取消理赔",
-      "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
+      "remark": "航班延误: 需补充：1.承运人或其代理人出具的延误时间及原因书面证明（需含航班号、原计划起降时间、实际/替代起降时间、延误时长、延误原因、盖章或签字） 2.实际乘坐航班的登机牌（显示MU760或改签后航班号、日期、起降机场、旅客姓名）",
       "payout": 0
     },
     {
@@ -163,15 +163,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IKcLLIA1",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误252.35小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000IPZUrIAP",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
@@ -181,48 +172,12 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IQUEfIAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误210.76小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000IRuwcIAD",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
       "remark": "转人工复核：存在材料识别或真实性争议",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IVGPVIA5",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：原航班计划起飞日期（含年份的完整官方证明）",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IWCN5IAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IWPTxIAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误16.30小时，待补件后按实际签收时间修正。",
       "payout": 0
     },
     {
@@ -244,15 +199,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IzfLeIAJ",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误95.13小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000J1iVZIAZ",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
@@ -262,57 +208,12 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000JFFOqIAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000JLlaUIAT",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1500.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误330.83小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000JMY05IAH",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
       "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误41.27小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000JUIXeIAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误119.73小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000JZWF1IAP",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1500.00",
-      "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000JeY4vIAF",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误93.84小时，待补件后按实际签收时间修正。",
       "payout": 0
     },
     {
@@ -339,7 +240,7 @@
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误39.83小时，待补件后按实际签收时间修正。",
+      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误38.03小时，待补件后按实际签收时间修正。",
       "payout": 0
     },
     {
@@ -361,21 +262,12 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IBkDFIA1",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误78.12小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000ID4ufIAD",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误28.59小时，待补件后按实际签收时间修正。",
+      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误15.73小时，待补件后按实际签收时间修正。",
       "payout": 0
     },
     {
@@ -384,7 +276,7 @@
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误14.68小时，待补件后按实际签收时间修正。",
+      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误12.67小时，待补件后按实际签收时间修正。",
       "payout": 0
     },
     {
@@ -402,25 +294,7 @@
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误31.95小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IGyc9IAD",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1500.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误30.85小时，待补件后按实际签收时间修正。",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IIkV3IAL",
-      "claim_type": "baggage_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误127.81小时，待补件后按实际签收时间修正。",
+      "remark": "需补齐资料：relationship_proof_or_authorization",
       "payout": 0
     },
     {
@@ -433,15 +307,6 @@
       "payout": 300.0
     },
     {
-      "forceid": "a0nC800000IWNn7IAH",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 需补充：1.承运人或其代理人出具的书面延误证明（须含航班号5N522、原计划起飞/到达时间、实际起飞/到达时间、备降原因及盖章/签字） 2.飞常准APP截图中完整显示计划时间（2026-02-22 13:40出发、16:05到达）与实际时间（14:11起飞、23:46到达）的清晰页面（当前材料中aviation_scheduled.planned_arr=16:05+03:00与cla",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000JIl0jIAD",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -451,31 +316,13 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000LxgVNIAZ",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄6岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄6岁，为未成年人，需补充监护人身份证明及监护关系证明；[缺必备材料] 承运人延误书面证明、登机牌或电子客票行程单、中国海关出入境盖章页或电子出入境记录",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000LxhzKIAR",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明；[缺必备材料] 承运人延误书面证明、登机牌或电子客票行程单、中国海关出入境盖章页或电子出入境记录",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000MrMFTIA3",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：承运人延误书面证明、登机牌或电子客票行程单、中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 承运人延误书面证明、登机牌或电子客票行程单、中国海关出入境盖章页或电子出入境记录",
-      "payout": 0
+      "remark": "航班延误: 【需监护人材料】被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明",
+      "payout": 300.0
     },
     {
       "forceid": "a0nC800000IEf2XIAT",
@@ -484,24 +331,6 @@
       "manual": "通过",
       "manual_note": "600.00",
       "remark": "航班延误: 需补充：1.承运人出具的航班取消书面证明（须含航班号U25270、原定起飞/到达时间、取消原因及官方签章） 2.改签后实际乘坐航班（U24899）的登机牌或值机记录及实际起飞/到达时间（含时区）",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000MsGpXIAV",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "87.58",
-      "remark": "航班延误: 【必备材料缺失】请补充：登机牌或电子客票行程单；硬校验标记：[缺必备材料] 登机牌或电子客票行程单",
-      "payout": 1112.42
-    },
-    {
-      "forceid": "a0nC800000MoNj8IAF",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "600.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：登机牌或电子客票行程单；硬校验标记：[缺必备材料] 登机牌或电子客票行程单",
       "payout": 0
     },
     {
@@ -541,15 +370,6 @@
       "payout": 600.0
     },
     {
-      "forceid": "a0nC800000M6q8wIAB",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000IoENCIA3",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -586,33 +406,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000LQmPuIAL",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1200.00",
-      "remark": "航班延误: 需补充：1.替代航班（3月21日墨尔本出发航班）的具体起飞时间（含时区）及航班号 2.替代航班抵达深圳（SZX）的具体到达时间（含时区） 3.承运人或其代理人出具的航班取消及改签安排书面证明（需含航班号、原计划时间、取消原因、替代航班时间及盖章）",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000LR0MPIA1",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：被保险人护照照片页；硬校验标记：[缺必备材料] 被保险人护照照片页",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000NPcmVIAT",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 300.0
-    },
-    {
       "forceid": "a0nC800000IvlkcIAB",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -631,15 +424,6 @@
       "payout": 300.0
     },
     {
-      "forceid": "a0nC800000LSbmwIAD",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 300.0
-    },
-    {
       "forceid": "a0nC800000JkparIAB",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -649,39 +433,12 @@
       "payout": 300.0
     },
     {
-      "forceid": "a0nC800000IxpSLIAZ",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 需补充：1.承运人或其代理人出具的延误时间及原因书面证明（须含航班号、原订起飞/到达时间、实际/替代航班起飞/到达时间、延误时长、延误原因、盖章或签字） 2.飞常准APP官方延误截图（含航班EC7352678、SVO→MURMANSK、2026-02-22日期、计划与实际起降时间及延误分钟数）",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000LOW4LIAX",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "600.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：被保险人护照照片页；硬校验标记：[缺必备材料] 被保险人护照照片页",
-      "payout": 600.0
-    },
-    {
       "forceid": "a0nC800000IxpSMIAZ",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 需补充：1.承运人或其代理人出具的航班原定计划起飞及到达时间的书面证明（含航班号C6511、TAS-CAN、2026-02-23日期） 2.航班变动/取消原因的书面说明（加盖航司或代理公章）",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000LPJY7IAP",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：登机牌或电子客票行程单；硬校验标记：[缺必备材料] 登机牌或电子客票行程单",
       "payout": 0
     },
     {
@@ -700,15 +457,6 @@
       "manual": "通过",
       "manual_note": "600.00",
       "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000IBiOLIA1",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 需补充：1.承运人或其代理人出具的含航班号、原订起飞/到达时间、实际/替代起飞/到达时间、延误时长及原因的书面延误证明（须盖章或签字） 2.飞常准等第三方航旅平台可验证的航班动态截图（含ANA771在2026-02-19的计划与实际起降时间）",
       "payout": 0
     },
     {
@@ -748,15 +496,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000N4DxVIAV",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "600.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：登机牌或电子客票行程单；硬校验标记：[缺必备材料] 登机牌或电子客票行程单",
-      "payout": 600.0
-    },
-    {
       "forceid": "a0nC800000I5q8TIAR",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -773,24 +512,6 @@
       "manual_note": "300.00",
       "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
       "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000M1QQQIA3",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000MtcuTIAR",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "600.00",
-      "remark": "航班延误: 【必备材料缺失】请补充：登机牌或电子客票行程单；硬校验标记：[缺必备材料] 登机牌或电子客票行程单",
-      "payout": 600.0
     },
     {
       "forceid": "a0nC800000LP6z3IAD",
@@ -829,15 +550,6 @@
       "payout": 300.0
     },
     {
-      "forceid": "a0nC800000MWHyjIAH",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "1500.00",
-      "remark": "需补件：交通票据（机票/登机牌/行程单）；行李延误证明（含航班及原因）；行李签收时间证明",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000JFsd9IAD",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -864,6 +576,15 @@
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 【未达起赔门槛】延误时长151分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。；硬校验标记：[缺必备材料] 被保险人护照照片页",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000LPJY7IAP",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【未达起赔门槛】延误时长100分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
       "payout": 0
     },
     {
@@ -1452,6 +1173,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000IBiOLIA1",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【未达起赔门槛】延误时长0分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "payout": 300.0
+    },
+    {
       "forceid": "a0nC800000IBieTIAT",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -1890,6 +1620,15 @@
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 【未达起赔门槛】延误时长53分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IWNn7IAH",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【未达起赔门槛】延误时长269分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
       "payout": 0
     },
     {
@@ -2757,6 +2496,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000MWHyjIAH",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "1500.00",
+      "remark": "需补件：交通票据（机票/登机牌/行程单）；行李延误证明（含航班及原因）；行李签收时间证明",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000MWLvtIAH",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -2880,6 +2628,15 @@
       "manual": "通过",
       "manual_note": "1200.00",
       "remark": "航班延误: 【未达起赔门槛】延误时长0分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。；硬校验标记：[缺必备材料] 登机牌或电子客票行程单、中国海关出入境盖章页或电子出入境记录",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000LxgVNIAZ",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【未达起赔门槛】延误时长43分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。；硬校验标记：[未成年/限制行为能力人] 被保险人年龄6岁，为未成年人，需补充监护人身份证明及监护关系证明",
       "payout": 0
     },
     {
@@ -3123,6 +2880,15 @@
       "manual": "通过",
       "manual_note": "1500.00",
       "remark": "拒赔：航班实际到达时间2026-02-28 21:40超出保单有效期2026-02-26 23:59",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000JFFOqIAP",
+      "claim_type": "baggage_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "1000.00",
+      "remark": "拒赔：行李延误时长未达到6小时赔付门槛",
       "payout": 0
     },
     {
@@ -3398,21 +3164,21 @@
   ],
   "p0_flight_count": 0,
   "p0_baggage_count": 0,
-  "p1_flight_count": 58,
-  "p1_baggage_count": 29,
-  "p2_flight_count": 230,
-  "p2_baggage_count": 52,
+  "p1_flight_count": 40,
+  "p1_baggage_count": 15,
+  "p2_flight_count": 235,
+  "p2_baggage_count": 53,
   "p2_flight_reasons": {
     "延误0分钟": {
-      "count": 62,
-      "total_payout": 9300.0
+      "count": 66,
+      "total_payout": 9600.0
     },
     "超出有效期": {
       "count": 1,
       "total_payout": 0.0
     },
     "其他": {
-      "count": 128,
+      "count": 129,
       "total_payout": 300.0
     },
     "重复索赔": {
@@ -3426,25 +3192,25 @@
   },
   "p2_baggage_reasons": {
     "超出保单有效期": 7,
-    "延误未达6h门槛": 22,
+    "延误未达6h门槛": 23,
     "纯国内航班": 11,
     "事故类型为行李丢失": 9,
     "其他": 3
   },
   "p1_flight_keywords": {
-    "出入境记录": 27,
-    "登机牌/行程单": 20,
-    "延误证明/航班变动证明": 8,
+    "出入境记录": 19,
+    "登机牌/行程单": 12,
     "改签相关": 10,
-    "监护人材料": 2,
-    "护照照片页": 4
+    "延误证明/航班变动证明": 5,
+    "监护人材料": 1,
+    "护照照片页": 2
   },
   "p1_baggage_keywords": {
-    "行李签收证明": 25,
+    "行李签收证明": 11,
     "交通票据": 2
   },
   "pending_stats": {
-    "NULL": 1,
+    "NULL": 4,
     "待定": 28,
     "拒绝": 1,
     "通过": 14,
@@ -3452,8 +3218,13 @@
   },
   "daily_trend": [
     {
-      "date": "2026-05-06",
+      "date": "2026-05-07",
       "total": 1,
+      "consistent": "0"
+    },
+    {
+      "date": "2026-05-06",
+      "total": 16,
       "consistent": "0"
     },
     {
@@ -3504,7 +3275,7 @@
     {
       "date": "2026-04-26",
       "total": 3,
-      "consistent": "0"
+      "consistent": "1"
     },
     {
       "date": "2026-04-25",
@@ -3514,12 +3285,7 @@
     {
       "date": "2026-04-24",
       "total": 27,
-      "consistent": "13"
-    },
-    {
-      "date": "2026-04-22",
-      "total": 316,
-      "consistent": "206"
+      "consistent": "15"
     }
   ],
   "p2_with_payout": [
@@ -3585,6 +3351,15 @@
       "manual_note": "600.00",
       "remark": "航班延误: 【未达起赔门槛】延误时长0分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
       "payout": 600.0
+    },
+    {
+      "forceid": "a0nC800000IBiOLIA1",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【未达起赔门槛】延误时长0分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "payout": 300.0
     },
     {
       "forceid": "a0nC800000Iwqv7IAB",
@@ -3668,5 +3443,5 @@
       "payout": 300.0
     }
   ],
-  "analysis_time": "2026-05-06 11:24"
+  "analysis_time": "2026-05-07 12:31"
 }

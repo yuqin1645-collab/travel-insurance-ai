@@ -1,0 +1,1524 @@
+2026-05-06 10:14:58,096 INFO forceid=a0nC800000IBbzZIAT stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006672585】
+2026-05-06 10:14:58,109 INFO forceid=a0nC800000IBbzZIAT stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:14:58,110 INFO forceid=a0nC800000IBbzZIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:15:31,449 INFO forceid=a0nC800000IBbzZIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 10:16:52,304 INFO forceid=a0nC800000IBbzZIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 10:17:42,513 INFO forceid=a0nC800000IBbzZIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 10:17:42,517 INFO forceid=a0nC800000IBbzZIAT stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:18:10,043 INFO forceid=a0nC800000IBbzZIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IBbzZIAT] 飞常准查询成功（候选=CA965 2026-02-12）: -> 已到达 [PEK->FRA] route_match=False
+2026-05-06 10:18:10,652 INFO forceid=a0nC800000IBbzZIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IBbzZIAT] 飞常准查询成功（候选=LH862 2026-02-12）: -> 取消 [FRA->OSL] route_match=False
+2026-05-06 10:18:10,653 INFO forceid=a0nC800000IBbzZIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IBbzZIAT] 联程末段 planned_arr 更新为飞常准数据: 2026-02-12T15:20:00+01:00
+2026-05-06 10:18:10,967 INFO forceid=a0nC800000IBbzZIAT stage=fd_alt_aviation_lookup attempt=0 [a0nC800000IBbzZIAT] 接驳航班飞常准查询成功: CA961 2026-02-12 -> 已到达
+2026-05-06 10:18:10,987 INFO forceid=a0nC800000IBbzZIAT stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:18:10,996 INFO forceid=a0nC800000IBbzZIAT stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:18:27,427 INFO forceid=a0nC800000IBbzZIAT stage=review attempt=0 推送前端成功: a0nC800000IBbzZIAT
+2026-05-06 10:18:29,085 INFO forceid=a0nC800000IBbzZIAT stage=review attempt=0 数据库同步成功: a0nC800000IBbzZIAT
+2026-05-06 10:19:42,140 INFO forceid=a0nC800000IViDhIAL stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006750690】
+2026-05-06 10:19:42,141 INFO forceid=a0nC800000IViDhIAL stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:19:42,141 INFO forceid=a0nC800000IViDhIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:20:31,529 INFO forceid=a0nC800000IViDhIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 10:21:45,331 INFO forceid=a0nC800000IViDhIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 10:22:16,069 INFO forceid=a0nC800000IViDhIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 15 个字段
+2026-05-06 10:22:16,069 INFO forceid=a0nC800000IViDhIAL stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:22:39,018 INFO forceid=a0nC800000IViDhIAL stage=fd_aviation_lookup attempt=0 [a0nC800000IViDhIAL] 飞常准查询成功（候选=AF382 CDG）: -> 已到达 [CDG->PEK] route_match=True
+2026-05-06 10:22:39,018 INFO forceid=a0nC800000IViDhIAL stage=fd_aviation_lookup attempt=0 [a0nC800000IViDhIAL] 飞常准查询成功（候选=AF1101 MAD）: -> 已到达 [MAD->CDG] route_match=False
+2026-05-06 10:22:39,033 INFO forceid=a0nC800000IViDhIAL stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:22:39,045 INFO forceid=a0nC800000IViDhIAL stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:22:46,925 INFO forceid=a0nC800000IViDhIAL stage=review attempt=0 推送前端成功: a0nC800000IViDhIAL
+2026-05-06 10:22:47,848 INFO forceid=a0nC800000IViDhIAL stage=review attempt=0 数据库同步成功: a0nC800000IViDhIAL
+2026-05-06 10:22:51,504 INFO forceid=a0nC800000IbiPVIAZ stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006527387】
+2026-05-06 10:22:51,504 INFO forceid=a0nC800000IbiPVIAZ stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:22:51,504 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:23:15,320 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 10:24:08,593 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 10:24:43,666 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 10:24:43,667 INFO forceid=a0nC800000IbiPVIAZ stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:25:08,442 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 10:25:08,442 INFO forceid=- stage=- attempt=0 使用Mock数据: SK4172 2026-02-28
+2026-05-06 10:25:08,445 INFO forceid=a0nC800000IbiPVIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IbiPVIAZ] 飞常准查询成功（候选=SK4095 OSL）: -> 已到达 [EVE->OSL] route_match=False
+2026-05-06 10:25:08,446 INFO forceid=a0nC800000IbiPVIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IbiPVIAZ] 飞常准候选未返回数据: SK4172 LHR, error=航班数据源未配置或不可用
+2026-05-06 10:25:08,724 INFO forceid=a0nC800000IbiPVIAZ stage=fd_alt_aviation_lookup attempt=0 [a0nC800000IbiPVIAZ] 接驳航班飞常准查询成功: SK803 2026-02-28 -> 已到达
+2026-05-06 10:25:08,738 INFO forceid=a0nC800000IbiPVIAZ stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:25:08,753 INFO forceid=a0nC800000IbiPVIAZ stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:25:16,070 INFO forceid=a0nC800000IbiPVIAZ stage=review attempt=0 推送前端成功: a0nC800000IbiPVIAZ
+2026-05-06 10:25:17,298 INFO forceid=a0nC800000IbiPVIAZ stage=review attempt=0 数据库同步成功: a0nC800000IbiPVIAZ
+2026-05-06 10:25:20,867 INFO forceid=a0nC800000IkAlBIAV stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006752577】
+2026-05-06 10:25:20,868 INFO forceid=a0nC800000IkAlBIAV stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:25:20,868 INFO forceid=a0nC800000IkAlBIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:26:09,190 INFO forceid=a0nC800000IkAlBIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 10:27:41,619 INFO forceid=a0nC800000IkAlBIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 10:28:37,866 INFO forceid=a0nC800000IkAlBIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 10:29:04,794 INFO forceid=a0nC800000IkAlBIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 25 份附件（3 批），返回 15 个字段
+2026-05-06 10:29:04,794 INFO forceid=a0nC800000IkAlBIAV stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:29:28,888 INFO forceid=a0nC800000IkAlBIAV stage=fd_aviation_lookup attempt=0 [a0nC800000IkAlBIAV] 飞常准查询成功（候选=LH2440 MUC）: -> 取消 [MUC->CPH] route_match=False
+2026-05-06 10:29:28,888 INFO forceid=a0nC800000IkAlBIAV stage=fd_aviation_lookup attempt=0 [a0nC800000IkAlBIAV] 飞常准查询成功（候选=CA961 PEK）: -> 已到达 [PEK->MUC] route_match=False
+2026-05-06 10:29:29,229 INFO forceid=a0nC800000IkAlBIAV stage=fd_alt_aviation_lookup attempt=0 [a0nC800000IkAlBIAV] 接驳航班飞常准查询成功: CA877 2026-02-12 -> 已到达
+2026-05-06 10:29:29,250 INFO forceid=a0nC800000IkAlBIAV stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:29:29,265 INFO forceid=a0nC800000IkAlBIAV stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:29:36,199 INFO forceid=a0nC800000IkAlBIAV stage=review attempt=0 推送前端成功: a0nC800000IkAlBIAV
+2026-05-06 10:29:38,004 INFO forceid=a0nC800000IkAlBIAV stage=review attempt=0 数据库同步成功: a0nC800000IkAlBIAV
+2026-05-06 10:29:57,354 INFO forceid=a0nC800000JFnQTIA1 stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006668337】
+2026-05-06 10:29:57,354 INFO forceid=a0nC800000JFnQTIA1 stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:29:57,354 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:31:22,456 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/5, attempt 1/3)
+2026-05-06 10:33:35,544 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/5, attempt 1/3)
+2026-05-06 10:34:57,481 INFO forceid=a0nC800000JIVDjIAP stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006240939】
+2026-05-06 10:34:57,481 INFO forceid=a0nC800000JIVDjIAP stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 10:34:57,481 INFO forceid=a0nC800000JIVDjIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 10:35:39,556 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/5, attempt 1/3)
+2026-05-06 10:35:45,522 INFO forceid=a0nC800000JIVDjIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 10:36:17,692 INFO forceid=a0nC800000JIVDjIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 10:36:17,692 INFO forceid=a0nC800000JIVDjIAP stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:36:43,225 INFO forceid=a0nC800000JIVDjIAP stage=fd_aviation_lookup attempt=0 [a0nC800000JIVDjIAP] 飞常准查询成功（候选=MS955 CAI）: -> 已到达 [CAI->PEK] route_match=True
+2026-05-06 10:36:43,226 INFO forceid=a0nC800000JIVDjIAP stage=fd_aviation_lookup attempt=0 [a0nC800000JIVDjIAP] 飞常准查询成功（候选=MS878 ABV）: -> 已到达 [ABV->CAI] route_match=False
+2026-05-06 10:36:43,512 INFO forceid=a0nC800000JIVDjIAP stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JIVDjIAP] 接驳航班飞常准查询成功: CA830 2026-01-25 -> 已到达
+2026-05-06 10:36:43,542 INFO forceid=a0nC800000JIVDjIAP stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:36:43,549 INFO forceid=a0nC800000JIVDjIAP stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:36:50,312 INFO forceid=a0nC800000JIVDjIAP stage=review attempt=0 推送前端成功: a0nC800000JIVDjIAP
+2026-05-06 10:36:51,108 INFO forceid=a0nC800000JIVDjIAP stage=review attempt=0 数据库同步成功: a0nC800000JIVDjIAP
+2026-05-06 10:37:49,893 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/5, attempt 1/3)
+2026-05-06 10:39:25,000 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 5/5, attempt 1/3)
+2026-05-06 10:40:56,982 INFO forceid=a0nC800000JFnQTIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 41 份附件（5 批），返回 15 个字段
+2026-05-06 10:40:56,983 INFO forceid=a0nC800000JFnQTIA1 stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 10:41:21,398 INFO forceid=a0nC800000JFnQTIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000JFnQTIA1] 飞常准查询成功（候选=QR146 BCN）: -> 取消 [BCN->DOH] route_match=True
+2026-05-06 10:41:21,398 INFO forceid=a0nC800000JFnQTIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000JFnQTIA1] 飞常准查询成功（候选=QZ646 PEK）: -> 计划 [DPS->LBJ] route_match=False
+2026-05-06 10:41:21,430 INFO forceid=a0nC800000JFnQTIA1 stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 10:41:21,440 INFO forceid=a0nC800000JFnQTIA1 stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 10:41:30,333 INFO forceid=a0nC800000JFnQTIA1 stage=review attempt=0 推送前端成功: a0nC800000JFnQTIA1
+2026-05-06 10:41:31,977 INFO forceid=a0nC800000JFnQTIA1 stage=review attempt=0 数据库同步成功: a0nC800000JFnQTIA1
+2026-05-06 11:20:21,606 INFO forceid=a0nC800000IbiPVIAZ stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006527387】
+2026-05-06 11:20:21,606 INFO forceid=a0nC800000IbiPVIAZ stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 11:20:21,606 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 11:20:52,671 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 11:21:45,858 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 11:22:18,175 INFO forceid=a0nC800000IbiPVIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 11:22:18,176 INFO forceid=a0nC800000IbiPVIAZ stage=fd_parse attempt=0 [1/1] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 11:22:42,926 INFO forceid=a0nC800000IbiPVIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IbiPVIAZ] 飞常准查询成功（候选=SK4095 OSL）: -> 已到达 [EVE->OSL] route_match=False
+2026-05-06 11:22:42,927 INFO forceid=a0nC800000IbiPVIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IbiPVIAZ] 飞常准查询成功（候选=SK803 OSL）: -> 已到达 [OSL->LHR] route_match=True
+2026-05-06 11:22:42,941 INFO forceid=a0nC800000IbiPVIAZ stage=fd_hardcheck attempt=0 [1/1] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 11:22:42,955 INFO forceid=a0nC800000IbiPVIAZ stage=fd_audit attempt=0 [1/1] 航班延误-阶段2: 理赔判定...
+2026-05-06 11:22:50,190 INFO forceid=a0nC800000IbiPVIAZ stage=review attempt=0 推送前端成功: a0nC800000IbiPVIAZ
+2026-05-06 11:22:51,650 INFO forceid=a0nC800000IbiPVIAZ stage=review attempt=0 数据库同步成功: a0nC800000IbiPVIAZ
+2026-05-06 12:07:08,285 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [1/1] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 12:07:08,285 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [1/1] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:07:08,286 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:08:20,677 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:10:51,162 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [1/8] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 12:10:51,163 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [1/8] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:10:51,163 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:12:02,194 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:12:41,166 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:12:41,167 INFO forceid=a0nC800000JI3FuIAL stage=fd_parse attempt=0 [1/8] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:13:03,536 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=EY372 AUH）: -> 已到达 [AUH->MLE] route_match=False
+2026-05-06 12:13:03,537 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=MU237 PVG）: -> 已到达 [PVG->AUH] route_match=False
+2026-05-06 12:13:03,780 INFO forceid=a0nC800000JI3FuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 接驳航班飞常准查询成功: EY376 2026-02-22 -> 已到达
+2026-05-06 12:13:03,781 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:13:03,796 INFO forceid=a0nC800000JI3FuIAL stage=fd_hardcheck attempt=0 [1/8] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:13:03,797 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:13:03,811 INFO forceid=a0nC800000JI3FuIAL stage=fd_audit attempt=0 [1/8] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:13:09,583 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:13:11,115 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 推送前端成功: a0nC800000JI3FuIAL
+2026-05-06 12:13:12,920 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 数据库同步成功: a0nC800000JI3FuIAL
+2026-05-06 12:13:14,435 INFO forceid=a0nC800000IWNn7IAH stage=start attempt=0 [2/8] 开始审核 航班延误-案件号【000006773994】
+2026-05-06 12:13:14,436 INFO forceid=a0nC800000IWNn7IAH stage=fd_vision_extract attempt=0 [2/8] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:13:14,436 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:13:20,298 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 FileList 下载完成: 14/14 个文件
+2026-05-06 12:14:26,485 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 12:15:20,021 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 12:15:54,943 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 12:15:54,944 INFO forceid=a0nC800000IWNn7IAH stage=fd_parse attempt=0 [2/8] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:16:15,943 INFO forceid=a0nC800000IWNn7IAH stage=fd_aviation_lookup attempt=0 [a0nC800000IWNn7IAH] 飞常准查询成功（候选=5N522 MMK）: -> 已到达 [MMK->SVO] route_match=True
+2026-05-06 12:16:15,944 INFO forceid=a0nC800000IWNn7IAH stage=fd_aviation_lookup attempt=0 [a0nC800000IWNn7IAH] 飞常准查询成功（候选=DP6844 MURMANSK (MMK)）: -> 延误 [KZN->SVO] route_match=False
+2026-05-06 12:16:15,944 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 12:16:15,950 INFO forceid=a0nC800000IWNn7IAH stage=fd_hardcheck attempt=0 [2/8] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:16:15,951 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 12:16:15,955 INFO forceid=a0nC800000IWNn7IAH stage=fd_audit attempt=0 [2/8] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:16:21,956 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 12:16:23,014 INFO forceid=a0nC800000IWNn7IAH stage=review attempt=0 推送前端成功: a0nC800000IWNn7IAH
+2026-05-06 12:16:24,596 INFO forceid=a0nC800000IWNn7IAH stage=review attempt=0 数据库同步成功: a0nC800000IWNn7IAH
+2026-05-06 12:16:25,349 INFO forceid=a0nC800000JIl0jIAD stage=start attempt=0 [3/8] 开始审核 航班延误-案件号【000006434764】
+2026-05-06 12:16:25,349 INFO forceid=a0nC800000JIl0jIAD stage=fd_vision_extract attempt=0 [3/8] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:16:25,349 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:16:27,347 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 FileList 下载完成: 11/11 个文件
+2026-05-06 12:18:19,091 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 12:19:20,183 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 12:19:41,777 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 12:19:41,777 INFO forceid=a0nC800000JIl0jIAD stage=fd_parse attempt=0 [3/8] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:20:00,911 INFO forceid=a0nC800000JIl0jIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JIl0jIAD] 飞常准查询成功（候选=MU4194 PVG）: -> 已到达 [PVG->KIX] route_match=True
+2026-05-06 12:20:00,911 INFO forceid=a0nC800000JIl0jIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JIl0jIAD] 飞常准查询成功（候选=MU501 PVG）: -> 已到达 [PVG->HKG] route_match=False
+2026-05-06 12:20:01,230 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 12:20:01,230 INFO forceid=- stage=- attempt=0 使用Mock数据: JAL894 2025-10-01
+2026-05-06 12:20:01,242 INFO forceid=a0nC800000JIl0jIAD stage=fd_hardcheck attempt=0 [3/8] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:20:01,246 INFO forceid=a0nC800000JIl0jIAD stage=fd_audit attempt=0 [3/8] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:20:07,500 INFO forceid=a0nC800000JIl0jIAD stage=review attempt=0 推送前端成功: a0nC800000JIl0jIAD
+2026-05-06 12:20:08,525 INFO forceid=a0nC800000JIl0jIAD stage=review attempt=0 数据库同步成功: a0nC800000JIl0jIAD
+2026-05-06 12:20:09,895 INFO forceid=a0nC800000JMawLIAT stage=start attempt=0 [4/8] 开始审核 航班延误-案件号【000006765923】
+2026-05-06 12:20:09,896 INFO forceid=a0nC800000JMawLIAT stage=fd_vision_extract attempt=0 [4/8] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:20:09,896 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:20:15,905 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 FileList 下载完成: 26/26 个文件
+2026-05-06 12:21:42,009 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 12:23:29,341 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 12:24:45,106 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 12:25:24,200 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 27 份附件（3 批），返回 15 个字段
+2026-05-06 12:25:24,201 INFO forceid=a0nC800000JMawLIAT stage=fd_parse attempt=0 [4/8] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:25:54,217 INFO forceid=a0nC800000JMawLIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JMawLIAT] 飞常准查询成功（候选=VA1118 PPP）: -> 取消 [PPP->BNE] route_match=True
+2026-05-06 12:25:54,218 INFO forceid=a0nC800000JMawLIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JMawLIAT] 飞常准查询成功（候选=VA610 MKY）: -> 已到达 [MKY->BNE] route_match=False
+2026-05-06 12:25:54,219 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 12:25:54,225 INFO forceid=a0nC800000JMawLIAT stage=fd_hardcheck attempt=0 [4/8] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:25:54,226 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 12:25:54,232 INFO forceid=a0nC800000JMawLIAT stage=fd_audit attempt=0 [4/8] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:26:00,472 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 12:26:02,142 INFO forceid=a0nC800000JMawLIAT stage=review attempt=0 推送前端成功: a0nC800000JMawLIAT
+2026-05-06 12:26:05,922 INFO forceid=a0nC800000JMawLIAT stage=review attempt=0 数据库同步成功: a0nC800000JMawLIAT
+2026-05-06 12:26:08,361 INFO forceid=a0nC800000IWp9wIAD stage=start attempt=0 [5/8] 开始审核 航班延误-案件号【000006775405】
+2026-05-06 12:26:08,362 INFO forceid=a0nC800000IWp9wIAD stage=fd_vision_extract attempt=0 [5/8] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:26:08,362 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:26:11,731 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 FileList 下载完成: 8/8 个文件
+2026-05-06 12:27:20,663 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:27:57,245 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:27:57,246 INFO forceid=a0nC800000IWp9wIAD stage=fd_parse attempt=0 [5/8] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:28:18,118 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG45 NRT）: -> 已到达 [NRT->ICN] route_match=True
+2026-05-06 12:28:18,119 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG46 ICN）: -> 已到达 [ICN->NRT] route_match=False
+2026-05-06 12:28:18,122 INFO forceid=a0nC800000IWp9wIAD stage=fd_hardcheck attempt=0 [5/8] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:28:18,125 INFO forceid=a0nC800000IWp9wIAD stage=fd_audit attempt=0 [5/8] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:28:26,249 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 推送前端成功: a0nC800000IWp9wIAD
+2026-05-06 12:28:27,933 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 数据库同步成功: a0nC800000IWp9wIAD
+2026-05-06 12:28:28,403 INFO forceid=a0nC800000IKcLLIA1 stage=start attempt=0 [6/8] 开始审核 行李延误-案件号【000006665815】
+2026-05-06 12:28:28,403 INFO forceid=a0nC800000IKcLLIA1 stage=baggage_delay_start attempt=0 [6/8] 行李延误审核开始
+2026-05-06 12:28:28,404 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:29:36,286 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/5, attempt 1/3)
+2026-05-06 12:31:01,890 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/5, attempt 1/3)
+2026-05-06 12:34:00,061 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/5, attempt 1/3)
+2026-05-06 12:35:29,815 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/5, attempt 1/3)
+2026-05-06 12:36:13,202 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 5/5, attempt 1/3)
+2026-05-06 12:36:36,844 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 43 份附件（5 批），返回 37 个字段
+2026-05-06 12:36:36,845 INFO forceid=a0nC800000IKcLLIA1 stage=baggage_delay_vision attempt=0 [6/8] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=true
+2026-05-06 12:37:05,148 INFO forceid=a0nC800000IKcLLIA1 stage=review attempt=0 推送前端成功: a0nC800000IKcLLIA1
+2026-05-06 12:37:05,773 INFO forceid=a0nC800000IKcLLIA1 stage=review attempt=0 数据库同步成功: a0nC800000IKcLLIA1
+2026-05-06 12:37:06,283 INFO forceid=a0nC800000IPZUrIAP stage=start attempt=0 [7/8] 开始审核 行李延误-案件号【000006752954】
+2026-05-06 12:37:06,284 INFO forceid=a0nC800000IPZUrIAP stage=baggage_delay_start attempt=0 [7/8] 行李延误审核开始
+2026-05-06 12:37:06,284 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:38:11,427 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 12:39:07,413 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 12:39:27,403 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 37 个字段
+2026-05-06 12:39:27,405 INFO forceid=a0nC800000IPZUrIAP stage=baggage_delay_vision attempt=0 [7/8] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 12:39:35,958 INFO forceid=a0nC800000IPZUrIAP stage=review attempt=0 推送前端成功: a0nC800000IPZUrIAP
+2026-05-06 12:39:36,660 INFO forceid=a0nC800000IPZUrIAP stage=review attempt=0 数据库同步成功: a0nC800000IPZUrIAP
+2026-05-06 12:39:36,978 INFO forceid=a0nC800000IQUEfIAP stage=start attempt=0 [8/8] 开始审核 行李延误-案件号【000006616112】
+2026-05-06 12:39:36,979 INFO forceid=a0nC800000IQUEfIAP stage=baggage_delay_start attempt=0 [8/8] 行李延误审核开始
+2026-05-06 12:39:36,980 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:40:12,723 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 12:41:34,420 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 12:43:24,909 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 12:44:38,224 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 26 份附件（3 批），返回 37 个字段
+2026-05-06 12:44:38,225 INFO forceid=a0nC800000IQUEfIAP stage=baggage_delay_vision attempt=0 [8/8] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 12:45:06,312 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 12:45:06,312 INFO forceid=- stage=- attempt=0 使用Mock数据: SK6303 2026-02-27
+2026-05-06 12:45:07,513 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 12:45:07,514 INFO forceid=- stage=- attempt=0 使用Mock数据: SK6303 2026-02-27
+2026-05-06 12:45:08,460 INFO forceid=a0nC800000IQUEfIAP stage=review attempt=0 推送前端成功: a0nC800000IQUEfIAP
+2026-05-06 12:45:09,166 INFO forceid=a0nC800000IQUEfIAP stage=review attempt=0 数据库同步成功: a0nC800000IQUEfIAP
+2026-05-06 12:49:21,288 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [1/2] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 12:49:21,289 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [1/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:49:21,289 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:50:15,005 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:51:02,533 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:51:02,536 INFO forceid=a0nC800000JI3FuIAL stage=fd_parse attempt=0 [1/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:51:27,241 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=EY372 AUH）: -> 已到达 [AUH->MLE] route_match=True
+2026-05-06 12:51:27,242 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=MU237 PVG）: -> 已到达 [PVG->AUH] route_match=False
+2026-05-06 12:51:27,471 INFO forceid=a0nC800000JI3FuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 接驳航班飞常准查询成功: EY376 2026-02-22 -> 已到达
+2026-05-06 12:51:27,472 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:51:27,489 INFO forceid=a0nC800000JI3FuIAL stage=fd_hardcheck attempt=0 [1/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:51:27,490 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:51:27,501 INFO forceid=a0nC800000JI3FuIAL stage=fd_audit attempt=0 [1/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:51:32,951 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:51:33,807 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 推送前端成功: a0nC800000JI3FuIAL
+2026-05-06 12:51:35,948 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 数据库同步成功: a0nC800000JI3FuIAL
+2026-05-06 12:51:37,684 INFO forceid=a0nC800000IWp9wIAD stage=start attempt=0 [2/2] 开始审核 航班延误-案件号【000006775405】
+2026-05-06 12:51:37,684 INFO forceid=a0nC800000IWp9wIAD stage=fd_vision_extract attempt=0 [2/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:51:37,684 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:52:20,612 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:52:59,509 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:52:59,510 INFO forceid=a0nC800000IWp9wIAD stage=fd_parse attempt=0 [2/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:53:20,644 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG45 ICN）: -> 已到达 [NRT->ICN] route_match=False
+2026-05-06 12:53:20,644 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG46 ICN）: -> 已到达 [ICN->NRT] route_match=False
+2026-05-06 12:53:20,652 INFO forceid=a0nC800000IWp9wIAD stage=fd_hardcheck attempt=0 [2/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:53:20,660 INFO forceid=a0nC800000IWp9wIAD stage=fd_audit attempt=0 [2/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:53:28,292 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 推送前端成功: a0nC800000IWp9wIAD
+2026-05-06 12:53:30,214 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 数据库同步成功: a0nC800000IWp9wIAD
+2026-05-06 12:56:09,052 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [1/2] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 12:56:09,052 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [1/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:56:09,052 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:57:01,954 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:57:39,157 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:57:39,159 INFO forceid=a0nC800000JI3FuIAL stage=fd_parse attempt=0 [1/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:58:02,186 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=EY372 AUH）: -> 已到达 [AUH->MLE] route_match=False
+2026-05-06 12:58:02,187 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=MU237 PVG）: -> 已到达 [PVG->AUH] route_match=False
+2026-05-06 12:58:02,683 INFO forceid=a0nC800000JI3FuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 接驳航班飞常准查询成功: EY376 2026-02-22 -> 已到达
+2026-05-06 12:58:02,684 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:58:02,693 INFO forceid=a0nC800000JI3FuIAL stage=fd_hardcheck attempt=0 [1/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:58:02,694 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:58:02,707 INFO forceid=a0nC800000JI3FuIAL stage=fd_audit attempt=0 [1/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 12:58:09,144 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 12:58:10,073 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 推送前端成功: a0nC800000JI3FuIAL
+2026-05-06 12:58:12,035 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 数据库同步成功: a0nC800000JI3FuIAL
+2026-05-06 12:58:13,797 INFO forceid=a0nC800000IWp9wIAD stage=start attempt=0 [2/2] 开始审核 航班延误-案件号【000006775405】
+2026-05-06 12:58:13,798 INFO forceid=a0nC800000IWp9wIAD stage=fd_vision_extract attempt=0 [2/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 12:58:13,798 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 12:58:52,697 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 12:59:36,374 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 12:59:36,374 INFO forceid=a0nC800000IWp9wIAD stage=fd_parse attempt=0 [2/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 12:59:56,368 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=CZ6010 ICN）: -> 已到达 [ICN->CGO] route_match=True
+2026-05-06 12:59:56,370 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG45 NRT）: -> 已到达 [NRT->ICN] route_match=False
+2026-05-06 12:59:56,371 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGO
+2026-05-06 12:59:56,376 INFO forceid=a0nC800000IWp9wIAD stage=fd_hardcheck attempt=0 [2/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 12:59:56,377 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGO
+2026-05-06 12:59:56,382 INFO forceid=a0nC800000IWp9wIAD stage=fd_audit attempt=0 [2/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 13:00:05,518 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGO
+2026-05-06 13:00:06,894 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 推送前端成功: a0nC800000IWp9wIAD
+2026-05-06 13:00:09,070 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 数据库同步成功: a0nC800000IWp9wIAD
+2026-05-06 13:02:33,803 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [1/2] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 13:02:33,803 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [1/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 13:02:33,803 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:03:25,534 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 13:04:06,424 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 13:04:06,427 INFO forceid=a0nC800000JI3FuIAL stage=fd_parse attempt=0 [1/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 13:04:27,938 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=EY372 AUH）: -> 已到达 [AUH->MLE] route_match=False
+2026-05-06 13:04:27,938 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=MU237 PVG）: -> 已到达 [PVG->AUH] route_match=False
+2026-05-06 13:04:28,183 INFO forceid=a0nC800000JI3FuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 接驳航班飞常准查询成功: EY376 2026-02-22 -> 已到达
+2026-05-06 13:04:28,185 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 13:04:28,201 INFO forceid=a0nC800000JI3FuIAL stage=fd_hardcheck attempt=0 [1/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 13:04:28,204 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 13:04:28,222 INFO forceid=a0nC800000JI3FuIAL stage=fd_audit attempt=0 [1/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 13:04:33,052 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 13:04:34,508 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 推送前端成功: a0nC800000JI3FuIAL
+2026-05-06 13:04:36,441 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 数据库同步成功: a0nC800000JI3FuIAL
+2026-05-06 13:04:38,386 INFO forceid=a0nC800000IWp9wIAD stage=start attempt=0 [2/2] 开始审核 航班延误-案件号【000006775405】
+2026-05-06 13:04:38,386 INFO forceid=a0nC800000IWp9wIAD stage=fd_vision_extract attempt=0 [2/2] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 13:04:38,387 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:05:18,674 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 13:05:56,319 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 13:05:56,319 INFO forceid=a0nC800000IWp9wIAD stage=fd_parse attempt=0 [2/2] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 13:06:17,185 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG45 NRT）: -> 已到达 [NRT->ICN] route_match=True
+2026-05-06 13:06:17,186 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG46 ICN）: -> 已到达 [ICN->NRT] route_match=False
+2026-05-06 13:06:17,191 INFO forceid=a0nC800000IWp9wIAD stage=fd_hardcheck attempt=0 [2/2] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 13:06:17,193 INFO forceid=a0nC800000IWp9wIAD stage=fd_audit attempt=0 [2/2] 航班延误-阶段2: 理赔判定...
+2026-05-06 13:06:24,146 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 推送前端成功: a0nC800000IWp9wIAD
+2026-05-06 13:06:25,987 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 数据库同步成功: a0nC800000IWp9wIAD
+2026-05-06 13:08:53,450 INFO forceid=a0nC800000IKcLLIA1 stage=start attempt=0 [1/87] 开始审核 行李延误-案件号【000006665815】
+2026-05-06 13:08:53,451 INFO forceid=a0nC800000IKcLLIA1 stage=baggage_delay_start attempt=0 [1/87] 行李延误审核开始
+2026-05-06 13:08:53,451 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:09:35,127 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/5, attempt 1/3)
+2026-05-06 13:10:27,900 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/5, attempt 1/3)
+2026-05-06 13:11:58,331 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/5, attempt 1/3)
+2026-05-06 13:13:49,944 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/5, attempt 1/3)
+2026-05-06 13:14:35,147 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 5/5, attempt 1/3)
+2026-05-06 13:14:56,519 INFO forceid=a0nC800000IKcLLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 43 份附件（5 批），返回 37 个字段
+2026-05-06 13:14:56,520 INFO forceid=a0nC800000IKcLLIA1 stage=baggage_delay_vision attempt=0 [1/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=true
+2026-05-06 13:15:25,476 INFO forceid=a0nC800000IKcLLIA1 stage=review attempt=0 推送前端成功: a0nC800000IKcLLIA1
+2026-05-06 13:15:26,195 INFO forceid=a0nC800000IKcLLIA1 stage=review attempt=0 数据库同步成功: a0nC800000IKcLLIA1
+2026-05-06 13:15:26,853 INFO forceid=a0nC800000IPZUrIAP stage=start attempt=0 [2/87] 开始审核 行李延误-案件号【000006752954】
+2026-05-06 13:15:26,853 INFO forceid=a0nC800000IPZUrIAP stage=baggage_delay_start attempt=0 [2/87] 行李延误审核开始
+2026-05-06 13:15:26,853 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:16:28,038 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:17:12,928 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:17:25,142 INFO forceid=a0nC800000IPZUrIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 37 个字段
+2026-05-06 13:17:25,143 INFO forceid=a0nC800000IPZUrIAP stage=baggage_delay_vision attempt=0 [2/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 13:17:34,866 INFO forceid=a0nC800000IPZUrIAP stage=review attempt=0 推送前端成功: a0nC800000IPZUrIAP
+2026-05-06 13:17:35,666 INFO forceid=a0nC800000IPZUrIAP stage=review attempt=0 数据库同步成功: a0nC800000IPZUrIAP
+2026-05-06 13:17:36,014 INFO forceid=a0nC800000IQUEfIAP stage=start attempt=0 [3/87] 开始审核 行李延误-案件号【000006616112】
+2026-05-06 13:17:36,014 INFO forceid=a0nC800000IQUEfIAP stage=baggage_delay_start attempt=0 [3/87] 行李延误审核开始
+2026-05-06 13:17:36,014 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:18:10,822 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 13:19:19,061 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 13:20:45,752 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 13:21:47,887 INFO forceid=a0nC800000IQUEfIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 26 份附件（3 批），返回 37 个字段
+2026-05-06 13:21:47,889 INFO forceid=a0nC800000IQUEfIAP stage=baggage_delay_vision attempt=0 [3/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 13:22:13,713 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 13:22:13,714 INFO forceid=- stage=- attempt=0 使用Mock数据: SK6303 2026-02-27
+2026-05-06 13:22:27,981 INFO forceid=a0nC800000IQUEfIAP stage=review attempt=0 推送前端成功: a0nC800000IQUEfIAP
+2026-05-06 13:22:28,582 INFO forceid=a0nC800000IQUEfIAP stage=review attempt=0 数据库同步成功: a0nC800000IQUEfIAP
+2026-05-06 13:22:28,820 INFO forceid=a0nC800000IRuwcIAD stage=start attempt=0 [4/87] 开始审核 行李延误-案件号【000006583516】
+2026-05-06 13:22:28,821 INFO forceid=a0nC800000IRuwcIAD stage=baggage_delay_start attempt=0 [4/87] 行李延误审核开始
+2026-05-06 13:22:28,821 INFO forceid=a0nC800000IRuwcIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:23:04,985 INFO forceid=a0nC800000IRuwcIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:23:55,529 INFO forceid=a0nC800000IRuwcIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:24:15,451 INFO forceid=a0nC800000IRuwcIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 15 份附件（2 批），返回 37 个字段
+2026-05-06 13:24:15,451 INFO forceid=a0nC800000IRuwcIAD stage=baggage_delay_vision attempt=0 [4/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 13:24:40,138 INFO forceid=a0nC800000IRuwcIAD stage=review attempt=0 推送前端成功: a0nC800000IRuwcIAD
+2026-05-06 13:24:40,715 INFO forceid=a0nC800000IRuwcIAD stage=review attempt=0 数据库同步成功: a0nC800000IRuwcIAD
+2026-05-06 13:24:41,147 INFO forceid=a0nC800000IVGPVIA5 stage=start attempt=0 [5/87] 开始审核 行李延误-案件号【000006659496】
+2026-05-06 13:24:41,147 INFO forceid=a0nC800000IVGPVIA5 stage=baggage_delay_start attempt=0 [5/87] 行李延误审核开始
+2026-05-06 13:24:41,148 INFO forceid=a0nC800000IVGPVIA5 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:25:11,317 INFO forceid=a0nC800000IVGPVIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:26:16,048 INFO forceid=a0nC800000IVGPVIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:26:45,372 INFO forceid=a0nC800000IVGPVIA5 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 37 个字段
+2026-05-06 13:26:45,373 INFO forceid=a0nC800000IVGPVIA5 stage=baggage_delay_vision attempt=0 [5/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 13:27:20,385 INFO forceid=a0nC800000IVGPVIA5 stage=review attempt=0 推送前端成功: a0nC800000IVGPVIA5
+2026-05-06 13:27:21,109 INFO forceid=a0nC800000IVGPVIA5 stage=review attempt=0 数据库同步成功: a0nC800000IVGPVIA5
+2026-05-06 13:27:21,408 INFO forceid=a0nC800000IWCN5IAP stage=start attempt=0 [6/87] 开始审核 行李延误-案件号【000006585870】
+2026-05-06 13:27:21,409 INFO forceid=a0nC800000IWCN5IAP stage=baggage_delay_start attempt=0 [6/87] 行李延误审核开始
+2026-05-06 13:27:21,409 INFO forceid=a0nC800000IWCN5IAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:27:57,814 INFO forceid=a0nC800000IWCN5IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 13:28:57,657 INFO forceid=a0nC800000IWCN5IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 13:30:05,378 INFO forceid=a0nC800000IWCN5IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 13:30:32,364 INFO forceid=a0nC800000IWCN5IAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 28 份附件（3 批），返回 37 个字段
+2026-05-06 13:30:32,364 INFO forceid=a0nC800000IWCN5IAP stage=baggage_delay_vision attempt=0 [6/87] 视觉识别完成: has_boarding=True has_delay_proof=true has_receipt_proof=true
+2026-05-06 13:30:52,703 INFO forceid=a0nC800000IWCN5IAP stage=review attempt=0 推送前端成功: a0nC800000IWCN5IAP
+2026-05-06 13:30:53,167 INFO forceid=a0nC800000IWCN5IAP stage=review attempt=0 数据库同步成功: a0nC800000IWCN5IAP
+2026-05-06 13:30:53,543 INFO forceid=a0nC800000IWPTxIAP stage=start attempt=0 [7/87] 开始审核 行李延误-案件号【000006728279】
+2026-05-06 13:30:53,543 INFO forceid=a0nC800000IWPTxIAP stage=baggage_delay_start attempt=0 [7/87] 行李延误审核开始
+2026-05-06 13:30:53,543 INFO forceid=a0nC800000IWPTxIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:31:32,427 INFO forceid=a0nC800000IWPTxIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:33:08,090 INFO forceid=a0nC800000IWPTxIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:33:38,002 INFO forceid=a0nC800000IWPTxIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 19 份附件（2 批），返回 37 个字段
+2026-05-06 13:33:38,003 INFO forceid=a0nC800000IWPTxIAP stage=baggage_delay_vision attempt=0 [7/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 13:33:53,468 INFO forceid=a0nC800000IWPTxIAP stage=review attempt=0 推送前端成功: a0nC800000IWPTxIAP
+2026-05-06 13:33:54,146 INFO forceid=a0nC800000IWPTxIAP stage=review attempt=0 数据库同步成功: a0nC800000IWPTxIAP
+2026-05-06 13:33:54,430 INFO forceid=a0nC800000Ik6ODIAZ stage=start attempt=0 [8/87] 开始审核 行李延误-案件号【000006643854】
+2026-05-06 13:33:54,430 INFO forceid=a0nC800000Ik6ODIAZ stage=baggage_delay_start attempt=0 [8/87] 行李延误审核开始
+2026-05-06 13:33:54,431 INFO forceid=a0nC800000Ik6ODIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:34:25,821 INFO forceid=a0nC800000Ik6ODIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 13:34:56,947 INFO forceid=a0nC800000Ik6ODIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 37 个字段
+2026-05-06 13:34:56,948 INFO forceid=a0nC800000Ik6ODIAZ stage=baggage_delay_vision attempt=0 [8/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 13:35:14,709 INFO forceid=a0nC800000Ik6ODIAZ stage=review attempt=0 推送前端成功: a0nC800000Ik6ODIAZ
+2026-05-06 13:35:15,252 INFO forceid=a0nC800000Ik6ODIAZ stage=review attempt=0 数据库同步成功: a0nC800000Ik6ODIAZ
+2026-05-06 13:35:15,433 INFO forceid=a0nC800000IvVMTIA3 stage=start attempt=0 [9/87] 开始审核 行李延误-案件号【000006472145】
+2026-05-06 13:35:15,435 INFO forceid=a0nC800000IvVMTIA3 stage=baggage_delay_start attempt=0 [9/87] 行李延误审核开始
+2026-05-06 13:35:15,435 INFO forceid=a0nC800000IvVMTIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:36:32,099 INFO forceid=a0nC800000IvVMTIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 13:37:02,040 INFO forceid=a0nC800000IvVMTIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 8 份附件（1 批），返回 37 个字段
+2026-05-06 13:37:02,041 INFO forceid=a0nC800000IvVMTIA3 stage=baggage_delay_vision attempt=0 [9/87] 视觉识别完成: has_boarding=false has_delay_proof=true has_receipt_proof=true
+2026-05-06 13:37:18,632 INFO forceid=a0nC800000IvVMTIA3 stage=review attempt=0 推送前端成功: a0nC800000IvVMTIA3
+2026-05-06 13:37:19,066 INFO forceid=a0nC800000IvVMTIA3 stage=review attempt=0 数据库同步成功: a0nC800000IvVMTIA3
+2026-05-06 13:37:19,431 INFO forceid=a0nC800000IzfLeIAJ stage=start attempt=0 [10/87] 开始审核 行李延误-案件号【000006668117】
+2026-05-06 13:37:19,431 INFO forceid=a0nC800000IzfLeIAJ stage=baggage_delay_start attempt=0 [10/87] 行李延误审核开始
+2026-05-06 13:37:19,431 INFO forceid=a0nC800000IzfLeIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:38:24,373 INFO forceid=a0nC800000IzfLeIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 13:40:20,216 INFO forceid=a0nC800000IzfLeIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 13:41:05,351 INFO forceid=a0nC800000IzfLeIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 13:41:18,738 INFO forceid=a0nC800000IzfLeIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 21 份附件（3 批），返回 37 个字段
+2026-05-06 13:41:18,738 INFO forceid=a0nC800000IzfLeIAJ stage=baggage_delay_vision attempt=0 [10/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 13:41:47,470 INFO forceid=a0nC800000IzfLeIAJ stage=review attempt=0 推送前端成功: a0nC800000IzfLeIAJ
+2026-05-06 13:41:48,067 INFO forceid=a0nC800000IzfLeIAJ stage=review attempt=0 数据库同步成功: a0nC800000IzfLeIAJ
+2026-05-06 13:41:48,278 INFO forceid=a0nC800000J1iVZIAZ stage=start attempt=0 [11/87] 开始审核 行李延误-案件号【000006472152】
+2026-05-06 13:41:48,278 INFO forceid=a0nC800000J1iVZIAZ stage=baggage_delay_start attempt=0 [11/87] 行李延误审核开始
+2026-05-06 13:41:48,279 INFO forceid=a0nC800000J1iVZIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:42:46,515 INFO forceid=a0nC800000J1iVZIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 13:43:10,430 INFO forceid=a0nC800000J1iVZIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 37 个字段
+2026-05-06 13:43:10,431 INFO forceid=a0nC800000J1iVZIAZ stage=baggage_delay_vision attempt=0 [11/87] 视觉识别完成: has_boarding=false has_delay_proof=true has_receipt_proof=false
+2026-05-06 13:43:33,592 INFO forceid=a0nC800000J1iVZIAZ stage=review attempt=0 推送前端成功: a0nC800000J1iVZIAZ
+2026-05-06 13:43:34,186 INFO forceid=a0nC800000J1iVZIAZ stage=review attempt=0 数据库同步成功: a0nC800000J1iVZIAZ
+2026-05-06 13:43:34,415 INFO forceid=a0nC800000JFFOqIAP stage=start attempt=0 [12/87] 开始审核 行李延误-案件号【000006568468】
+2026-05-06 13:43:34,415 INFO forceid=a0nC800000JFFOqIAP stage=baggage_delay_start attempt=0 [12/87] 行李延误审核开始
+2026-05-06 13:43:34,416 INFO forceid=a0nC800000JFFOqIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:44:02,817 INFO forceid=a0nC800000JFFOqIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 13:45:24,147 INFO forceid=a0nC800000JFFOqIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 13:46:05,727 INFO forceid=a0nC800000JFFOqIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 13:46:32,556 INFO forceid=a0nC800000JFFOqIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 24 份附件（3 批），返回 37 个字段
+2026-05-06 13:46:32,557 INFO forceid=a0nC800000JFFOqIAP stage=baggage_delay_vision attempt=0 [12/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 13:46:58,157 INFO forceid=a0nC800000JFFOqIAP stage=review attempt=0 推送前端成功: a0nC800000JFFOqIAP
+2026-05-06 13:46:58,767 INFO forceid=a0nC800000JFFOqIAP stage=review attempt=0 数据库同步成功: a0nC800000JFFOqIAP
+2026-05-06 13:46:59,048 INFO forceid=a0nC800000JLlaUIAT stage=start attempt=0 [13/87] 开始审核 行李延误-案件号【000006588061】
+2026-05-06 13:46:59,048 INFO forceid=a0nC800000JLlaUIAT stage=baggage_delay_start attempt=0 [13/87] 行李延误审核开始
+2026-05-06 13:46:59,048 INFO forceid=a0nC800000JLlaUIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:47:34,627 INFO forceid=a0nC800000JLlaUIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:49:18,316 INFO forceid=a0nC800000JLlaUIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:49:43,031 INFO forceid=a0nC800000JLlaUIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 37 个字段
+2026-05-06 13:49:43,031 INFO forceid=a0nC800000JLlaUIAT stage=baggage_delay_vision attempt=0 [13/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 13:49:58,327 INFO forceid=a0nC800000JLlaUIAT stage=review attempt=0 推送前端成功: a0nC800000JLlaUIAT
+2026-05-06 13:49:58,903 INFO forceid=a0nC800000JLlaUIAT stage=review attempt=0 数据库同步成功: a0nC800000JLlaUIAT
+2026-05-06 13:49:59,194 INFO forceid=a0nC800000JMY05IAH stage=start attempt=0 [14/87] 开始审核 行李延误-案件号【000006636278】
+2026-05-06 13:49:59,195 INFO forceid=a0nC800000JMY05IAH stage=baggage_delay_start attempt=0 [14/87] 行李延误审核开始
+2026-05-06 13:49:59,195 INFO forceid=a0nC800000JMY05IAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:50:39,915 INFO forceid=a0nC800000JMY05IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 13:51:37,716 INFO forceid=a0nC800000JMY05IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 13:53:01,224 INFO forceid=a0nC800000JMY05IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 13:53:23,161 INFO forceid=a0nC800000JMY05IAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 30 份附件（3 批），返回 37 个字段
+2026-05-06 13:53:23,162 INFO forceid=a0nC800000JMY05IAH stage=baggage_delay_vision attempt=0 [14/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=false
+2026-05-06 13:53:41,953 INFO forceid=a0nC800000JMY05IAH stage=review attempt=0 推送前端成功: a0nC800000JMY05IAH
+2026-05-06 13:53:42,601 INFO forceid=a0nC800000JMY05IAH stage=review attempt=0 数据库同步成功: a0nC800000JMY05IAH
+2026-05-06 13:53:42,896 INFO forceid=a0nC800000JUIXeIAP stage=start attempt=0 [15/87] 开始审核 行李延误-案件号【000006585929】
+2026-05-06 13:53:42,896 INFO forceid=a0nC800000JUIXeIAP stage=baggage_delay_start attempt=0 [15/87] 行李延误审核开始
+2026-05-06 13:53:42,897 INFO forceid=a0nC800000JUIXeIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:54:18,841 INFO forceid=a0nC800000JUIXeIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:55:08,549 INFO forceid=a0nC800000JUIXeIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:55:30,469 INFO forceid=a0nC800000JUIXeIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 37 个字段
+2026-05-06 13:55:30,470 INFO forceid=a0nC800000JUIXeIAP stage=baggage_delay_vision attempt=0 [15/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=false
+2026-05-06 13:55:48,661 INFO forceid=a0nC800000JUIXeIAP stage=review attempt=0 推送前端成功: a0nC800000JUIXeIAP
+2026-05-06 13:55:49,125 INFO forceid=a0nC800000JUIXeIAP stage=review attempt=0 数据库同步成功: a0nC800000JUIXeIAP
+2026-05-06 13:55:49,467 INFO forceid=a0nC800000JZWF1IAP stage=start attempt=0 [16/87] 开始审核 行李延误-案件号【000006812008】
+2026-05-06 13:55:49,467 INFO forceid=a0nC800000JZWF1IAP stage=baggage_delay_start attempt=0 [16/87] 行李延误审核开始
+2026-05-06 13:55:49,467 INFO forceid=a0nC800000JZWF1IAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 13:56:24,745 INFO forceid=a0nC800000JZWF1IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 13:57:56,241 INFO forceid=a0nC800000JZWF1IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 13:58:16,596 INFO forceid=a0nC800000JZWF1IAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 19 份附件（2 批），返回 37 个字段
+2026-05-06 13:58:16,597 INFO forceid=a0nC800000JZWF1IAP stage=baggage_delay_vision attempt=0 [16/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-05-06 13:58:37,700 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=3, 航班号格式不正确
+2026-05-06 13:58:37,701 INFO forceid=- stage=- attempt=0 使用Mock数据: TBS10091 2026-03-09
+2026-05-06 13:58:45,459 INFO forceid=a0nC800000JZWF1IAP stage=review attempt=0 推送前端成功: a0nC800000JZWF1IAP
+2026-05-06 13:58:46,303 INFO forceid=a0nC800000JZWF1IAP stage=review attempt=0 数据库同步成功: a0nC800000JZWF1IAP
+2026-05-06 13:58:46,604 INFO forceid=a0nC800000JeY4vIAF stage=start attempt=0 [17/87] 开始审核 行李延误-案件号【000006618592】
+2026-05-06 13:58:46,606 INFO forceid=a0nC800000JeY4vIAF stage=baggage_delay_start attempt=0 [17/87] 行李延误审核开始
+2026-05-06 13:58:46,606 INFO forceid=a0nC800000JeY4vIAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:00:08,552 INFO forceid=a0nC800000JeY4vIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:01:42,781 INFO forceid=a0nC800000JeY4vIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:02:14,527 INFO forceid=a0nC800000JeY4vIAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 37 个字段
+2026-05-06 14:02:14,528 INFO forceid=a0nC800000JeY4vIAF stage=baggage_delay_vision attempt=0 [17/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 14:02:45,388 INFO forceid=a0nC800000JeY4vIAF stage=review attempt=0 推送前端成功: a0nC800000JeY4vIAF
+2026-05-06 14:02:46,156 INFO forceid=a0nC800000JeY4vIAF stage=review attempt=0 数据库同步成功: a0nC800000JeY4vIAF
+2026-05-06 14:02:46,453 INFO forceid=a0nC800000KFrYLIA1 stage=start attempt=0 [18/87] 开始审核 行李延误-案件号【000006578883】
+2026-05-06 14:02:46,455 INFO forceid=a0nC800000KFrYLIA1 stage=baggage_delay_start attempt=0 [18/87] 行李延误审核开始
+2026-05-06 14:02:46,456 INFO forceid=a0nC800000KFrYLIA1 stage=bd_duplicate_check attempt=0 [18/87] 重复理赔检测命中: 重复理赔：您本次申请的理赔已在#20260228571做出赔付结论。根据一事不二理原则，本次重复申请不予赔付。
+2026-05-06 14:02:47,642 INFO forceid=a0nC800000KFrYLIA1 stage=review attempt=0 推送前端成功: a0nC800000KFrYLIA1
+2026-05-06 14:02:47,981 WARNING forceid=a0nC800000KFrYLIA1 stage=review attempt=0 数据库同步失败: a0nC800000KFrYLIA1: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1")
+2026-05-06 14:02:48,380 INFO forceid=a0nC800000KOm6QIAT stage=start attempt=0 [19/87] 开始审核 行李延误-案件号【000006788940】
+2026-05-06 14:02:48,381 INFO forceid=a0nC800000KOm6QIAT stage=baggage_delay_start attempt=0 [19/87] 行李延误审核开始
+2026-05-06 14:02:48,381 INFO forceid=a0nC800000KOm6QIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:03:08,321 INFO forceid=a0nC800000KOm6QIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:04:22,186 INFO forceid=a0nC800000KOm6QIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:04:47,365 INFO forceid=a0nC800000KOm6QIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 20 份附件（2 批），返回 37 个字段
+2026-05-06 14:04:47,366 INFO forceid=a0nC800000KOm6QIAT stage=baggage_delay_vision attempt=0 [19/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=false
+2026-05-06 14:05:01,667 INFO forceid=a0nC800000KOm6QIAT stage=review attempt=0 推送前端成功: a0nC800000KOm6QIAT
+2026-05-06 14:05:02,434 INFO forceid=a0nC800000KOm6QIAT stage=review attempt=0 数据库同步成功: a0nC800000KOm6QIAT
+2026-05-06 14:05:03,015 INFO forceid=a0nC800000L1SxSIAV stage=start attempt=0 [20/87] 开始审核 行李延误-案件号【000006825905】
+2026-05-06 14:05:03,015 INFO forceid=a0nC800000L1SxSIAV stage=baggage_delay_start attempt=0 [20/87] 行李延误审核开始
+2026-05-06 14:05:03,015 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:05:38,122 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/4, attempt 1/3)
+2026-05-06 14:06:37,784 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/4, attempt 1/3)
+2026-05-06 14:08:24,180 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/4, attempt 1/3)
+2026-05-06 14:09:22,918 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/4, attempt 1/3)
+2026-05-06 14:09:37,796 INFO forceid=a0nC800000L1SxSIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 34 份附件（4 批），返回 37 个字段
+2026-05-06 14:09:37,796 INFO forceid=a0nC800000L1SxSIAV stage=baggage_delay_vision attempt=0 [20/87] 视觉识别完成: has_boarding=True has_delay_proof=true has_receipt_proof=True
+2026-05-06 14:09:52,509 INFO forceid=a0nC800000L1SxSIAV stage=review attempt=0 推送前端成功: a0nC800000L1SxSIAV
+2026-05-06 14:09:53,343 INFO forceid=a0nC800000L1SxSIAV stage=review attempt=0 数据库同步成功: a0nC800000L1SxSIAV
+2026-05-06 14:09:53,688 INFO forceid=a0nC800000NGCUbIAP stage=start attempt=0 [21/87] 开始审核 行李延误-案件号【000006634042】
+2026-05-06 14:09:53,689 INFO forceid=a0nC800000NGCUbIAP stage=baggage_delay_start attempt=0 [21/87] 行李延误审核开始
+2026-05-06 14:09:53,689 INFO forceid=a0nC800000NGCUbIAP stage=bd_duplicate_check attempt=0 [21/87] 重复理赔检测命中: 重复理赔：您本次申请的理赔已在#32186908做出赔付结论。根据一事不二理原则，本次重复申请不予赔付。
+2026-05-06 14:09:54,421 INFO forceid=a0nC800000NGCUbIAP stage=review attempt=0 推送前端成功: a0nC800000NGCUbIAP
+2026-05-06 14:09:54,937 WARNING forceid=a0nC800000NGCUbIAP stage=review attempt=0 数据库同步失败: a0nC800000NGCUbIAP: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1")
+2026-05-06 14:09:55,259 INFO forceid=a0nC800000IBbl3IAD stage=start attempt=0 [22/87] 开始审核 行李延误-案件号【000006577826】
+2026-05-06 14:09:55,259 INFO forceid=a0nC800000IBbl3IAD stage=baggage_delay_start attempt=0 [22/87] 行李延误审核开始
+2026-05-06 14:09:55,260 INFO forceid=a0nC800000IBbl3IAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:10:59,791 INFO forceid=a0nC800000IBbl3IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:12:11,369 INFO forceid=a0nC800000IBbl3IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:12:32,719 INFO forceid=a0nC800000IBbl3IAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 15 份附件（2 批），返回 37 个字段
+2026-05-06 14:12:32,720 INFO forceid=a0nC800000IBbl3IAD stage=baggage_delay_vision attempt=0 [22/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-05-06 14:12:52,442 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=3, 航班号格式不正确
+2026-05-06 14:12:52,442 INFO forceid=- stage=- attempt=0 使用Mock数据: MU467086 2026-02-15
+2026-05-06 14:12:53,845 INFO forceid=a0nC800000IBbl3IAD stage=review attempt=0 推送前端成功: a0nC800000IBbl3IAD
+2026-05-06 14:12:54,295 INFO forceid=a0nC800000IBbl3IAD stage=review attempt=0 数据库同步成功: a0nC800000IBbl3IAD
+2026-05-06 14:12:54,666 INFO forceid=a0nC800000IBkDFIA1 stage=start attempt=0 [23/87] 开始审核 行李延误-案件号【000006686533】
+2026-05-06 14:12:54,667 INFO forceid=a0nC800000IBkDFIA1 stage=baggage_delay_start attempt=0 [23/87] 行李延误审核开始
+2026-05-06 14:12:54,667 INFO forceid=a0nC800000IBkDFIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:13:21,634 INFO forceid=a0nC800000IBkDFIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 14:14:10,461 INFO forceid=a0nC800000IBkDFIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 14:15:31,497 INFO forceid=a0nC800000IBkDFIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 14:15:53,872 INFO forceid=a0nC800000IBkDFIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 29 份附件（3 批），返回 37 个字段
+2026-05-06 14:15:53,872 INFO forceid=a0nC800000IBkDFIA1 stage=baggage_delay_vision attempt=0 [23/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=False
+2026-05-06 14:16:17,915 INFO forceid=a0nC800000IBkDFIA1 stage=review attempt=0 推送前端成功: a0nC800000IBkDFIA1
+2026-05-06 14:16:18,679 INFO forceid=a0nC800000IBkDFIA1 stage=review attempt=0 数据库同步成功: a0nC800000IBkDFIA1
+2026-05-06 14:16:19,041 INFO forceid=a0nC800000ID4ufIAD stage=start attempt=0 [24/87] 开始审核 行李延误-案件号【000006647167】
+2026-05-06 14:16:19,042 INFO forceid=a0nC800000ID4ufIAD stage=baggage_delay_start attempt=0 [24/87] 行李延误审核开始
+2026-05-06 14:16:19,043 INFO forceid=a0nC800000ID4ufIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:16:49,322 INFO forceid=a0nC800000ID4ufIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:17:49,642 INFO forceid=a0nC800000ID4ufIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:18:21,627 INFO forceid=a0nC800000ID4ufIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 37 个字段
+2026-05-06 14:18:21,627 INFO forceid=a0nC800000ID4ufIAD stage=baggage_delay_vision attempt=0 [24/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=true
+2026-05-06 14:18:49,972 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 14:18:49,973 INFO forceid=- stage=- attempt=0 使用Mock数据: SK777 2026-02-21
+2026-05-06 14:18:51,830 INFO forceid=a0nC800000ID4ufIAD stage=review attempt=0 推送前端成功: a0nC800000ID4ufIAD
+2026-05-06 14:18:52,405 INFO forceid=a0nC800000ID4ufIAD stage=review attempt=0 数据库同步成功: a0nC800000ID4ufIAD
+2026-05-06 14:18:52,818 INFO forceid=a0nC800000ID52jIAD stage=start attempt=0 [25/87] 开始审核 行李延误-案件号【000006701281】
+2026-05-06 14:18:52,819 INFO forceid=a0nC800000ID52jIAD stage=baggage_delay_start attempt=0 [25/87] 行李延误审核开始
+2026-05-06 14:18:52,819 INFO forceid=a0nC800000ID52jIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:19:36,214 INFO forceid=a0nC800000ID52jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:20:30,498 INFO forceid=a0nC800000ID52jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:20:55,023 INFO forceid=a0nC800000ID52jIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 37 个字段
+2026-05-06 14:20:55,023 INFO forceid=a0nC800000ID52jIAD stage=baggage_delay_vision attempt=0 [25/87] 视觉识别完成: has_boarding=true has_delay_proof=true has_receipt_proof=false
+2026-05-06 14:21:09,942 INFO forceid=a0nC800000ID52jIAD stage=review attempt=0 推送前端成功: a0nC800000ID52jIAD
+2026-05-06 14:21:10,511 INFO forceid=a0nC800000ID52jIAD stage=review attempt=0 数据库同步成功: a0nC800000ID52jIAD
+2026-05-06 14:21:10,987 INFO forceid=a0nC800000IF4NXIA1 stage=start attempt=0 [26/87] 开始审核 行李延误-案件号【000006746169】
+2026-05-06 14:21:10,987 INFO forceid=a0nC800000IF4NXIA1 stage=baggage_delay_start attempt=0 [26/87] 行李延误审核开始
+2026-05-06 14:21:10,987 INFO forceid=a0nC800000IF4NXIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:22:10,571 INFO forceid=a0nC800000IF4NXIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:23:25,693 INFO forceid=a0nC800000IF4NXIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:23:49,018 INFO forceid=a0nC800000IF4NXIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 37 个字段
+2026-05-06 14:23:49,019 INFO forceid=a0nC800000IF4NXIA1 stage=baggage_delay_vision attempt=0 [26/87] 视觉识别完成: has_boarding=true has_delay_proof=True has_receipt_proof=True
+2026-05-06 14:24:05,119 INFO forceid=a0nC800000IF4NXIA1 stage=review attempt=0 推送前端成功: a0nC800000IF4NXIA1
+2026-05-06 14:24:05,858 INFO forceid=a0nC800000IF4NXIA1 stage=review attempt=0 数据库同步成功: a0nC800000IF4NXIA1
+2026-05-06 14:24:06,100 INFO forceid=a0nC800000IGDVCIA5 stage=start attempt=0 [27/87] 开始审核 行李延误-案件号【000006542007】
+2026-05-06 14:24:06,100 INFO forceid=a0nC800000IGDVCIA5 stage=baggage_delay_start attempt=0 [27/87] 行李延误审核开始
+2026-05-06 14:24:06,100 INFO forceid=a0nC800000IGDVCIA5 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:24:33,782 INFO forceid=a0nC800000IGDVCIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:25:33,992 INFO forceid=a0nC800000IGDVCIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:25:57,272 INFO forceid=a0nC800000IGDVCIA5 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 19 份附件（2 批），返回 37 个字段
+2026-05-06 14:25:57,273 INFO forceid=a0nC800000IGDVCIA5 stage=baggage_delay_vision attempt=0 [27/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 14:26:14,813 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 14:26:14,814 INFO forceid=- stage=- attempt=0 使用Mock数据: YK1855 2026-02-09
+2026-05-06 14:26:22,677 INFO forceid=a0nC800000IGDVCIA5 stage=review attempt=0 推送前端成功: a0nC800000IGDVCIA5
+2026-05-06 14:26:24,900 INFO forceid=a0nC800000IGDVCIA5 stage=review attempt=0 数据库同步成功: a0nC800000IGDVCIA5
+2026-05-06 14:26:25,630 INFO forceid=a0nC800000IGyc9IAD stage=start attempt=0 [28/87] 开始审核 行李延误-案件号【000006759024】
+2026-05-06 14:26:25,630 INFO forceid=a0nC800000IGyc9IAD stage=baggage_delay_start attempt=0 [28/87] 行李延误审核开始
+2026-05-06 14:26:25,631 INFO forceid=a0nC800000IGyc9IAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:26:53,617 INFO forceid=a0nC800000IGyc9IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:27:48,439 INFO forceid=a0nC800000IGyc9IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:28:07,451 INFO forceid=a0nC800000IGyc9IAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 37 个字段
+2026-05-06 14:28:07,452 INFO forceid=a0nC800000IGyc9IAD stage=baggage_delay_vision attempt=0 [28/87] 视觉识别完成: has_boarding=True has_delay_proof=True has_receipt_proof=True
+2026-05-06 14:28:31,478 INFO forceid=a0nC800000IGyc9IAD stage=review attempt=0 推送前端成功: a0nC800000IGyc9IAD
+2026-05-06 14:28:32,332 INFO forceid=a0nC800000IGyc9IAD stage=review attempt=0 数据库同步成功: a0nC800000IGyc9IAD
+2026-05-06 14:28:32,598 INFO forceid=a0nC800000IIkV3IAL stage=start attempt=0 [29/87] 开始审核 行李延误-案件号【000006604082】
+2026-05-06 14:28:32,598 INFO forceid=a0nC800000IIkV3IAL stage=baggage_delay_start attempt=0 [29/87] 行李延误审核开始
+2026-05-06 14:28:32,599 INFO forceid=a0nC800000IIkV3IAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:29:06,314 INFO forceid=a0nC800000IIkV3IAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:30:01,068 INFO forceid=a0nC800000IIkV3IAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:30:26,006 INFO forceid=a0nC800000IIkV3IAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 37 个字段
+2026-05-06 14:30:26,006 INFO forceid=a0nC800000IIkV3IAL stage=baggage_delay_vision attempt=0 [29/87] 视觉识别完成: has_boarding=true has_delay_proof=True has_receipt_proof=true
+2026-05-06 14:30:42,605 INFO forceid=a0nC800000IIkV3IAL stage=review attempt=0 推送前端成功: a0nC800000IIkV3IAL
+2026-05-06 14:30:43,126 INFO forceid=a0nC800000IIkV3IAL stage=review attempt=0 数据库同步成功: a0nC800000IIkV3IAL
+2026-05-06 14:30:44,703 INFO forceid=a0nC800000JMawLIAT stage=start attempt=0 [30/87] 开始审核 航班延误-案件号【000006765923】
+2026-05-06 14:30:44,704 INFO forceid=a0nC800000JMawLIAT stage=fd_vision_extract attempt=0 [30/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:30:44,704 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:31:39,587 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 14:32:55,934 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 14:34:03,200 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 14:34:35,990 INFO forceid=a0nC800000JMawLIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 27 份附件（3 批），返回 15 个字段
+2026-05-06 14:34:35,992 INFO forceid=a0nC800000JMawLIAT stage=fd_parse attempt=0 [30/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:35:02,275 INFO forceid=a0nC800000JMawLIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JMawLIAT] 飞常准查询成功（候选=VA1118 PPP）: -> 取消 [PPP->BNE] route_match=True
+2026-05-06 14:35:02,276 INFO forceid=a0nC800000JMawLIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JMawLIAT] 飞常准查询成功（候选=VA610 MKY）: -> 已到达 [MKY->BNE] route_match=False
+2026-05-06 14:35:02,277 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 14:35:02,291 INFO forceid=a0nC800000JMawLIAT stage=fd_hardcheck attempt=0 [30/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:35:02,291 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 14:35:02,294 INFO forceid=a0nC800000JMawLIAT stage=fd_audit attempt=0 [30/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:35:11,803 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PPP
+2026-05-06 14:35:12,965 INFO forceid=a0nC800000JMawLIAT stage=review attempt=0 推送前端成功: a0nC800000JMawLIAT
+2026-05-06 14:35:14,864 INFO forceid=a0nC800000JMawLIAT stage=review attempt=0 数据库同步成功: a0nC800000JMawLIAT
+2026-05-06 14:35:16,545 INFO forceid=a0nC800000IWp9wIAD stage=start attempt=0 [31/87] 开始审核 航班延误-案件号【000006775405】
+2026-05-06 14:35:16,546 INFO forceid=a0nC800000IWp9wIAD stage=fd_vision_extract attempt=0 [31/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:35:16,546 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:35:48,384 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 14:36:18,090 INFO forceid=a0nC800000IWp9wIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 14:36:18,090 INFO forceid=a0nC800000IWp9wIAD stage=fd_parse attempt=0 [31/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:36:39,472 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG45 NRT）: -> 已到达 [NRT->ICN] route_match=True
+2026-05-06 14:36:39,472 INFO forceid=a0nC800000IWp9wIAD stage=fd_aviation_lookup attempt=0 [a0nC800000IWp9wIAD] 飞常准查询成功（候选=ZG46 ICN）: -> 已到达 [ICN->NRT] route_match=False
+2026-05-06 14:36:39,482 INFO forceid=a0nC800000IWp9wIAD stage=fd_hardcheck attempt=0 [31/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:36:39,487 INFO forceid=a0nC800000IWp9wIAD stage=fd_audit attempt=0 [31/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:36:46,658 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 推送前端成功: a0nC800000IWp9wIAD
+2026-05-06 14:36:47,717 INFO forceid=a0nC800000IWp9wIAD stage=review attempt=0 数据库同步成功: a0nC800000IWp9wIAD
+2026-05-06 14:36:48,297 INFO forceid=a0nC800000J9EbwIAF stage=start attempt=0 [32/87] 开始审核 航班延误-案件号【000006526485】
+2026-05-06 14:36:48,297 INFO forceid=a0nC800000J9EbwIAF stage=fd_vision_extract attempt=0 [32/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:36:48,297 INFO forceid=a0nC800000J9EbwIAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:37:01,802 INFO forceid=a0nC800000J9EbwIAF stage=material_extractor attempt=0 FileList 下载完成: 16/16 个文件
+2026-05-06 14:37:27,248 INFO forceid=a0nC800000J9EbwIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:38:57,366 INFO forceid=a0nC800000J9EbwIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:39:33,033 INFO forceid=a0nC800000J9EbwIAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 15 个字段
+2026-05-06 14:39:33,034 INFO forceid=a0nC800000J9EbwIAF stage=fd_parse attempt=0 [32/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:39:58,181 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 14:39:58,182 INFO forceid=- stage=- attempt=0 使用Mock数据: LH726 2026-02-19
+2026-05-06 14:39:58,248 INFO forceid=a0nC800000J9EbwIAF stage=fd_aviation_lookup attempt=0 [a0nC800000J9EbwIAF] 飞常准候选未返回数据: LH726 MUC, error=航班数据源未配置或不可用
+2026-05-06 14:39:58,248 INFO forceid=a0nC800000J9EbwIAF stage=fd_aviation_lookup attempt=0 [a0nC800000J9EbwIAF] 飞常准查询成功（候选=LH728 MUC）: -> 已到达 [FRA->PVG] route_match=False
+2026-05-06 14:39:58,263 INFO forceid=a0nC800000J9EbwIAF stage=fd_hardcheck attempt=0 [32/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:39:58,269 INFO forceid=a0nC800000J9EbwIAF stage=fd_audit attempt=0 [32/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:40:11,126 INFO forceid=a0nC800000J9EbwIAF stage=review attempt=0 推送前端成功: a0nC800000J9EbwIAF
+2026-05-06 14:40:12,399 INFO forceid=a0nC800000J9EbwIAF stage=review attempt=0 数据库同步成功: a0nC800000J9EbwIAF
+2026-05-06 14:40:14,219 INFO forceid=a0nC800000IsO7sIAF stage=start attempt=0 [33/87] 开始审核 航班延误-案件号【000006768008】
+2026-05-06 14:40:14,220 INFO forceid=a0nC800000IsO7sIAF stage=fd_vision_extract attempt=0 [33/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:40:14,221 INFO forceid=a0nC800000IsO7sIAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:40:19,864 INFO forceid=a0nC800000IsO7sIAF stage=material_extractor attempt=0 FileList 下载完成: 17/17 个文件
+2026-05-06 14:40:52,067 INFO forceid=a0nC800000IsO7sIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:42:16,210 INFO forceid=a0nC800000IsO7sIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:42:51,360 INFO forceid=a0nC800000IsO7sIAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 15 个字段
+2026-05-06 14:42:51,361 INFO forceid=a0nC800000IsO7sIAF stage=fd_parse attempt=0 [33/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:43:13,671 INFO forceid=a0nC800000IsO7sIAF stage=fd_aviation_lookup attempt=0 [a0nC800000IsO7sIAF] 飞常准查询成功（候选=MU592 SVO）: -> 已到达 [SVO->PVG] route_match=False
+2026-05-06 14:43:13,672 INFO forceid=a0nC800000IsO7sIAF stage=fd_aviation_lookup attempt=0 [a0nC800000IsO7sIAF] 飞常准查询成功（候选=MU247 PVG）: -> 已到达 [PVG->SVO] route_match=False
+2026-05-06 14:43:13,678 INFO forceid=a0nC800000IsO7sIAF stage=fd_hardcheck attempt=0 [33/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:43:13,683 INFO forceid=a0nC800000IsO7sIAF stage=fd_audit attempt=0 [33/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:43:25,910 INFO forceid=a0nC800000IsO7sIAF stage=review attempt=0 推送前端成功: a0nC800000IsO7sIAF
+2026-05-06 14:43:27,809 INFO forceid=a0nC800000IsO7sIAF stage=review attempt=0 数据库同步成功: a0nC800000IsO7sIAF
+2026-05-06 14:43:29,481 INFO forceid=a0nC800000IbYy3IAF stage=start attempt=0 [34/87] 开始审核 航班延误-案件号【000006776874】
+2026-05-06 14:43:29,481 INFO forceid=a0nC800000IbYy3IAF stage=fd_vision_extract attempt=0 [34/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:43:29,482 INFO forceid=a0nC800000IbYy3IAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:43:37,886 INFO forceid=a0nC800000IbYy3IAF stage=material_extractor attempt=0 FileList 下载完成: 14/14 个文件
+2026-05-06 14:44:02,229 INFO forceid=a0nC800000IbYy3IAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:45:29,777 INFO forceid=a0nC800000IbYy3IAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:46:07,390 INFO forceid=a0nC800000IbYy3IAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 15 份附件（2 批），返回 15 个字段
+2026-05-06 14:46:07,391 INFO forceid=a0nC800000IbYy3IAF stage=fd_parse attempt=0 [34/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:46:31,233 INFO forceid=a0nC800000IbYy3IAF stage=fd_aviation_lookup attempt=0 [a0nC800000IbYy3IAF] 飞常准查询成功（候选=SV888 HLP）: -> 已到达 [RUH->PKX] route_match=False
+2026-05-06 14:46:31,234 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: HLP
+2026-05-06 14:46:31,235 INFO forceid=a0nC800000IbYy3IAF stage=fd_hardcheck attempt=0 [34/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:46:31,236 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: HLP
+2026-05-06 14:46:31,240 INFO forceid=a0nC800000IbYy3IAF stage=fd_audit attempt=0 [34/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:46:37,163 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: HLP
+2026-05-06 14:46:38,089 INFO forceid=a0nC800000IbYy3IAF stage=review attempt=0 推送前端成功: a0nC800000IbYy3IAF
+2026-05-06 14:46:40,259 INFO forceid=a0nC800000IbYy3IAF stage=review attempt=0 数据库同步成功: a0nC800000IbYy3IAF
+2026-05-06 14:46:41,308 INFO forceid=a0nC800000HOCPdIAP stage=start attempt=0 [35/87] 开始审核 航班延误-案件号【000006570461】
+2026-05-06 14:46:41,309 INFO forceid=a0nC800000HOCPdIAP stage=fd_vision_extract attempt=0 [35/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:46:41,309 INFO forceid=a0nC800000HOCPdIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:46:42,412 INFO forceid=a0nC800000HOCPdIAP stage=material_extractor attempt=0 FileList 下载完成: 6/6 个文件
+2026-05-06 14:47:06,842 INFO forceid=a0nC800000HOCPdIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 14:47:37,249 INFO forceid=a0nC800000HOCPdIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 7 份附件（1 批），返回 15 个字段
+2026-05-06 14:47:37,249 INFO forceid=a0nC800000HOCPdIAP stage=fd_parse attempt=0 [35/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:47:55,201 INFO forceid=a0nC800000HOCPdIAP stage=fd_aviation_lookup attempt=0 [a0nC800000HOCPdIAP] 飞常准查询成功（候选=MU760 PVG）: -> 已到达 [KTI->PVG] route_match=False
+2026-05-06 14:47:55,201 INFO forceid=a0nC800000HOCPdIAP stage=fd_aviation_lookup attempt=0 [a0nC800000HOCPdIAP] 飞常准查询成功（候选=CA1234 SVO）: -> 已到达 [YIN->PEK] route_match=False
+2026-05-06 14:47:55,204 INFO forceid=a0nC800000HOCPdIAP stage=fd_hardcheck attempt=0 [35/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:47:55,206 INFO forceid=a0nC800000HOCPdIAP stage=fd_audit attempt=0 [35/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:48:02,172 INFO forceid=a0nC800000HOCPdIAP stage=review attempt=0 推送前端成功: a0nC800000HOCPdIAP
+2026-05-06 14:48:03,284 INFO forceid=a0nC800000HOCPdIAP stage=review attempt=0 数据库同步成功: a0nC800000HOCPdIAP
+2026-05-06 14:48:04,408 INFO forceid=a0nC800000ICShPIAX stage=start attempt=0 [36/87] 开始审核 航班延误-案件号【000006659507】
+2026-05-06 14:48:04,409 INFO forceid=a0nC800000ICShPIAX stage=fd_vision_extract attempt=0 [36/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:48:04,409 INFO forceid=a0nC800000ICShPIAX stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:48:12,414 INFO forceid=a0nC800000ICShPIAX stage=material_extractor attempt=0 FileList 下载完成: 16/16 个文件
+2026-05-06 14:48:57,585 INFO forceid=a0nC800000ICShPIAX stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:50:42,799 INFO forceid=a0nC800000ICShPIAX stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:51:41,078 INFO forceid=a0nC800000ICShPIAX stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 15 个字段
+2026-05-06 14:51:41,078 INFO forceid=a0nC800000ICShPIAX stage=fd_parse attempt=0 [36/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:52:04,946 INFO forceid=a0nC800000ICShPIAX stage=fd_aviation_lookup attempt=0 [a0nC800000ICShPIAX] 飞常准查询成功（候选=SK4104 OSL）: -> 已到达 [OSL->BOO] route_match=False
+2026-05-06 14:52:04,947 INFO forceid=a0nC800000ICShPIAX stage=fd_aviation_lookup attempt=0 [a0nC800000ICShPIAX] 飞常准查询成功（候选=SK1794 LYS）: -> 已到达 [LYS->CPH] route_match=False
+2026-05-06 14:52:05,435 INFO forceid=a0nC800000ICShPIAX stage=fd_alt_aviation_lookup attempt=0 [a0nC800000ICShPIAX] 接驳航班飞常准查询成功: WF0826 2026-02-07 -> 已到达
+2026-05-06 14:52:05,435 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYS
+2026-05-06 14:52:05,437 INFO forceid=a0nC800000ICShPIAX stage=fd_hardcheck attempt=0 [36/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:52:05,437 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYS
+2026-05-06 14:52:05,439 INFO forceid=a0nC800000ICShPIAX stage=fd_audit attempt=0 [36/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:52:11,439 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYS
+2026-05-06 14:52:12,498 INFO forceid=a0nC800000ICShPIAX stage=review attempt=0 推送前端成功: a0nC800000ICShPIAX
+2026-05-06 14:52:13,461 INFO forceid=a0nC800000ICShPIAX stage=review attempt=0 数据库同步成功: a0nC800000ICShPIAX
+2026-05-06 14:52:14,310 INFO forceid=a0nC800000JxF3KIAV stage=start attempt=0 [37/87] 开始审核 航班延误-案件号【000006782387】
+2026-05-06 14:52:14,311 INFO forceid=a0nC800000JxF3KIAV stage=fd_vision_extract attempt=0 [37/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:52:14,311 INFO forceid=a0nC800000JxF3KIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:52:21,032 INFO forceid=a0nC800000JxF3KIAV stage=material_extractor attempt=0 FileList 下载完成: 8/8 个文件
+2026-05-06 14:53:12,307 INFO forceid=a0nC800000JxF3KIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 14:53:37,955 INFO forceid=a0nC800000JxF3KIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 14:53:37,956 INFO forceid=a0nC800000JxF3KIAV stage=fd_parse attempt=0 [37/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:53:58,503 INFO forceid=a0nC800000JxF3KIAV stage=fd_aviation_lookup attempt=0 [a0nC800000JxF3KIAV] 飞常准查询成功（候选=MU2052 MCT）: -> 取消 [MCT->PKX] route_match=False
+2026-05-06 14:53:58,510 INFO forceid=a0nC800000JxF3KIAV stage=fd_hardcheck attempt=0 [37/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:53:58,513 INFO forceid=a0nC800000JxF3KIAV stage=fd_audit attempt=0 [37/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:54:05,901 INFO forceid=a0nC800000JxF3KIAV stage=review attempt=0 推送前端成功: a0nC800000JxF3KIAV
+2026-05-06 14:54:07,842 INFO forceid=a0nC800000JxF3KIAV stage=review attempt=0 数据库同步成功: a0nC800000JxF3KIAV
+2026-05-06 14:54:09,564 INFO forceid=a0nC800000JxH8NIAV stage=start attempt=0 [38/87] 开始审核 航班延误-案件号【000006785898】
+2026-05-06 14:54:09,564 INFO forceid=a0nC800000JxH8NIAV stage=fd_vision_extract attempt=0 [38/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:54:09,564 INFO forceid=a0nC800000JxH8NIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:54:12,327 INFO forceid=a0nC800000JxH8NIAV stage=material_extractor attempt=0 FileList 下载完成: 8/8 个文件
+2026-05-06 14:54:54,048 INFO forceid=a0nC800000JxH8NIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 14:55:20,227 INFO forceid=a0nC800000JxH8NIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 14:55:20,227 INFO forceid=a0nC800000JxH8NIAV stage=fd_parse attempt=0 [38/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:55:38,302 INFO forceid=- stage=- attempt=0 航班数据命中缓存: MU2052 2026-03-01
+2026-05-06 14:55:39,162 INFO forceid=a0nC800000JxH8NIAV stage=fd_aviation_lookup attempt=0 [a0nC800000JxH8NIAV] 飞常准查询成功（候选=MU2052 MCT）: -> 取消 [MCT->PKX] route_match=False
+2026-05-06 14:55:39,162 INFO forceid=a0nC800000JxH8NIAV stage=fd_aviation_lookup attempt=0 [a0nC800000JxH8NIAV] 飞常准查询成功（候选=MU760 UNKNOWN）: -> 已到达 [KTI->PVG] route_match=False
+2026-05-06 14:55:39,164 INFO forceid=a0nC800000JxH8NIAV stage=fd_hardcheck attempt=0 [38/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:55:39,166 INFO forceid=a0nC800000JxH8NIAV stage=fd_audit attempt=0 [38/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:55:44,787 INFO forceid=a0nC800000JxH8NIAV stage=review attempt=0 推送前端成功: a0nC800000JxH8NIAV
+2026-05-06 14:55:46,554 INFO forceid=a0nC800000JxH8NIAV stage=review attempt=0 数据库同步成功: a0nC800000JxH8NIAV
+2026-05-06 14:55:47,161 INFO forceid=a0nC800000I93VuIAJ stage=start attempt=0 [39/87] 开始审核 航班延误-案件号【000006689652】
+2026-05-06 14:55:47,161 INFO forceid=a0nC800000I93VuIAJ stage=fd_vision_extract attempt=0 [39/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:55:47,161 INFO forceid=a0nC800000I93VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:55:52,633 INFO forceid=a0nC800000I93VuIAJ stage=material_extractor attempt=0 FileList 下载完成: 17/17 个文件
+2026-05-06 14:56:25,999 INFO forceid=a0nC800000I93VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 14:57:57,777 INFO forceid=a0nC800000I93VuIAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 14:58:29,992 INFO forceid=a0nC800000I93VuIAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 15 个字段
+2026-05-06 14:58:29,993 INFO forceid=a0nC800000I93VuIAJ stage=fd_parse attempt=0 [39/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 14:58:53,551 INFO forceid=a0nC800000I93VuIAJ stage=fd_aviation_lookup attempt=0 [a0nC800000I93VuIAJ] 飞常准查询成功（候选=MF891 XMN）: -> 已到达 [XMN->DPS] route_match=True
+2026-05-06 14:58:53,556 INFO forceid=a0nC800000I93VuIAJ stage=fd_hardcheck attempt=0 [39/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 14:58:53,559 INFO forceid=a0nC800000I93VuIAJ stage=fd_audit attempt=0 [39/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 14:59:01,498 INFO forceid=a0nC800000I93VuIAJ stage=review attempt=0 推送前端成功: a0nC800000I93VuIAJ
+2026-05-06 14:59:03,216 INFO forceid=a0nC800000I93VuIAJ stage=review attempt=0 数据库同步成功: a0nC800000I93VuIAJ
+2026-05-06 14:59:05,181 INFO forceid=a0nC800000JI3FuIAL stage=start attempt=0 [40/87] 开始审核 航班延误-案件号【000006787781】
+2026-05-06 14:59:05,181 INFO forceid=a0nC800000JI3FuIAL stage=fd_vision_extract attempt=0 [40/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 14:59:05,181 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 14:59:55,915 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 15:00:34,622 INFO forceid=a0nC800000JI3FuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 15:00:34,623 INFO forceid=a0nC800000JI3FuIAL stage=fd_parse attempt=0 [40/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:00:59,378 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=EY372 AUH）: -> 已到达 [AUH->MLE] route_match=False
+2026-05-06 15:00:59,378 INFO forceid=a0nC800000JI3FuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 飞常准查询成功（候选=MU237 PVG）: -> 已到达 [PVG->AUH] route_match=False
+2026-05-06 15:00:59,748 INFO forceid=a0nC800000JI3FuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JI3FuIAL] 接驳航班飞常准查询成功: EY376 2026-02-22 -> 已到达
+2026-05-06 15:00:59,748 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 15:00:59,749 INFO forceid=a0nC800000JI3FuIAL stage=fd_hardcheck attempt=0 [40/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:00:59,749 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 15:00:59,755 INFO forceid=a0nC800000JI3FuIAL stage=fd_audit attempt=0 [40/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:01:06,127 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MLE
+2026-05-06 15:01:07,677 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 推送前端成功: a0nC800000JI3FuIAL
+2026-05-06 15:01:08,694 INFO forceid=a0nC800000JI3FuIAL stage=review attempt=0 数据库同步成功: a0nC800000JI3FuIAL
+2026-05-06 15:01:09,423 INFO forceid=a0nC800000IWNn7IAH stage=start attempt=0 [41/87] 开始审核 航班延误-案件号【000006773994】
+2026-05-06 15:01:09,423 INFO forceid=a0nC800000IWNn7IAH stage=fd_vision_extract attempt=0 [41/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:01:09,423 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:01:54,171 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 15:02:38,604 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 15:03:17,843 INFO forceid=a0nC800000IWNn7IAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 15:03:17,843 INFO forceid=a0nC800000IWNn7IAH stage=fd_parse attempt=0 [41/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:03:37,695 INFO forceid=a0nC800000IWNn7IAH stage=fd_aviation_lookup attempt=0 [a0nC800000IWNn7IAH] 飞常准查询成功（候选=5N522 MMK）: -> 已到达 [MMK->SVO] route_match=True
+2026-05-06 15:03:37,696 INFO forceid=a0nC800000IWNn7IAH stage=fd_aviation_lookup attempt=0 [a0nC800000IWNn7IAH] 飞常准查询成功（候选=DP 6844 MMK）: -> 延误 [KZN->SVO] route_match=False
+2026-05-06 15:03:37,696 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 15:03:37,698 INFO forceid=a0nC800000IWNn7IAH stage=fd_hardcheck attempt=0 [41/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:03:37,698 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 15:03:37,701 INFO forceid=a0nC800000IWNn7IAH stage=fd_audit attempt=0 [41/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:03:43,141 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 15:03:44,089 INFO forceid=a0nC800000IWNn7IAH stage=review attempt=0 推送前端成功: a0nC800000IWNn7IAH
+2026-05-06 15:03:46,278 INFO forceid=a0nC800000IWNn7IAH stage=review attempt=0 数据库同步成功: a0nC800000IWNn7IAH
+2026-05-06 15:03:47,372 INFO forceid=a0nC800000JIl0jIAD stage=start attempt=0 [42/87] 开始审核 航班延误-案件号【000006434764】
+2026-05-06 15:03:47,373 INFO forceid=a0nC800000JIl0jIAD stage=fd_vision_extract attempt=0 [42/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:03:47,374 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:05:10,619 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 15:05:54,107 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 15:06:18,858 INFO forceid=a0nC800000JIl0jIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 15:06:18,859 INFO forceid=a0nC800000JIl0jIAD stage=fd_parse attempt=0 [42/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:06:37,930 INFO forceid=a0nC800000JIl0jIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JIl0jIAD] 飞常准查询成功（候选=MU4194 PVG）: -> 已到达 [PVG->KIX] route_match=True
+2026-05-06 15:06:37,931 INFO forceid=a0nC800000JIl0jIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JIl0jIAD] 飞常准查询成功（候选=HO1630 UNKNOWN）: -> 已到达 [UKB->PVG] route_match=False
+2026-05-06 15:06:38,196 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 15:06:38,197 INFO forceid=- stage=- attempt=0 使用Mock数据: JAL894 2025-10-01
+2026-05-06 15:06:38,198 INFO forceid=a0nC800000JIl0jIAD stage=fd_hardcheck attempt=0 [42/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:06:38,203 INFO forceid=a0nC800000JIl0jIAD stage=fd_audit attempt=0 [42/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:06:44,017 INFO forceid=a0nC800000JIl0jIAD stage=review attempt=0 推送前端成功: a0nC800000JIl0jIAD
+2026-05-06 15:06:45,106 INFO forceid=a0nC800000JIl0jIAD stage=review attempt=0 数据库同步成功: a0nC800000JIl0jIAD
+2026-05-06 15:06:47,003 INFO forceid=a0nC800000LxgVNIAZ stage=start attempt=0 [43/87] 开始审核 航班延误-案件号【000006780677】
+2026-05-06 15:06:47,003 INFO forceid=a0nC800000LxgVNIAZ stage=fd_vision_extract attempt=0 [43/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:06:47,004 INFO forceid=a0nC800000LxgVNIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:07:50,950 INFO forceid=a0nC800000LxgVNIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 15:08:44,405 INFO forceid=a0nC800000LxgVNIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 15:09:09,316 INFO forceid=a0nC800000LxgVNIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 15:09:09,317 INFO forceid=a0nC800000LxgVNIAZ stage=fd_parse attempt=0 [43/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:09:31,131 INFO forceid=a0nC800000LxgVNIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000LxgVNIAZ] 飞常准查询成功（候选=9C7422 BKK）: -> 已到达 [BKK->PVG] route_match=True
+2026-05-06 15:09:31,131 INFO forceid=a0nC800000LxgVNIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000LxgVNIAZ] 飞常准查询成功（候选=MU238 AUH）: -> 取消 [AUH->PVG] route_match=False
+2026-05-06 15:09:31,133 INFO forceid=a0nC800000LxgVNIAZ stage=fd_hardcheck attempt=0 [43/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:09:31,134 INFO forceid=a0nC800000LxgVNIAZ stage=fd_audit attempt=0 [43/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:09:37,512 INFO forceid=a0nC800000LxgVNIAZ stage=review attempt=0 推送前端成功: a0nC800000LxgVNIAZ
+2026-05-06 15:09:38,612 INFO forceid=a0nC800000LxgVNIAZ stage=review attempt=0 数据库同步成功: a0nC800000LxgVNIAZ
+2026-05-06 15:09:39,351 INFO forceid=a0nC800000LxhzKIAR stage=start attempt=0 [44/87] 开始审核 航班延误-案件号【000006780679】
+2026-05-06 15:09:39,352 INFO forceid=a0nC800000LxhzKIAR stage=fd_vision_extract attempt=0 [44/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:09:39,352 INFO forceid=a0nC800000LxhzKIAR stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:10:15,663 INFO forceid=a0nC800000LxhzKIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 15:11:01,880 INFO forceid=a0nC800000LxhzKIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 15:11:28,939 INFO forceid=a0nC800000LxhzKIAR stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 15 个字段
+2026-05-06 15:11:28,940 INFO forceid=a0nC800000LxhzKIAR stage=fd_parse attempt=0 [44/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:11:51,746 INFO forceid=a0nC800000LxhzKIAR stage=fd_aviation_lookup attempt=0 [a0nC800000LxhzKIAR] 飞常准查询成功（候选=MU238 ZAE）: -> 取消 [AUH->PVG] route_match=False
+2026-05-06 15:11:51,747 INFO forceid=a0nC800000LxhzKIAR stage=fd_aviation_lookup attempt=0 [a0nC800000LxhzKIAR] 飞常准查询成功（候选=QZ646 HKT）: -> 计划 [DPS->LBJ] route_match=False
+2026-05-06 15:11:51,994 INFO forceid=a0nC800000LxhzKIAR stage=fd_alt_aviation_lookup attempt=0 [a0nC800000LxhzKIAR] 接驳航班飞常准查询成功: 9C7422 2026-03-05 -> 已到达
+2026-05-06 15:11:51,995 INFO forceid=a0nC800000LxhzKIAR stage=fd_hardcheck attempt=0 [44/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:11:51,998 INFO forceid=a0nC800000LxhzKIAR stage=fd_audit attempt=0 [44/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:11:58,491 INFO forceid=a0nC800000LxhzKIAR stage=review attempt=0 推送前端成功: a0nC800000LxhzKIAR
+2026-05-06 15:12:00,378 INFO forceid=a0nC800000LxhzKIAR stage=review attempt=0 数据库同步成功: a0nC800000LxhzKIAR
+2026-05-06 15:12:02,082 INFO forceid=a0nC800000MrMFTIA3 stage=start attempt=0 [45/87] 开始审核 航班延误-案件号【000006836962】
+2026-05-06 15:12:02,082 INFO forceid=a0nC800000MrMFTIA3 stage=fd_vision_extract attempt=0 [45/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:12:02,083 INFO forceid=a0nC800000MrMFTIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:12:28,887 INFO forceid=a0nC800000MrMFTIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 15:13:57,974 INFO forceid=a0nC800000MrMFTIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 15:14:54,664 INFO forceid=a0nC800000MrMFTIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 15:15:15,643 INFO forceid=a0nC800000MrMFTIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 22 份附件（3 批），返回 15 个字段
+2026-05-06 15:15:15,644 INFO forceid=a0nC800000MrMFTIA3 stage=fd_parse attempt=0 [45/87] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:15:38,718 INFO forceid=a0nC800000MrMFTIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000MrMFTIA3] 飞常准查询成功（候选=D7332 KUL）: -> 已到达 [KUL->PVG] route_match=True
+2026-05-06 15:15:38,718 INFO forceid=a0nC800000MrMFTIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000MrMFTIA3] 飞常准查询成功（候选=AK1561 PEK）: -> 已到达 [PKX->BKI] route_match=False
+2026-05-06 15:15:38,723 INFO forceid=a0nC800000MrMFTIA3 stage=fd_hardcheck attempt=0 [45/87] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:15:38,729 INFO forceid=a0nC800000MrMFTIA3 stage=fd_audit attempt=0 [45/87] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:15:46,501 INFO forceid=a0nC800000MrMFTIA3 stage=review attempt=0 推送前端成功: a0nC800000MrMFTIA3
+2026-05-06 15:15:48,429 INFO forceid=a0nC800000MrMFTIA3 stage=review attempt=0 数据库同步成功: a0nC800000MrMFTIA3
+2026-05-06 15:15:49,533 INFO forceid=a0nC800000IEf2XIAT stage=start attempt=0 [46/87] 开始审核 航班延误-案件号【000006623819】
+2026-05-06 15:15:49,534 INFO forceid=a0nC800000IEf2XIAT stage=fd_vision_extract attempt=0 [46/87] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:15:49,534 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:19:54,244 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 FileList 下载完成: 24/24 个文件
+[1/42] a0nC800000IEf2XIAT ... 2026-05-06 15:44:22,745 INFO forceid=a0nC800000IEf2XIAT stage=start attempt=0 [1/42] 开始审核 航班延误-案件号【000006623819】
+2026-05-06 15:44:22,746 INFO forceid=a0nC800000IEf2XIAT stage=fd_vision_extract attempt=0 [1/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:44:22,746 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:44:49,728 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 15:45:44,879 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 15:46:58,513 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 15:47:42,420 INFO forceid=a0nC800000IEf2XIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 24 份附件（3 批），返回 15 个字段
+2026-05-06 15:47:42,420 INFO forceid=a0nC800000IEf2XIAT stage=fd_parse attempt=0 [1/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:48:05,002 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 15:48:05,002 INFO forceid=- stage=- attempt=0 使用Mock数据: EJU5270 2026-02-06
+2026-05-06 15:48:05,003 INFO forceid=a0nC800000IEf2XIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IEf2XIAT] 飞常准候选未返回数据: EJU5270 ORY, error=航班数据源未配置或不可用
+2026-05-06 15:48:05,268 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 15:48:05,268 INFO forceid=- stage=- attempt=0 使用Mock数据: 4899 2026-02-09
+2026-05-06 15:48:05,279 INFO forceid=a0nC800000IEf2XIAT stage=fd_hardcheck attempt=0 [1/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:48:05,284 INFO forceid=a0nC800000IEf2XIAT stage=fd_audit attempt=0 [1/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:48:12,715 INFO forceid=a0nC800000IEf2XIAT stage=review attempt=0 推送前端成功: a0nC800000IEf2XIAT
+2026-05-06 15:48:14,164 INFO forceid=a0nC800000IEf2XIAT stage=review attempt=0 数据库同步成功: a0nC800000IEf2XIAT
+需补齐资料 (231s)
+[2/42] a0nC800000MsGpXIAV ... 2026-05-06 15:48:17,675 INFO forceid=a0nC800000MsGpXIAV stage=start attempt=0 [2/42] 开始审核 航班延误-案件号【000006849491】
+2026-05-06 15:48:17,676 INFO forceid=a0nC800000MsGpXIAV stage=fd_vision_extract attempt=0 [2/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:48:17,676 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:50:36,297 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/5, attempt 1/3)
+2026-05-06 15:52:29,171 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/5, attempt 1/3)
+2026-05-06 15:54:04,932 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/5, attempt 1/3)
+2026-05-06 15:55:15,973 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/5, attempt 1/3)
+2026-05-06 15:56:41,523 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 5/5, attempt 1/3)
+2026-05-06 15:57:32,690 INFO forceid=a0nC800000MsGpXIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 49 份附件（5 批），返回 15 个字段
+2026-05-06 15:57:32,691 INFO forceid=a0nC800000MsGpXIAV stage=fd_parse attempt=0 [2/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 15:57:57,479 INFO forceid=a0nC800000MsGpXIAV stage=fd_aviation_lookup attempt=0 [a0nC800000MsGpXIAV] 飞常准查询成功（候选=LH147 NUE）: -> 取消 [NUE->FRA] route_match=False
+2026-05-06 15:57:57,479 INFO forceid=a0nC800000MsGpXIAV stage=fd_aviation_lookup attempt=0 [a0nC800000MsGpXIAV] 飞常准查询成功（候选=LH796 FRA）: -> 已到达 [FRA->HKG] route_match=False
+2026-05-06 15:57:57,480 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: NUE
+2026-05-06 15:57:57,490 INFO forceid=a0nC800000MsGpXIAV stage=fd_hardcheck attempt=0 [2/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 15:57:57,490 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: NUE
+2026-05-06 15:57:57,493 INFO forceid=a0nC800000MsGpXIAV stage=fd_audit attempt=0 [2/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 15:58:04,113 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: NUE
+2026-05-06 15:58:05,225 INFO forceid=a0nC800000MsGpXIAV stage=review attempt=0 推送前端成功: a0nC800000MsGpXIAV
+2026-05-06 15:58:06,066 INFO forceid=a0nC800000MsGpXIAV stage=review attempt=0 数据库同步成功: a0nC800000MsGpXIAV
+通过 (586s)
+[3/42] a0nC800000MoNj8IAF ... 2026-05-06 15:58:06,784 INFO forceid=a0nC800000MoNj8IAF stage=start attempt=0 [3/42] 开始审核 航班延误-案件号【000006868697】
+2026-05-06 15:58:06,785 INFO forceid=a0nC800000MoNj8IAF stage=fd_vision_extract attempt=0 [3/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 15:58:06,785 INFO forceid=a0nC800000MoNj8IAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 15:58:44,989 INFO forceid=a0nC800000MoNj8IAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 15:59:26,409 INFO forceid=a0nC800000MoNj8IAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 15:59:56,198 INFO forceid=a0nC800000MoNj8IAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 15 个字段
+2026-05-06 15:59:56,198 INFO forceid=a0nC800000MoNj8IAF stage=fd_parse attempt=0 [3/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:00:21,448 INFO forceid=a0nC800000MoNj8IAF stage=fd_aviation_lookup attempt=0 [a0nC800000MoNj8IAF] 飞常准查询成功（候选=LH 0732 FRA）: -> 已到达 [FRA->PVG] route_match=True
+2026-05-06 16:00:21,452 INFO forceid=a0nC800000MoNj8IAF stage=fd_hardcheck attempt=0 [3/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:00:21,455 INFO forceid=a0nC800000MoNj8IAF stage=fd_audit attempt=0 [3/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:00:27,333 INFO forceid=a0nC800000MoNj8IAF stage=review attempt=0 推送前端成功: a0nC800000MoNj8IAF
+2026-05-06 16:00:28,790 INFO forceid=a0nC800000MoNj8IAF stage=review attempt=0 数据库同步成功: a0nC800000MoNj8IAF
+通过 (140s)
+[4/42] a0nC800000JA2dYIAT ... 2026-05-06 16:00:29,599 INFO forceid=a0nC800000JA2dYIAT stage=start attempt=0 [4/42] 开始审核 航班延误-案件号【000006786103】
+2026-05-06 16:00:29,599 INFO forceid=a0nC800000JA2dYIAT stage=fd_vision_extract attempt=0 [4/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:00:29,599 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:00:39,081 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 FileList 下载完成: 22/22 个文件
+2026-05-06 16:01:02,874 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 16:02:07,116 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 16:03:12,093 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 16:03:56,955 INFO forceid=a0nC800000JA2dYIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 23 份附件（3 批），返回 15 个字段
+2026-05-06 16:03:56,956 INFO forceid=a0nC800000JA2dYIAT stage=fd_parse attempt=0 [4/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:04:18,492 INFO forceid=a0nC800000JA2dYIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JA2dYIAT] 飞常准查询成功（候选=LH1978 KEF）: -> 已到达 [MUC->CGN] route_match=False
+2026-05-06 16:04:18,493 INFO forceid=a0nC800000JA2dYIAT stage=fd_aviation_lookup attempt=0 [a0nC800000JA2dYIAT] 飞常准查询成功（候选=CZ2170 WNZ）: -> 已到达 [WNZ->CAN] route_match=False
+2026-05-06 16:04:18,811 INFO forceid=a0nC800000JA2dYIAT stage=fd_alt_aviation_lookup attempt=0 [a0nC800000JA2dYIAT] 接驳航班飞常准查询成功: FI532 2026-03-06 -> 已到达
+2026-05-06 16:04:18,812 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: KEF
+2026-05-06 16:04:18,812 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGN
+2026-05-06 16:04:18,814 INFO forceid=a0nC800000JA2dYIAT stage=fd_hardcheck attempt=0 [4/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:04:18,814 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: KEF
+2026-05-06 16:04:18,814 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGN
+2026-05-06 16:04:18,815 INFO forceid=a0nC800000JA2dYIAT stage=fd_audit attempt=0 [4/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:04:24,694 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: KEF
+2026-05-06 16:04:24,694 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CGN
+2026-05-06 16:04:26,136 INFO forceid=a0nC800000JA2dYIAT stage=review attempt=0 推送前端成功: a0nC800000JA2dYIAT
+2026-05-06 16:04:27,585 INFO forceid=a0nC800000JA2dYIAT stage=review attempt=0 数据库同步成功: a0nC800000JA2dYIAT
+通过 (235s)
+[5/42] a0nC800000IG4dGIAT ... 2026-05-06 16:04:28,145 INFO forceid=a0nC800000IG4dGIAT stage=start attempt=0 [5/42] 开始审核 航班延误-案件号【000006591250】
+2026-05-06 16:04:28,145 INFO forceid=a0nC800000IG4dGIAT stage=fd_vision_extract attempt=0 [5/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:04:28,146 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:04:43,136 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 FileList 下载完成: 37/37 个文件
+2026-05-06 16:05:23,054 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/4, attempt 1/3)
+2026-05-06 16:06:49,099 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/4, attempt 1/3)
+2026-05-06 16:08:29,243 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/4, attempt 1/3)
+2026-05-06 16:09:40,233 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/4, attempt 1/3)
+2026-05-06 16:10:25,161 INFO forceid=a0nC800000IG4dGIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 38 份附件（4 批），返回 15 个字段
+2026-05-06 16:10:25,162 INFO forceid=a0nC800000IG4dGIAT stage=fd_parse attempt=0 [5/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:10:47,801 INFO forceid=a0nC800000IG4dGIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IG4dGIAT] 飞常准查询成功（候选=SK0828 AMS）: -> 取消 [AMS->OSL] route_match=False
+2026-05-06 16:10:47,803 INFO forceid=a0nC800000IG4dGIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IG4dGIAT] 飞常准查询成功（候选=SK4126 OSL）: -> 已到达 [OSL->BOO] route_match=False
+2026-05-06 16:10:47,804 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BOO
+2026-05-06 16:10:47,809 INFO forceid=a0nC800000IG4dGIAT stage=fd_hardcheck attempt=0 [5/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:10:47,810 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BOO
+2026-05-06 16:10:47,811 INFO forceid=a0nC800000IG4dGIAT stage=fd_audit attempt=0 [5/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:10:59,014 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BOO
+2026-05-06 16:11:00,152 INFO forceid=a0nC800000IG4dGIAT stage=review attempt=0 推送前端成功: a0nC800000IG4dGIAT
+2026-05-06 16:11:00,894 INFO forceid=a0nC800000IG4dGIAT stage=review attempt=0 数据库同步成功: a0nC800000IG4dGIAT
+通过 (391s)
+[6/42] a0nC800000IsoQWIAZ ... 2026-05-06 16:11:01,622 INFO forceid=a0nC800000IsoQWIAZ stage=start attempt=0 [6/42] 开始审核 航班延误-案件号【000006768892】
+2026-05-06 16:11:01,623 INFO forceid=a0nC800000IsoQWIAZ stage=fd_vision_extract attempt=0 [6/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:11:01,623 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:11:20,013 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 FileList 下载完成: 32/32 个文件
+2026-05-06 16:11:47,714 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/4, attempt 1/3)
+2026-05-06 16:12:59,172 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/4, attempt 1/3)
+2026-05-06 16:14:04,538 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/4, attempt 1/3)
+2026-05-06 16:15:17,390 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/4, attempt 1/3)
+2026-05-06 16:15:52,597 INFO forceid=a0nC800000IsoQWIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 33 份附件（4 批），返回 15 个字段
+2026-05-06 16:15:52,597 INFO forceid=a0nC800000IsoQWIAZ stage=fd_parse attempt=0 [6/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:16:15,396 INFO forceid=a0nC800000IsoQWIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IsoQWIAZ] 飞常准查询成功（候选=FV6428 SVO）: -> 取消 [LED->SVO] route_match=False
+2026-05-06 16:16:15,397 INFO forceid=a0nC800000IsoQWIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IsoQWIAZ] 飞常准查询成功（候选=SU204 SVO）: -> 已到达 [SVO->PKX] route_match=False
+2026-05-06 16:16:15,828 INFO forceid=a0nC800000IsoQWIAZ stage=fd_alt_aviation_lookup attempt=0 [a0nC800000IsoQWIAZ] 接驳航班飞常准查询成功: FV6132 2026-02-23 -> 已到达
+2026-05-06 16:16:15,828 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MOW
+2026-05-06 16:16:15,832 INFO forceid=a0nC800000IsoQWIAZ stage=fd_hardcheck attempt=0 [6/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:16:15,832 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MOW
+2026-05-06 16:16:15,833 INFO forceid=a0nC800000IsoQWIAZ stage=fd_audit attempt=0 [6/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:16:22,547 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MOW
+2026-05-06 16:16:24,054 INFO forceid=a0nC800000IsoQWIAZ stage=review attempt=0 推送前端成功: a0nC800000IsoQWIAZ
+2026-05-06 16:16:24,967 INFO forceid=a0nC800000IsoQWIAZ stage=review attempt=0 数据库同步成功: a0nC800000IsoQWIAZ
+通过 (321s)
+[7/42] a0nC800000MY6fpIAD ... 2026-05-06 16:16:25,435 INFO forceid=a0nC800000MY6fpIAD stage=start attempt=0 [7/42] 开始审核 航班延误-案件号【000006616112】
+2026-05-06 16:16:25,435 INFO forceid=a0nC800000MY6fpIAD stage=fd_vision_extract attempt=0 [7/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:16:25,435 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:16:34,258 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 FileList 下载完成: 24/24 个文件
+2026-05-06 16:17:01,573 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 16:19:27,310 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 16:21:58,103 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 16:23:27,743 INFO forceid=a0nC800000MY6fpIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 25 份附件（3 批），返回 15 个字段
+2026-05-06 16:23:27,745 INFO forceid=a0nC800000MY6fpIAD stage=fd_parse attempt=0 [7/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:23:53,745 INFO forceid=a0nC800000MY6fpIAD stage=fd_aviation_lookup attempt=0 [a0nC800000MY6fpIAD] 飞常准查询成功（候选=SK4425 LYR）: -> 已到达 [LYR->OSL] route_match=True
+2026-05-06 16:23:53,745 INFO forceid=a0nC800000MY6fpIAD stage=fd_aviation_lookup attempt=0 [a0nC800000MY6fpIAD] 飞常准查询成功（候选=QR180 OSL）: -> 已到达 [OSL->DOH] route_match=False
+2026-05-06 16:23:53,983 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 16:23:53,984 INFO forceid=- stage=- attempt=0 使用Mock数据: SK6303 2026-02-27
+2026-05-06 16:23:53,984 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYR
+2026-05-06 16:23:53,985 INFO forceid=a0nC800000MY6fpIAD stage=fd_hardcheck attempt=0 [7/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:23:53,985 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYR
+2026-05-06 16:23:53,986 INFO forceid=a0nC800000MY6fpIAD stage=fd_audit attempt=0 [7/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:24:08,520 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LYR
+2026-05-06 16:24:09,652 INFO forceid=a0nC800000MY6fpIAD stage=review attempt=0 推送前端成功: a0nC800000MY6fpIAD
+2026-05-06 16:24:10,308 INFO forceid=a0nC800000MY6fpIAD stage=review attempt=0 数据库同步成功: a0nC800000MY6fpIAD
+通过 (463s)
+[8/42] a0nC800000M6q8wIAB ... 2026-05-06 16:24:10,854 INFO forceid=a0nC800000M6q8wIAB stage=start attempt=0 [8/42] 开始审核 航班延误-案件号【000006773830】
+2026-05-06 16:24:10,854 INFO forceid=a0nC800000M6q8wIAB stage=fd_vision_extract attempt=0 [8/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:24:10,854 INFO forceid=a0nC800000M6q8wIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:24:30,995 INFO forceid=a0nC800000M6q8wIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 16:25:46,491 INFO forceid=a0nC800000M6q8wIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 16:26:50,029 INFO forceid=a0nC800000M6q8wIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 16:27:24,791 INFO forceid=a0nC800000M6q8wIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 21 份附件（3 批），返回 15 个字段
+2026-05-06 16:27:24,791 INFO forceid=a0nC800000M6q8wIAB stage=fd_parse attempt=0 [8/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:27:52,168 INFO forceid=a0nC800000M6q8wIAB stage=fd_aviation_lookup attempt=0 [a0nC800000M6q8wIAB] 飞常准查询成功（候选=ET846 CPT）: -> 已到达 [CPT->ADD] route_match=True
+2026-05-06 16:27:52,169 INFO forceid=a0nC800000M6q8wIAB stage=fd_aviation_lookup attempt=0 [a0nC800000M6q8wIAB] 飞常准查询成功（候选=ET616 ADD）: -> 已到达 [ADD->CAN] route_match=False
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CPT
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ADD
+2026-05-06 16:27:52,169 INFO forceid=a0nC800000M6q8wIAB stage=fd_hardcheck attempt=0 [8/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CPT
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ADD
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ADD
+2026-05-06 16:27:52,169 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ADD
+2026-05-06 16:27:52,170 INFO forceid=a0nC800000M6q8wIAB stage=fd_audit attempt=0 [8/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:27:58,110 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CPT
+2026-05-06 16:27:58,110 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ADD
+2026-05-06 16:27:59,093 INFO forceid=a0nC800000M6q8wIAB stage=review attempt=0 推送前端成功: a0nC800000M6q8wIAB
+2026-05-06 16:27:59,925 INFO forceid=a0nC800000M6q8wIAB stage=review attempt=0 数据库同步成功: a0nC800000M6q8wIAB
+通过 (227s)
+[9/42] a0nC800000IoENCIA3 ... 2026-05-06 16:28:01,043 INFO forceid=a0nC800000IoENCIA3 stage=start attempt=0 [9/42] 开始审核 航班延误-案件号【000006759687】
+2026-05-06 16:28:01,050 INFO forceid=a0nC800000IoENCIA3 stage=fd_vision_extract attempt=0 [9/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:28:01,050 INFO forceid=a0nC800000IoENCIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:28:03,239 INFO forceid=a0nC800000IoENCIA3 stage=material_extractor attempt=0 FileList 下载完成: 2/2 个文件
+2026-05-06 16:28:15,075 INFO forceid=a0nC800000IoENCIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:28:48,231 INFO forceid=a0nC800000IoENCIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 4 份附件（1 批），返回 15 个字段
+2026-05-06 16:28:48,231 INFO forceid=a0nC800000IoENCIA3 stage=fd_parse attempt=0 [9/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:29:14,029 INFO forceid=a0nC800000IoENCIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000IoENCIA3] 飞常准查询成功（候选=IB586 CDG）: -> 取消 [CDG->MAD] route_match=True
+2026-05-06 16:29:14,029 INFO forceid=a0nC800000IoENCIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000IoENCIA3] 飞常准查询成功（候选=CZ347 CAN）: -> 已到达 [CAN->CDG] route_match=False
+2026-05-06 16:29:14,312 INFO forceid=a0nC800000IoENCIA3 stage=fd_alt_aviation_lookup attempt=0 [a0nC800000IoENCIA3] 接驳航班飞常准查询成功: AF1300 2026-02-12 -> 已到达
+2026-05-06 16:29:14,315 INFO forceid=a0nC800000IoENCIA3 stage=fd_hardcheck attempt=0 [9/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:29:14,317 INFO forceid=a0nC800000IoENCIA3 stage=fd_audit attempt=0 [9/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:29:20,949 INFO forceid=a0nC800000IoENCIA3 stage=review attempt=0 推送前端成功: a0nC800000IoENCIA3
+2026-05-06 16:29:21,802 INFO forceid=a0nC800000IoENCIA3 stage=review attempt=0 数据库同步成功: a0nC800000IoENCIA3
+通过 (78s)
+[10/42] a0nC800000IH21SIAT ... 2026-05-06 16:29:22,400 INFO forceid=a0nC800000IH21SIAT stage=start attempt=0 [10/42] 开始审核 航班延误-案件号【000006754705】
+2026-05-06 16:29:22,400 INFO forceid=a0nC800000IH21SIAT stage=fd_vision_extract attempt=0 [10/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:29:22,400 INFO forceid=a0nC800000IH21SIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:29:27,026 INFO forceid=a0nC800000IH21SIAT stage=material_extractor attempt=0 FileList 下载完成: 9/9 个文件
+2026-05-06 16:29:55,187 INFO forceid=a0nC800000IH21SIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:30:34,207 INFO forceid=a0nC800000IH21SIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 16:30:34,207 INFO forceid=a0nC800000IH21SIAT stage=fd_parse attempt=0 [10/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:30:53,052 INFO forceid=a0nC800000IH21SIAT stage=fd_aviation_lookup attempt=0 [a0nC800000IH21SIAT] 飞常准查询成功（候选=CZ0342 SVO）: -> 已到达 [SVO->PKX] route_match=True
+2026-05-06 16:30:53,053 INFO forceid=a0nC800000IH21SIAT stage=fd_hardcheck attempt=0 [10/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:30:53,057 INFO forceid=a0nC800000IH21SIAT stage=fd_audit attempt=0 [10/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:31:00,442 INFO forceid=a0nC800000IH21SIAT stage=review attempt=0 推送前端成功: a0nC800000IH21SIAT
+2026-05-06 16:31:01,267 INFO forceid=a0nC800000IH21SIAT stage=review attempt=0 数据库同步成功: a0nC800000IH21SIAT
+通过 (97s)
+[11/42] a0nC800000JVq5uIAD ... 2026-05-06 16:31:01,957 INFO forceid=a0nC800000JVq5uIAD stage=start attempt=0 [11/42] 开始审核 航班延误-案件号【000006791125】
+2026-05-06 16:31:02,132 INFO forceid=a0nC800000JVq5uIAD stage=fd_vision_extract attempt=0 [11/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:31:02,132 INFO forceid=a0nC800000JVq5uIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:31:18,160 INFO forceid=a0nC800000JVq5uIAD stage=material_extractor attempt=0 FileList 下载完成: 17/17 个文件
+2026-05-06 16:32:02,458 INFO forceid=a0nC800000JVq5uIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:33:25,262 INFO forceid=a0nC800000JVq5uIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:34:06,629 INFO forceid=a0nC800000JVq5uIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 18 份附件（2 批），返回 15 个字段
+2026-05-06 16:34:06,629 INFO forceid=a0nC800000JVq5uIAD stage=fd_parse attempt=0 [11/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:34:25,761 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 16:34:25,761 INFO forceid=- stage=- attempt=0 使用Mock数据: G133 2026-02-25
+2026-05-06 16:34:25,761 INFO forceid=a0nC800000JVq5uIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JVq5uIAD] 飞常准查询成功（候选=MU6049 PVG）: -> 已到达 [PVG->SIN] route_match=True
+2026-05-06 16:34:25,761 INFO forceid=a0nC800000JVq5uIAD stage=fd_aviation_lookup attempt=0 [a0nC800000JVq5uIAD] 飞常准候选未返回数据: G133 PVG, error=航班数据源未配置或不可用
+2026-05-06 16:34:25,769 INFO forceid=a0nC800000JVq5uIAD stage=fd_hardcheck attempt=0 [11/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:34:25,771 INFO forceid=a0nC800000JVq5uIAD stage=fd_audit attempt=0 [11/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:34:32,024 INFO forceid=a0nC800000JVq5uIAD stage=review attempt=0 推送前端成功: a0nC800000JVq5uIAD
+2026-05-06 16:34:32,931 INFO forceid=a0nC800000JVq5uIAD stage=review attempt=0 数据库同步成功: a0nC800000JVq5uIAD
+通过 (209s)
+[12/42] a0nC800000IuKoBIAV ... 2026-05-06 16:34:33,324 INFO forceid=a0nC800000IuKoBIAV stage=start attempt=0 [12/42] 开始审核 航班延误-案件号【000006525711】
+2026-05-06 16:34:33,324 INFO forceid=a0nC800000IuKoBIAV stage=fd_vision_extract attempt=0 [12/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:34:33,324 INFO forceid=a0nC800000IuKoBIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:34:43,787 INFO forceid=a0nC800000IuKoBIAV stage=material_extractor attempt=0 FileList 下载完成: 12/12 个文件
+2026-05-06 16:35:22,091 INFO forceid=a0nC800000IuKoBIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:36:25,009 INFO forceid=a0nC800000IuKoBIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:36:50,914 INFO forceid=a0nC800000IuKoBIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 15 个字段
+2026-05-06 16:36:50,915 INFO forceid=a0nC800000IuKoBIAV stage=fd_parse attempt=0 [12/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:37:08,704 INFO forceid=a0nC800000IuKoBIAV stage=fd_aviation_lookup attempt=0 [a0nC800000IuKoBIAV] 飞常准查询成功（候选=HO1608 HEL）: -> 已到达 [HEL->PVG] route_match=True
+2026-05-06 16:37:08,704 INFO forceid=a0nC800000IuKoBIAV stage=fd_aviation_lookup attempt=0 [a0nC800000IuKoBIAV] 飞常准查询成功（候选=HO1607 PVG）: -> 已到达 [PVG->HEL] route_match=False
+2026-05-06 16:37:08,707 INFO forceid=a0nC800000IuKoBIAV stage=fd_hardcheck attempt=0 [12/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:37:08,709 INFO forceid=a0nC800000IuKoBIAV stage=fd_audit attempt=0 [12/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:37:15,142 INFO forceid=a0nC800000IuKoBIAV stage=review attempt=0 推送前端成功: a0nC800000IuKoBIAV
+2026-05-06 16:37:15,807 INFO forceid=a0nC800000IuKoBIAV stage=review attempt=0 数据库同步成功: a0nC800000IuKoBIAV
+通过 (161s)
+[13/42] a0nC800000LQmPuIAL ... 2026-05-06 16:37:16,556 INFO forceid=a0nC800000LQmPuIAL stage=start attempt=0 [13/42] 开始审核 航班延误-案件号【000006791644】
+2026-05-06 16:37:16,556 INFO forceid=a0nC800000LQmPuIAL stage=fd_vision_extract attempt=0 [13/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:37:16,556 INFO forceid=a0nC800000LQmPuIAL stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:37:24,129 INFO forceid=a0nC800000LQmPuIAL stage=material_extractor attempt=0 FileList 下载完成: 18/18 个文件
+2026-05-06 16:37:47,106 INFO forceid=a0nC800000LQmPuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:39:05,816 INFO forceid=a0nC800000LQmPuIAL stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:39:43,677 INFO forceid=a0nC800000LQmPuIAL stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 19 份附件（2 批），返回 15 个字段
+2026-05-06 16:39:43,677 INFO forceid=a0nC800000LQmPuIAL stage=fd_parse attempt=0 [13/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:40:07,236 INFO forceid=a0nC800000LQmPuIAL stage=fd_aviation_lookup attempt=0 [a0nC800000LQmPuIAL] 飞常准查询成功（候选=ZH812 MEL）: -> 取消 [MEL->SZX] route_match=True
+2026-05-06 16:40:07,525 INFO forceid=a0nC800000LQmPuIAL stage=fd_alt_aviation_lookup attempt=0 [a0nC800000LQmPuIAL] 接驳航班飞常准查询成功: ZH9329 2026-03-21 -> 已到达
+2026-05-06 16:40:07,534 INFO forceid=a0nC800000LQmPuIAL stage=fd_hardcheck attempt=0 [13/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:40:07,535 INFO forceid=a0nC800000LQmPuIAL stage=fd_audit attempt=0 [13/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:40:22,484 INFO forceid=a0nC800000LQmPuIAL stage=review attempt=0 推送前端成功: a0nC800000LQmPuIAL
+2026-05-06 16:40:24,384 INFO forceid=a0nC800000LQmPuIAL stage=review attempt=0 数据库同步成功: a0nC800000LQmPuIAL
+通过 (185s)
+[14/42] a0nC800000LR0MPIA1 ... 2026-05-06 16:40:25,638 INFO forceid=a0nC800000LR0MPIA1 stage=start attempt=0 [14/42] 开始审核 航班延误-案件号【900000015690-00000003】
+2026-05-06 16:40:25,638 INFO forceid=a0nC800000LR0MPIA1 stage=fd_vision_extract attempt=0 [14/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:40:25,638 INFO forceid=a0nC800000LR0MPIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:40:29,834 INFO forceid=a0nC800000LR0MPIA1 stage=material_extractor attempt=0 FileList 下载完成: 9/9 个文件
+2026-05-06 16:41:06,013 INFO forceid=a0nC800000LR0MPIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:41:42,430 INFO forceid=a0nC800000LR0MPIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 16:41:42,430 INFO forceid=a0nC800000LR0MPIA1 stage=fd_parse attempt=0 [14/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:42:00,271 INFO forceid=a0nC800000LR0MPIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000LR0MPIA1] 飞常准查询成功（候选=JD607 HGH）: -> 已到达 [HGH->SVO] route_match=True
+2026-05-06 16:42:00,271 INFO forceid=a0nC800000LR0MPIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000LR0MPIA1] 飞常准查询成功（候选=JD0607 HGH）: -> 已到达 [HGH->SVO] route_match=True
+2026-05-06 16:42:00,272 INFO forceid=a0nC800000LR0MPIA1 stage=fd_hardcheck attempt=0 [14/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:42:00,274 INFO forceid=a0nC800000LR0MPIA1 stage=fd_audit attempt=0 [14/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:42:07,568 INFO forceid=a0nC800000LR0MPIA1 stage=review attempt=0 推送前端成功: a0nC800000LR0MPIA1
+2026-05-06 16:42:08,515 INFO forceid=a0nC800000LR0MPIA1 stage=review attempt=0 数据库同步成功: a0nC800000LR0MPIA1
+通过 (101s)
+[15/42] a0nC800000NPcmVIAT ... 2026-05-06 16:42:09,392 INFO forceid=a0nC800000NPcmVIAT stage=start attempt=0 [15/42] 开始审核 航班延误-案件号【000006872946】
+2026-05-06 16:42:09,392 INFO forceid=a0nC800000NPcmVIAT stage=fd_vision_extract attempt=0 [15/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:42:09,392 INFO forceid=a0nC800000NPcmVIAT stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:42:39,132 INFO forceid=a0nC800000NPcmVIAT stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:43:13,841 INFO forceid=a0nC800000NPcmVIAT stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 6 份附件（1 批），返回 15 个字段
+2026-05-06 16:43:13,841 INFO forceid=a0nC800000NPcmVIAT stage=fd_parse attempt=0 [15/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:43:32,927 INFO forceid=a0nC800000NPcmVIAT stage=fd_aviation_lookup attempt=0 [a0nC800000NPcmVIAT] 飞常准查询成功（候选=QZ646 WUH）: -> 已到达 [DPS->LBJ] route_match=False
+2026-05-06 16:43:32,928 INFO forceid=a0nC800000NPcmVIAT stage=fd_aviation_lookup attempt=0 [a0nC800000NPcmVIAT] 飞常准查询成功（候选=MU760 SVO）: -> 已到达 [KTI->PVG] route_match=False
+2026-05-06 16:43:32,929 INFO forceid=a0nC800000NPcmVIAT stage=fd_hardcheck attempt=0 [15/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:43:32,931 INFO forceid=a0nC800000NPcmVIAT stage=fd_audit attempt=0 [15/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:43:39,388 INFO forceid=a0nC800000NPcmVIAT stage=review attempt=0 推送前端成功: a0nC800000NPcmVIAT
+2026-05-06 16:43:40,221 INFO forceid=a0nC800000NPcmVIAT stage=review attempt=0 数据库同步成功: a0nC800000NPcmVIAT
+通过 (88s)
+[16/42] a0nC800000IvlkcIAB ... 2026-05-06 16:43:40,743 INFO forceid=a0nC800000IvlkcIAB stage=start attempt=0 [16/42] 开始审核 航班延误-案件号【000006755316】
+2026-05-06 16:43:40,743 INFO forceid=a0nC800000IvlkcIAB stage=fd_vision_extract attempt=0 [16/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:43:40,743 INFO forceid=a0nC800000IvlkcIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:43:43,502 INFO forceid=a0nC800000IvlkcIAB stage=material_extractor attempt=0 FileList 下载完成: 12/12 个文件
+2026-05-06 16:44:08,165 INFO forceid=a0nC800000IvlkcIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:44:56,973 INFO forceid=a0nC800000IvlkcIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:45:32,549 INFO forceid=a0nC800000IvlkcIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 15 份附件（2 批），返回 15 个字段
+2026-05-06 16:45:32,549 INFO forceid=a0nC800000IvlkcIAB stage=fd_parse attempt=0 [16/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:45:52,954 INFO forceid=a0nC800000IvlkcIAB stage=fd_aviation_lookup attempt=0 [a0nC800000IvlkcIAB] 飞常准查询成功（候选=HU7944 BKK）: -> 已到达 [BKK->DLC] route_match=True
+2026-05-06 16:45:52,955 INFO forceid=a0nC800000IvlkcIAB stage=fd_aviation_lookup attempt=0 [a0nC800000IvlkcIAB] 飞常准查询成功（候选=FM7302 UNKNOWN）: -> 已到达 [BKK->PVG] route_match=False
+2026-05-06 16:45:52,957 INFO forceid=a0nC800000IvlkcIAB stage=fd_hardcheck attempt=0 [16/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:45:52,959 INFO forceid=a0nC800000IvlkcIAB stage=fd_audit attempt=0 [16/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:45:59,923 INFO forceid=a0nC800000IvlkcIAB stage=review attempt=0 推送前端成功: a0nC800000IvlkcIAB
+2026-05-06 16:46:00,900 INFO forceid=a0nC800000IvlkcIAB stage=review attempt=0 数据库同步成功: a0nC800000IvlkcIAB
+通过 (138s)
+[17/42] a0nC800000IccjRIAR ... 2026-05-06 16:46:01,693 INFO forceid=a0nC800000IccjRIAR stage=start attempt=0 [17/42] 开始审核 航班延误-案件号【000006747593】
+2026-05-06 16:46:01,693 INFO forceid=a0nC800000IccjRIAR stage=fd_vision_extract attempt=0 [17/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:46:01,693 INFO forceid=a0nC800000IccjRIAR stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:46:06,666 INFO forceid=a0nC800000IccjRIAR stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 16:46:26,737 INFO forceid=a0nC800000IccjRIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:47:02,454 INFO forceid=a0nC800000IccjRIAR stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 16:47:02,454 INFO forceid=a0nC800000IccjRIAR stage=fd_parse attempt=0 [17/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:47:23,852 INFO forceid=a0nC800000IccjRIAR stage=fd_aviation_lookup attempt=0 [a0nC800000IccjRIAR] 飞常准查询成功（候选=8B861 CAN）: -> 已到达 [CAN->CGK] route_match=True
+2026-05-06 16:47:23,854 INFO forceid=a0nC800000IccjRIAR stage=fd_hardcheck attempt=0 [17/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:47:23,858 INFO forceid=a0nC800000IccjRIAR stage=fd_audit attempt=0 [17/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:47:31,117 INFO forceid=a0nC800000IccjRIAR stage=review attempt=0 推送前端成功: a0nC800000IccjRIAR
+2026-05-06 16:47:32,162 INFO forceid=a0nC800000IccjRIAR stage=review attempt=0 数据库同步成功: a0nC800000IccjRIAR
+通过 (88s)
+[18/42] a0nC800000LSbmwIAD ... 2026-05-06 16:47:33,086 INFO forceid=a0nC800000LSbmwIAD stage=start attempt=0 [18/42] 开始审核 航班延误-案件号【000006756496】
+2026-05-06 16:47:33,086 INFO forceid=a0nC800000LSbmwIAD stage=fd_vision_extract attempt=0 [18/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:47:33,087 INFO forceid=a0nC800000LSbmwIAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:47:37,154 INFO forceid=a0nC800000LSbmwIAD stage=material_extractor attempt=0 FileList 下载完成: 12/12 个文件
+2026-05-06 16:48:33,114 INFO forceid=a0nC800000LSbmwIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:49:14,994 INFO forceid=a0nC800000LSbmwIAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:49:42,746 INFO forceid=a0nC800000LSbmwIAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 16:49:42,746 INFO forceid=a0nC800000LSbmwIAD stage=fd_parse attempt=0 [18/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:50:06,994 INFO forceid=a0nC800000LSbmwIAD stage=fd_aviation_lookup attempt=0 [a0nC800000LSbmwIAD] 飞常准查询成功（候选=QZ327 KUL）: -> 已到达 [KUL->SUB] route_match=True
+2026-05-06 16:50:06,994 INFO forceid=a0nC800000LSbmwIAD stage=fd_aviation_lookup attempt=0 [a0nC800000LSbmwIAD] 飞常准查询成功（候选=AK157 KWL）: -> 已到达 [KWL->KUL] route_match=False
+2026-05-06 16:50:06,994 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SUB
+2026-05-06 16:50:06,997 INFO forceid=a0nC800000LSbmwIAD stage=fd_hardcheck attempt=0 [18/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:50:06,997 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SUB
+2026-05-06 16:50:06,998 INFO forceid=a0nC800000LSbmwIAD stage=fd_audit attempt=0 [18/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:50:13,124 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SUB
+2026-05-06 16:50:14,405 INFO forceid=a0nC800000LSbmwIAD stage=review attempt=0 推送前端成功: a0nC800000LSbmwIAD
+2026-05-06 16:50:15,277 INFO forceid=a0nC800000LSbmwIAD stage=review attempt=0 数据库同步成功: a0nC800000LSbmwIAD
+通过 (160s)
+[19/42] a0nC800000JkparIAB ... 2026-05-06 16:50:15,776 INFO forceid=a0nC800000JkparIAB stage=start attempt=0 [19/42] 开始审核 航班延误-案件号【000006644278】
+2026-05-06 16:50:15,848 INFO forceid=a0nC800000JkparIAB stage=fd_vision_extract attempt=0 [19/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:50:15,848 INFO forceid=a0nC800000JkparIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:50:19,111 INFO forceid=a0nC800000JkparIAB stage=material_extractor attempt=0 FileList 下载完成: 13/13 个文件
+2026-05-06 16:50:51,093 INFO forceid=a0nC800000JkparIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:51:36,442 INFO forceid=a0nC800000JkparIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:52:13,777 INFO forceid=a0nC800000JkparIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 14 份附件（2 批），返回 15 个字段
+2026-05-06 16:52:13,778 INFO forceid=a0nC800000JkparIAB stage=fd_parse attempt=0 [19/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:52:31,876 INFO forceid=a0nC800000JkparIAB stage=fd_aviation_lookup attempt=0 [a0nC800000JkparIAB] 飞常准查询成功（候选=MU7256 KIX）: -> 取消 [KTI->PVG] route_match=False
+2026-05-06 16:52:31,876 INFO forceid=a0nC800000JkparIAB stage=fd_aviation_lookup attempt=0 [a0nC800000JkparIAB] 飞常准查询成功（候选=K6110 REP）: -> 已到达 [SAI->KTI] route_match=False
+2026-05-06 16:52:31,880 INFO forceid=a0nC800000JkparIAB stage=fd_hardcheck attempt=0 [19/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:52:31,884 INFO forceid=a0nC800000JkparIAB stage=fd_audit attempt=0 [19/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:52:38,159 INFO forceid=a0nC800000JkparIAB stage=review attempt=0 推送前端成功: a0nC800000JkparIAB
+2026-05-06 16:52:38,873 INFO forceid=a0nC800000JkparIAB stage=review attempt=0 数据库同步成功: a0nC800000JkparIAB
+需补齐资料 (141s)
+[20/42] a0nC800000IxpSLIAZ ... 2026-05-06 16:52:39,550 INFO forceid=a0nC800000IxpSLIAZ stage=start attempt=0 [20/42] 开始审核 航班延误-案件号【000006774135】
+2026-05-06 16:52:39,551 INFO forceid=a0nC800000IxpSLIAZ stage=fd_vision_extract attempt=0 [20/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:52:39,551 INFO forceid=a0nC800000IxpSLIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:52:50,744 INFO forceid=a0nC800000IxpSLIAZ stage=material_extractor attempt=0 FileList 下载完成: 12/12 个文件
+2026-05-06 16:53:39,138 INFO forceid=a0nC800000IxpSLIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:54:28,467 INFO forceid=a0nC800000IxpSLIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:54:53,275 INFO forceid=a0nC800000IxpSLIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 15 个字段
+2026-05-06 16:54:53,275 INFO forceid=a0nC800000IxpSLIAZ stage=fd_parse attempt=0 [20/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:55:11,629 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 16:55:11,629 INFO forceid=- stage=- attempt=0 使用Mock数据: SU2048 2026-02-22
+2026-05-06 16:55:11,631 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 16:55:11,632 INFO forceid=- stage=- attempt=0 使用Mock数据: 5H522 2026-02-22
+2026-05-06 16:55:11,632 INFO forceid=a0nC800000IxpSLIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IxpSLIAZ] 飞常准候选未返回数据: 5H522 MMK, error=航班数据源未配置或不可用
+2026-05-06 16:55:11,633 INFO forceid=a0nC800000IxpSLIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IxpSLIAZ] 飞常准候选未返回数据: SU2048 SVX, error=航班数据源未配置或不可用
+2026-05-06 16:55:11,633 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 16:55:11,633 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SVX
+2026-05-06 16:55:11,633 INFO forceid=a0nC800000IxpSLIAZ stage=fd_hardcheck attempt=0 [20/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:55:11,633 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 16:55:11,634 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SVX
+2026-05-06 16:55:11,636 INFO forceid=a0nC800000IxpSLIAZ stage=fd_audit attempt=0 [20/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:55:18,056 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 16:55:18,057 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SVX
+2026-05-06 16:55:18,997 INFO forceid=a0nC800000IxpSLIAZ stage=review attempt=0 推送前端成功: a0nC800000IxpSLIAZ
+2026-05-06 16:55:19,942 INFO forceid=a0nC800000IxpSLIAZ stage=review attempt=0 数据库同步成功: a0nC800000IxpSLIAZ
+通过 (159s)
+[21/42] a0nC800000LOW4LIAX ... 2026-05-06 16:55:20,676 INFO forceid=a0nC800000LOW4LIAX stage=start attempt=0 [21/42] 开始审核 航班延误-案件号【000006829736】
+2026-05-06 16:55:20,676 INFO forceid=a0nC800000LOW4LIAX stage=fd_vision_extract attempt=0 [21/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:55:20,677 INFO forceid=a0nC800000LOW4LIAX stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:55:25,972 INFO forceid=a0nC800000LOW4LIAX stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 16:55:56,594 INFO forceid=a0nC800000LOW4LIAX stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 16:56:36,417 INFO forceid=a0nC800000LOW4LIAX stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 16:56:59,170 INFO forceid=a0nC800000LOW4LIAX stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 16:56:59,170 INFO forceid=a0nC800000LOW4LIAX stage=fd_parse attempt=0 [21/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:57:26,236 INFO forceid=a0nC800000LOW4LIAX stage=fd_aviation_lookup attempt=0 [a0nC800000LOW4LIAX] 飞常准查询成功（候选=8B969 DPS）: -> 延误 [DPS->CAN] route_match=True
+2026-05-06 16:57:26,236 INFO forceid=a0nC800000LOW4LIAX stage=fd_aviation_lookup attempt=0 [a0nC800000LOW4LIAX] 飞常准查询成功（候选=8B968 CAN）: -> 已到达 [CAN->DPS] route_match=False
+2026-05-06 16:57:26,238 INFO forceid=a0nC800000LOW4LIAX stage=fd_hardcheck attempt=0 [21/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:57:26,240 INFO forceid=a0nC800000LOW4LIAX stage=fd_audit attempt=0 [21/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:57:31,994 INFO forceid=a0nC800000LOW4LIAX stage=review attempt=0 推送前端成功: a0nC800000LOW4LIAX
+2026-05-06 16:57:32,964 INFO forceid=a0nC800000LOW4LIAX stage=review attempt=0 数据库同步成功: a0nC800000LOW4LIAX
+通过 (130s)
+[22/42] a0nC800000IxpSMIAZ ... 2026-05-06 16:57:33,625 INFO forceid=a0nC800000IxpSMIAZ stage=start attempt=0 [22/42] 开始审核 航班延误-案件号【000006746859】
+2026-05-06 16:57:33,625 INFO forceid=a0nC800000IxpSMIAZ stage=fd_vision_extract attempt=0 [22/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:57:33,625 INFO forceid=a0nC800000IxpSMIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:57:38,244 INFO forceid=a0nC800000IxpSMIAZ stage=material_extractor attempt=0 FileList 下载完成: 9/9 个文件
+2026-05-06 16:58:08,583 INFO forceid=a0nC800000IxpSMIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 16:58:46,607 INFO forceid=a0nC800000IxpSMIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 16:58:46,608 INFO forceid=a0nC800000IxpSMIAZ stage=fd_parse attempt=0 [22/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 16:59:12,549 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 16:59:12,549 INFO forceid=- stage=- attempt=0 使用Mock数据: C6511 2026-02-23
+2026-05-06 16:59:12,549 INFO forceid=a0nC800000IxpSMIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IxpSMIAZ] 飞常准候选未返回数据: C6511 TAS, error=航班数据源未配置或不可用
+2026-05-06 16:59:12,550 INFO forceid=a0nC800000IxpSMIAZ stage=fd_hardcheck attempt=0 [22/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 16:59:12,552 INFO forceid=a0nC800000IxpSMIAZ stage=fd_audit attempt=0 [22/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 16:59:18,543 INFO forceid=a0nC800000IxpSMIAZ stage=review attempt=0 推送前端成功: a0nC800000IxpSMIAZ
+2026-05-06 16:59:19,239 INFO forceid=a0nC800000IxpSMIAZ stage=review attempt=0 数据库同步成功: a0nC800000IxpSMIAZ
+通过 (104s)
+[23/42] a0nC800000LPJY7IAP ... 2026-05-06 16:59:19,596 INFO forceid=a0nC800000LPJY7IAP stage=start attempt=0 [23/42] 开始审核 航班延误-案件号【000006507642】
+2026-05-06 16:59:19,596 INFO forceid=a0nC800000LPJY7IAP stage=fd_vision_extract attempt=0 [23/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 16:59:19,596 INFO forceid=a0nC800000LPJY7IAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 16:59:22,848 INFO forceid=a0nC800000LPJY7IAP stage=material_extractor attempt=0 FileList 下载完成: 5/5 个文件
+2026-05-06 16:59:53,721 INFO forceid=a0nC800000LPJY7IAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 17:00:27,194 INFO forceid=a0nC800000LPJY7IAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 5 份附件（1 批），返回 15 个字段
+2026-05-06 17:00:27,195 INFO forceid=a0nC800000LPJY7IAP stage=fd_parse attempt=0 [23/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:00:45,182 INFO forceid=a0nC800000LPJY7IAP stage=fd_aviation_lookup attempt=0 [a0nC800000LPJY7IAP] 飞常准查询成功（候选=AY099 HEL）: -> 已到达 [HEL->HKG] route_match=True
+2026-05-06 17:00:45,182 INFO forceid=a0nC800000LPJY7IAP stage=fd_aviation_lookup attempt=0 [a0nC800000LPJY7IAP] 飞常准查询成功（候选=AY0151 HEL）: -> 已到达 [HEL->HKT] route_match=False
+2026-05-06 17:00:45,185 INFO forceid=a0nC800000LPJY7IAP stage=fd_hardcheck attempt=0 [23/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:00:45,186 INFO forceid=a0nC800000LPJY7IAP stage=fd_audit attempt=0 [23/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:00:51,145 INFO forceid=a0nC800000LPJY7IAP stage=review attempt=0 推送前端成功: a0nC800000LPJY7IAP
+2026-05-06 17:00:51,678 INFO forceid=a0nC800000LPJY7IAP stage=review attempt=0 数据库同步成功: a0nC800000LPJY7IAP
+拒绝 (91s)
+[24/42] a0nC800000IxpSNIAZ ... 2026-05-06 17:00:52,179 INFO forceid=a0nC800000IxpSNIAZ stage=start attempt=0 [24/42] 开始审核 航班延误-案件号【000006774134】
+2026-05-06 17:00:52,179 INFO forceid=a0nC800000IxpSNIAZ stage=fd_vision_extract attempt=0 [24/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:00:52,179 INFO forceid=a0nC800000IxpSNIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:01:01,622 INFO forceid=a0nC800000IxpSNIAZ stage=material_extractor attempt=0 FileList 下载完成: 12/12 个文件
+2026-05-06 17:01:43,000 INFO forceid=a0nC800000IxpSNIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:02:26,274 INFO forceid=a0nC800000IxpSNIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:02:53,733 INFO forceid=a0nC800000IxpSNIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 13 份附件（2 批），返回 15 个字段
+2026-05-06 17:02:53,733 INFO forceid=a0nC800000IxpSNIAZ stage=fd_parse attempt=0 [24/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:03:11,755 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=3, 航班号格式不正确
+2026-05-06 17:03:11,756 INFO forceid=- stage=- attempt=0 使用Mock数据: EQ9072799 2026-02-22
+2026-05-06 17:03:12,006 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 17:03:12,006 INFO forceid=- stage=- attempt=0 使用Mock数据: 5H522 2026-02-22
+2026-05-06 17:03:12,006 INFO forceid=a0nC800000IxpSNIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IxpSNIAZ] 飞常准候选未返回数据: EQ9072799 MMK, error=航班数据源未配置或不可用
+2026-05-06 17:03:12,006 INFO forceid=a0nC800000IxpSNIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000IxpSNIAZ] 飞常准候选未返回数据: 5H522 MMK, error=航班数据源未配置或不可用
+2026-05-06 17:03:12,006 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 17:03:12,007 INFO forceid=a0nC800000IxpSNIAZ stage=fd_hardcheck attempt=0 [24/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:03:12,007 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 17:03:12,008 INFO forceid=a0nC800000IxpSNIAZ stage=fd_audit attempt=0 [24/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:03:18,827 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: MMK
+2026-05-06 17:03:22,539 INFO forceid=a0nC800000IxpSNIAZ stage=review attempt=0 推送前端成功: a0nC800000IxpSNIAZ
+2026-05-06 17:03:23,242 INFO forceid=a0nC800000IxpSNIAZ stage=review attempt=0 数据库同步成功: a0nC800000IxpSNIAZ
+拒绝 (147s)
+[25/42] a0nC800000JmEyfIAF ... 2026-05-06 17:03:23,642 INFO forceid=a0nC800000JmEyfIAF stage=start attempt=0 [25/42] 开始审核 航班延误-案件号【000006616457】
+2026-05-06 17:03:23,642 INFO forceid=a0nC800000JmEyfIAF stage=fd_vision_extract attempt=0 [25/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:03:23,642 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:03:56,261 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 FileList 下载完成: 35/35 个文件
+2026-05-06 17:04:40,429 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/4, attempt 1/3)
+2026-05-06 17:06:09,325 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/4, attempt 1/3)
+2026-05-06 17:07:41,496 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/4, attempt 1/3)
+2026-05-06 17:09:38,041 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 material extract [Vision] request start(batch 4/4, attempt 1/3)
+2026-05-06 17:10:46,115 INFO forceid=a0nC800000JmEyfIAF stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 36 份附件（4 批），返回 15 个字段
+2026-05-06 17:10:46,115 INFO forceid=a0nC800000JmEyfIAF stage=fd_parse attempt=0 [25/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:11:12,074 INFO forceid=a0nC800000JmEyfIAF stage=fd_aviation_lookup attempt=0 [a0nC800000JmEyfIAF] 飞常准查询成功（候选=SK683 CPH）: -> 已到达 [CPH->MXP] route_match=False
+2026-05-06 17:11:12,074 INFO forceid=a0nC800000JmEyfIAF stage=fd_aviation_lookup attempt=0 [a0nC800000JmEyfIAF] 飞常准查询成功（候选=SK4455 TOS）: -> 已到达 [TOS->CPH] route_match=False
+2026-05-06 17:11:12,074 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: TOS
+2026-05-06 17:11:12,074 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ROM
+2026-05-06 17:11:12,075 INFO forceid=a0nC800000JmEyfIAF stage=fd_hardcheck attempt=0 [25/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:11:12,075 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: TOS
+2026-05-06 17:11:12,075 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ROM
+2026-05-06 17:11:12,077 INFO forceid=a0nC800000JmEyfIAF stage=fd_audit attempt=0 [25/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:11:18,058 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: TOS
+2026-05-06 17:11:18,058 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: ROM
+2026-05-06 17:11:19,471 INFO forceid=a0nC800000JmEyfIAF stage=review attempt=0 推送前端成功: a0nC800000JmEyfIAF
+2026-05-06 17:11:20,418 INFO forceid=a0nC800000JmEyfIAF stage=review attempt=0 数据库同步成功: a0nC800000JmEyfIAF
+通过 (474s)
+[26/42] a0nC800000IBiOLIA1 ... 2026-05-06 17:11:21,016 INFO forceid=a0nC800000IBiOLIA1 stage=start attempt=0 [26/42] 开始审核 航班延误-案件号【000006418725】
+2026-05-06 17:11:21,016 INFO forceid=a0nC800000IBiOLIA1 stage=fd_vision_extract attempt=0 [26/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:11:21,016 INFO forceid=a0nC800000IBiOLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:11:26,936 INFO forceid=a0nC800000IBiOLIA1 stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 17:12:35,509 INFO forceid=a0nC800000IBiOLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:13:18,690 INFO forceid=a0nC800000IBiOLIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:13:41,624 INFO forceid=a0nC800000IBiOLIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 17:13:41,625 INFO forceid=a0nC800000IBiOLIA1 stage=fd_parse attempt=0 [26/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:13:59,479 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 17:13:59,479 INFO forceid=- stage=- attempt=0 使用Mock数据: ANA771 2026-02-19
+2026-05-06 17:13:59,480 INFO forceid=a0nC800000IBiOLIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000IBiOLIA1] 飞常准候选未返回数据: ANA771 OSAKA, error=航班数据源未配置或不可用
+2026-05-06 17:13:59,480 INFO forceid=a0nC800000IBiOLIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000IBiOLIA1] 飞常准查询成功（候选=NH979 UNKNOWN）: -> 已到达 [KIX->PEK] route_match=False
+2026-05-06 17:13:59,481 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: OSAKA
+2026-05-06 17:13:59,481 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SAPPORO
+2026-05-06 17:13:59,482 INFO forceid=a0nC800000IBiOLIA1 stage=fd_hardcheck attempt=0 [26/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:13:59,483 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: OSAKA
+2026-05-06 17:13:59,483 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SAPPORO
+2026-05-06 17:13:59,485 INFO forceid=a0nC800000IBiOLIA1 stage=fd_audit attempt=0 [26/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:14:06,482 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: OSAKA
+2026-05-06 17:14:06,482 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: SAPPORO
+2026-05-06 17:14:07,748 INFO forceid=a0nC800000IBiOLIA1 stage=review attempt=0 推送前端成功: a0nC800000IBiOLIA1
+2026-05-06 17:14:08,406 INFO forceid=a0nC800000IBiOLIA1 stage=review attempt=0 数据库同步成功: a0nC800000IBiOLIA1
+拒绝 (165s)
+[27/42] a0nC800000I0dDXIAZ ... 2026-05-06 17:14:08,870 INFO forceid=a0nC800000I0dDXIAZ stage=start attempt=0 [27/42] 开始审核 航班延误-案件号【000006622391】
+2026-05-06 17:14:09,100 INFO forceid=a0nC800000I0dDXIAZ stage=fd_vision_extract attempt=0 [27/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:14:09,101 INFO forceid=a0nC800000I0dDXIAZ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:14:12,777 INFO forceid=a0nC800000I0dDXIAZ stage=material_extractor attempt=0 FileList 下载完成: 6/6 个文件
+2026-05-06 17:14:45,697 INFO forceid=a0nC800000I0dDXIAZ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 17:15:17,636 INFO forceid=a0nC800000I0dDXIAZ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 17:15:17,636 INFO forceid=a0nC800000I0dDXIAZ stage=fd_parse attempt=0 [27/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:15:35,302 INFO forceid=a0nC800000I0dDXIAZ stage=fd_aviation_lookup attempt=0 [a0nC800000I0dDXIAZ] 飞常准查询成功（候选=HU492 BRU）: -> 取消 [BRU->PEK] route_match=True
+2026-05-06 17:15:35,307 INFO forceid=a0nC800000I0dDXIAZ stage=fd_hardcheck attempt=0 [27/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:15:35,309 INFO forceid=a0nC800000I0dDXIAZ stage=fd_audit attempt=0 [27/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:15:43,561 INFO forceid=a0nC800000I0dDXIAZ stage=review attempt=0 推送前端成功: a0nC800000I0dDXIAZ
+2026-05-06 17:15:44,382 INFO forceid=a0nC800000I0dDXIAZ stage=review attempt=0 数据库同步成功: a0nC800000I0dDXIAZ
+拒绝 (93s)
+[28/42] a0nC800000I0zypIAB ... 2026-05-06 17:15:45,281 INFO forceid=a0nC800000I0zypIAB stage=start attempt=0 [28/42] 开始审核 航班延误-案件号【000006621567】
+2026-05-06 17:15:45,281 INFO forceid=a0nC800000I0zypIAB stage=fd_vision_extract attempt=0 [28/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:15:45,281 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:16:15,790 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 FileList 下载完成: 28/28 个文件
+2026-05-06 17:17:35,625 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 17:19:19,876 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 17:21:02,758 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 17:22:01,310 INFO forceid=a0nC800000I0zypIAB stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 29 份附件（3 批），返回 15 个字段
+2026-05-06 17:22:01,310 INFO forceid=a0nC800000I0zypIAB stage=fd_parse attempt=0 [28/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:22:26,841 INFO forceid=a0nC800000I0zypIAB stage=fd_aviation_lookup attempt=0 [a0nC800000I0zypIAB] 飞常准查询成功（候选=CX584 HKG）: -> 取消 [HKG->CTS] route_match=False
+2026-05-06 17:22:26,841 INFO forceid=a0nC800000I0zypIAB stage=fd_aviation_lookup attempt=0 [a0nC800000I0zypIAB] 飞常准查询成功（候选=CX565 OSAKA）: -> 已到达 [KIX->HKG] route_match=False
+2026-05-06 17:22:27,143 INFO forceid=a0nC800000I0zypIAB stage=fd_alt_aviation_lookup attempt=0 [a0nC800000I0zypIAB] 接驳航班飞常准查询成功: CX583 2026-01-26 -> 已到达
+2026-05-06 17:22:27,145 INFO forceid=a0nC800000I0zypIAB stage=fd_hardcheck attempt=0 [28/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:22:27,146 INFO forceid=a0nC800000I0zypIAB stage=fd_audit attempt=0 [28/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:22:34,494 INFO forceid=a0nC800000I0zypIAB stage=review attempt=0 推送前端成功: a0nC800000I0zypIAB
+2026-05-06 17:22:35,449 INFO forceid=a0nC800000I0zypIAB stage=review attempt=0 数据库同步成功: a0nC800000I0zypIAB
+通过 (408s)
+[29/42] a0nC800000L9bM1IAJ ... 2026-05-06 17:22:36,101 INFO forceid=a0nC800000L9bM1IAJ stage=start attempt=0 [29/42] 开始审核 航班延误-案件号【000006694663】
+2026-05-06 17:22:36,102 INFO forceid=a0nC800000L9bM1IAJ stage=fd_vision_extract attempt=0 [29/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:22:36,102 INFO forceid=a0nC800000L9bM1IAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:22:41,149 INFO forceid=a0nC800000L9bM1IAJ stage=material_extractor attempt=0 FileList 下载完成: 18/18 个文件
+2026-05-06 17:23:14,234 INFO forceid=a0nC800000L9bM1IAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:24:16,714 INFO forceid=a0nC800000L9bM1IAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:24:45,967 INFO forceid=a0nC800000L9bM1IAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 15 个字段
+2026-05-06 17:24:45,968 INFO forceid=a0nC800000L9bM1IAJ stage=fd_parse attempt=0 [29/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:25:06,995 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 17:25:06,995 INFO forceid=- stage=- attempt=0 使用Mock数据: AA8001 2022-01-29
+2026-05-06 17:25:06,995 INFO forceid=a0nC800000L9bM1IAJ stage=fd_aviation_lookup attempt=0 [a0nC800000L9bM1IAJ] 飞常准查询成功（候选=AA1878 SFO）: -> 已到达 [SFO->CLT] route_match=True
+2026-05-06 17:25:06,995 INFO forceid=a0nC800000L9bM1IAJ stage=fd_aviation_lookup attempt=0 [a0nC800000L9bM1IAJ] 飞常准候选未返回数据: AA8001 SFO, error=航班数据源未配置或不可用
+2026-05-06 17:25:06,996 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CLT
+2026-05-06 17:25:07,001 INFO forceid=a0nC800000L9bM1IAJ stage=fd_hardcheck attempt=0 [29/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:25:07,001 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CLT
+2026-05-06 17:25:07,003 INFO forceid=a0nC800000L9bM1IAJ stage=fd_audit attempt=0 [29/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:25:12,893 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CLT
+2026-05-06 17:25:14,332 INFO forceid=a0nC800000L9bM1IAJ stage=review attempt=0 推送前端成功: a0nC800000L9bM1IAJ
+2026-05-06 17:25:15,250 INFO forceid=a0nC800000L9bM1IAJ stage=review attempt=0 数据库同步成功: a0nC800000L9bM1IAJ
+通过 (157s)
+[30/42] a0nC800000I4RAXIA3 ... 2026-05-06 17:25:16,061 INFO forceid=a0nC800000I4RAXIA3 stage=start attempt=0 [30/42] 开始审核 航班延误-案件号【000006681242】
+2026-05-06 17:25:16,062 INFO forceid=a0nC800000I4RAXIA3 stage=fd_vision_extract attempt=0 [30/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:25:16,062 INFO forceid=a0nC800000I4RAXIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:25:19,051 INFO forceid=a0nC800000I4RAXIA3 stage=material_extractor attempt=0 FileList 下载完成: 7/7 个文件
+2026-05-06 17:25:47,351 INFO forceid=a0nC800000I4RAXIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 17:26:12,836 INFO forceid=a0nC800000I4RAXIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 7 份附件（1 批），返回 15 个字段
+2026-05-06 17:26:12,836 INFO forceid=a0nC800000I4RAXIA3 stage=fd_parse attempt=0 [30/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:26:36,618 INFO forceid=a0nC800000I4RAXIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000I4RAXIA3] 飞常准查询成功（候选=UA889 PEK）: -> 取消 [PEK->SFO] route_match=True
+2026-05-06 17:26:36,620 INFO forceid=a0nC800000I4RAXIA3 stage=fd_hardcheck attempt=0 [30/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:26:36,623 INFO forceid=a0nC800000I4RAXIA3 stage=fd_audit attempt=0 [30/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:26:42,866 INFO forceid=a0nC800000I4RAXIA3 stage=review attempt=0 推送前端成功: a0nC800000I4RAXIA3
+2026-05-06 17:26:43,677 INFO forceid=a0nC800000I4RAXIA3 stage=review attempt=0 数据库同步成功: a0nC800000I4RAXIA3
+通过 (85s)
+[31/42] a0nC800000N4DxVIAV ... 2026-05-06 17:26:44,104 INFO forceid=a0nC800000N4DxVIAV stage=start attempt=0 [31/42] 开始审核 航班延误-案件号【000006320656】
+2026-05-06 17:26:44,105 INFO forceid=a0nC800000N4DxVIAV stage=fd_vision_extract attempt=0 [31/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:26:44,105 INFO forceid=a0nC800000N4DxVIAV stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:27:24,212 INFO forceid=a0nC800000N4DxVIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:28:21,298 INFO forceid=a0nC800000N4DxVIAV stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:28:54,073 INFO forceid=a0nC800000N4DxVIAV stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 15 个字段
+2026-05-06 17:28:54,074 INFO forceid=a0nC800000N4DxVIAV stage=fd_parse attempt=0 [31/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:29:13,332 INFO forceid=a0nC800000N4DxVIAV stage=fd_aviation_lookup attempt=0 [a0nC800000N4DxVIAV] 飞常准查询成功（候选=EY 031 AUH）: -> 已到达 [AUH->CDG] route_match=True
+2026-05-06 17:29:13,332 INFO forceid=a0nC800000N4DxVIAV stage=fd_aviation_lookup attempt=0 [a0nC800000N4DxVIAV] 飞常准查询成功（候选=EY 405 BKK）: -> 已到达 [BKK->AUH] route_match=False
+2026-05-06 17:29:13,337 INFO forceid=a0nC800000N4DxVIAV stage=fd_hardcheck attempt=0 [31/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:29:13,340 INFO forceid=a0nC800000N4DxVIAV stage=fd_audit attempt=0 [31/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:29:20,156 INFO forceid=a0nC800000N4DxVIAV stage=review attempt=0 推送前端成功: a0nC800000N4DxVIAV
+2026-05-06 17:29:20,829 INFO forceid=a0nC800000N4DxVIAV stage=review attempt=0 数据库同步成功: a0nC800000N4DxVIAV
+通过 (155s)
+[32/42] a0nC800000I5q8TIAR ... 2026-05-06 17:29:21,319 INFO forceid=a0nC800000I5q8TIAR stage=start attempt=0 [32/42] 开始审核 航班延误-案件号【000006639678】
+2026-05-06 17:29:21,319 INFO forceid=a0nC800000I5q8TIAR stage=fd_vision_extract attempt=0 [32/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:29:21,319 INFO forceid=a0nC800000I5q8TIAR stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:30:39,121 INFO forceid=a0nC800000I5q8TIAR stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 17:31:29,879 INFO forceid=a0nC800000I5q8TIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 17:32:10,622 INFO forceid=a0nC800000I5q8TIAR stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 9 份附件（1 批），返回 15 个字段
+2026-05-06 17:32:10,622 INFO forceid=a0nC800000I5q8TIAR stage=fd_parse attempt=0 [32/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:32:36,748 INFO forceid=a0nC800000I5q8TIAR stage=fd_aviation_lookup attempt=0 [a0nC800000I5q8TIAR] 飞常准查询成功（候选=TK2001 PKS）: -> 取消 [NAV->IST] route_match=False
+2026-05-06 17:32:36,748 INFO forceid=a0nC800000I5q8TIAR stage=fd_aviation_lookup attempt=0 [a0nC800000I5q8TIAR] 飞常准查询成功（候选=TK2005 PKS）: -> 取消 [NAV->IST] route_match=False
+2026-05-06 17:32:36,748 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PKS
+2026-05-06 17:32:36,764 INFO forceid=a0nC800000I5q8TIAR stage=fd_hardcheck attempt=0 [32/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:32:36,764 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PKS
+2026-05-06 17:32:36,765 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LZB/UNKNOWN
+2026-05-06 17:32:36,765 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LZB/UNKNOWN
+2026-05-06 17:32:36,766 INFO forceid=a0nC800000I5q8TIAR stage=fd_audit attempt=0 [32/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:32:42,465 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: PKS
+2026-05-06 17:32:43,771 INFO forceid=a0nC800000I5q8TIAR stage=review attempt=0 推送前端成功: a0nC800000I5q8TIAR
+2026-05-06 17:32:44,462 INFO forceid=a0nC800000I5q8TIAR stage=review attempt=0 数据库同步成功: a0nC800000I5q8TIAR
+需补齐资料 (201s)
+[33/42] a0nC800000I5vrJIAR ... 2026-05-06 17:32:44,852 INFO forceid=a0nC800000I5vrJIAR stage=start attempt=0 [33/42] 开始审核 航班延误-案件号【000006639666】
+2026-05-06 17:32:44,852 INFO forceid=a0nC800000I5vrJIAR stage=fd_vision_extract attempt=0 [33/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:32:44,852 INFO forceid=a0nC800000I5vrJIAR stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:33:42,830 INFO forceid=a0nC800000I5vrJIAR stage=material_extractor attempt=0 FileList 下载完成: 11/11 个文件
+2026-05-06 17:34:35,582 INFO forceid=a0nC800000I5vrJIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+2026-05-06 17:35:13,064 INFO forceid=a0nC800000I5vrJIAR stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 10 份附件（1 批），返回 15 个字段
+2026-05-06 17:35:13,064 INFO forceid=a0nC800000I5vrJIAR stage=fd_parse attempt=0 [33/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:35:35,320 INFO forceid=- stage=- attempt=0 航班数据命中缓存: TK2001 2026-01-19
+2026-05-06 17:35:35,321 INFO forceid=- stage=- attempt=0 航班数据命中缓存: TK2005 2026-01-19
+2026-05-06 17:35:35,321 INFO forceid=a0nC800000I5vrJIAR stage=fd_aviation_lookup attempt=0 [a0nC800000I5vrJIAR] 飞常准查询成功（候选=TK2001 PKS）: -> 取消 [NAV->IST] route_match=False
+2026-05-06 17:35:35,321 INFO forceid=a0nC800000I5vrJIAR stage=fd_aviation_lookup attempt=0 [a0nC800000I5vrJIAR] 飞常准查询成功（候选=TK2005 PKS）: -> 取消 [NAV->IST] route_match=False
+2026-05-06 17:35:35,321 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BUS
+2026-05-06 17:35:35,321 INFO forceid=a0nC800000I5vrJIAR stage=fd_hardcheck attempt=0 [33/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:35:35,321 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BUS
+2026-05-06 17:35:35,321 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LZB
+2026-05-06 17:35:35,321 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: LZB
+2026-05-06 17:35:35,322 INFO forceid=a0nC800000I5vrJIAR stage=fd_audit attempt=0 [33/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:35:44,772 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: BUS
+2026-05-06 17:35:45,690 INFO forceid=a0nC800000I5vrJIAR stage=review attempt=0 推送前端成功: a0nC800000I5vrJIAR
+2026-05-06 17:35:46,320 INFO forceid=a0nC800000I5vrJIAR stage=review attempt=0 数据库同步成功: a0nC800000I5vrJIAR
+需补齐资料 (180s)
+[34/42] a0nC800000M1QQQIA3 ... 2026-05-06 17:35:46,913 INFO forceid=a0nC800000M1QQQIA3 stage=start attempt=0 [34/42] 开始审核 航班延误-案件号【000006842841】
+2026-05-06 17:35:46,913 INFO forceid=a0nC800000M1QQQIA3 stage=fd_vision_extract attempt=0 [34/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:35:46,913 INFO forceid=a0nC800000M1QQQIA3 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:36:13,563 INFO forceid=a0nC800000M1QQQIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:37:02,758 INFO forceid=a0nC800000M1QQQIA3 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:37:32,479 INFO forceid=a0nC800000M1QQQIA3 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 15 个字段
+2026-05-06 17:37:32,479 INFO forceid=a0nC800000M1QQQIA3 stage=fd_parse attempt=0 [34/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:37:51,474 INFO forceid=a0nC800000M1QQQIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000M1QQQIA3] 飞常准查询成功（候选=9C8571 PVG）: -> 已到达 [PVG->CJU] route_match=True
+2026-05-06 17:37:51,474 INFO forceid=a0nC800000M1QQQIA3 stage=fd_aviation_lookup attempt=0 [a0nC800000M1QQQIA3] 飞常准查询成功（候选=9C8570 CJU）: -> 已到达 [CJU->PVG] route_match=False
+2026-05-06 17:37:51,474 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CJU
+2026-05-06 17:37:51,475 INFO forceid=a0nC800000M1QQQIA3 stage=fd_hardcheck attempt=0 [34/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:37:51,475 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CJU
+2026-05-06 17:37:51,476 INFO forceid=a0nC800000M1QQQIA3 stage=fd_audit attempt=0 [34/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:37:58,066 WARNING forceid=- stage=airport attempt=0 [airport.resolve_country] 未知机场三字码: CJU
+2026-05-06 17:37:59,357 INFO forceid=a0nC800000M1QQQIA3 stage=review attempt=0 推送前端成功: a0nC800000M1QQQIA3
+2026-05-06 17:38:00,062 INFO forceid=a0nC800000M1QQQIA3 stage=review attempt=0 数据库同步成功: a0nC800000M1QQQIA3
+通过 (131s)
+[35/42] a0nC800000MtcuTIAR ... 2026-05-06 17:38:00,338 INFO forceid=a0nC800000MtcuTIAR stage=start attempt=0 [35/42] 开始审核 航班延误-案件号【000006320636】
+2026-05-06 17:38:00,338 INFO forceid=a0nC800000MtcuTIAR stage=fd_vision_extract attempt=0 [35/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:38:00,338 INFO forceid=a0nC800000MtcuTIAR stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:38:20,215 INFO forceid=a0nC800000MtcuTIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:39:16,911 INFO forceid=a0nC800000MtcuTIAR stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:39:49,582 INFO forceid=a0nC800000MtcuTIAR stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 15 个字段
+2026-05-06 17:39:49,582 INFO forceid=a0nC800000MtcuTIAR stage=fd_parse attempt=0 [35/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:40:13,300 INFO forceid=a0nC800000MtcuTIAR stage=fd_aviation_lookup attempt=0 [a0nC800000MtcuTIAR] 飞常准查询成功（候选=EY031 AUH）: -> 已到达 [AUH->CDG] route_match=True
+2026-05-06 17:40:13,300 INFO forceid=a0nC800000MtcuTIAR stage=fd_aviation_lookup attempt=0 [a0nC800000MtcuTIAR] 飞常准查询成功（候选=EY405 BKK）: -> 已到达 [BKK->AUH] route_match=False
+2026-05-06 17:40:13,301 INFO forceid=a0nC800000MtcuTIAR stage=fd_hardcheck attempt=0 [35/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:40:13,302 INFO forceid=a0nC800000MtcuTIAR stage=fd_audit attempt=0 [35/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:40:19,952 INFO forceid=a0nC800000MtcuTIAR stage=review attempt=0 推送前端成功: a0nC800000MtcuTIAR
+2026-05-06 17:40:20,459 INFO forceid=a0nC800000MtcuTIAR stage=review attempt=0 数据库同步成功: a0nC800000MtcuTIAR
+通过 (139s)
+[36/42] a0nC800000LP6z3IAD ... SKIP (no folder)
+[37/42] a0nC800000IR0EWIA1 ... 2026-05-06 17:40:21,080 INFO forceid=a0nC800000IR0EWIA1 stage=start attempt=0 [37/42] 开始审核 航班延误-案件号【000006408699】
+2026-05-06 17:40:21,080 INFO forceid=a0nC800000IR0EWIA1 stage=fd_vision_extract attempt=0 [37/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:40:21,080 INFO forceid=a0nC800000IR0EWIA1 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:40:27,089 INFO forceid=a0nC800000IR0EWIA1 stage=material_extractor attempt=0 FileList 下载完成: 15/15 个文件
+2026-05-06 17:40:55,173 INFO forceid=a0nC800000IR0EWIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:41:41,547 INFO forceid=a0nC800000IR0EWIA1 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:42:07,054 INFO forceid=a0nC800000IR0EWIA1 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 16 份附件（2 批），返回 15 个字段
+2026-05-06 17:42:07,054 INFO forceid=a0nC800000IR0EWIA1 stage=fd_parse attempt=0 [37/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:42:25,467 INFO forceid=a0nC800000IR0EWIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000IR0EWIA1] 飞常准查询成功（候选=TK072 IST）: -> 已到达 [IST->CAN] route_match=True
+2026-05-06 17:42:25,467 INFO forceid=a0nC800000IR0EWIA1 stage=fd_aviation_lookup attempt=0 [a0nC800000IR0EWIA1] 飞常准查询成功（候选=TK0726 CAN）: -> 已到达 [IST->KTM] route_match=False
+2026-05-06 17:42:25,468 INFO forceid=a0nC800000IR0EWIA1 stage=fd_hardcheck attempt=0 [37/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:42:25,470 INFO forceid=a0nC800000IR0EWIA1 stage=fd_exclusion_precheck attempt=0 [37/42] 硬免责命中，跳过AI判定: 【承保区域不符】保险计划承保欧洲，出发地(IST/TR)或目的地(CAN/CN)均不在欧洲承保区域内
+2026-05-06 17:42:26,265 INFO forceid=a0nC800000IR0EWIA1 stage=review attempt=0 推送前端成功: a0nC800000IR0EWIA1
+2026-05-06 17:42:26,800 INFO forceid=a0nC800000IR0EWIA1 stage=review attempt=0 数据库同步成功: a0nC800000IR0EWIA1
+拒绝 (124s)
+[38/42] a0nC800000IBVNuIAP ... 2026-05-06 17:42:27,158 INFO forceid=a0nC800000IBVNuIAP stage=start attempt=0 [38/42] 开始审核 航班延误-案件号【000006716257】
+2026-05-06 17:42:27,158 INFO forceid=a0nC800000IBVNuIAP stage=fd_vision_extract attempt=0 [38/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:42:27,158 INFO forceid=a0nC800000IBVNuIAP stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:42:33,078 INFO forceid=a0nC800000IBVNuIAP stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 17:42:46,890 INFO forceid=a0nC800000IBVNuIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:43:28,977 INFO forceid=a0nC800000IBVNuIAP stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:43:53,497 INFO forceid=a0nC800000IBVNuIAP stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 17:43:53,497 INFO forceid=a0nC800000IBVNuIAP stage=fd_parse attempt=0 [38/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:44:14,301 INFO forceid=a0nC800000IBVNuIAP stage=fd_aviation_lookup attempt=0 [a0nC800000IBVNuIAP] 飞常准查询成功（候选=DP996 IST）: -> 已到达 [IST->VKO] route_match=True
+2026-05-06 17:44:14,301 INFO forceid=a0nC800000IBVNuIAP stage=fd_aviation_lookup attempt=0 [a0nC800000IBVNuIAP] 飞常准查询成功（候选=MU592 PVG）: -> 已到达 [SVO->PVG] route_match=False
+2026-05-06 17:44:14,302 INFO forceid=a0nC800000IBVNuIAP stage=fd_hardcheck attempt=0 [38/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:44:14,303 INFO forceid=a0nC800000IBVNuIAP stage=fd_audit attempt=0 [38/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:44:23,646 INFO forceid=a0nC800000IBVNuIAP stage=review attempt=0 推送前端成功: a0nC800000IBVNuIAP
+2026-05-06 17:44:24,275 INFO forceid=a0nC800000IBVNuIAP stage=review attempt=0 数据库同步成功: a0nC800000IBVNuIAP
+通过 (116s)
+[39/42] a0nC800000I9eP3IAJ ... 2026-05-06 17:44:24,629 INFO forceid=a0nC800000I9eP3IAJ stage=start attempt=0 [39/42] 开始审核 航班延误-案件号【000006725645】
+2026-05-06 17:44:24,629 INFO forceid=a0nC800000I9eP3IAJ stage=fd_vision_extract attempt=0 [39/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:44:24,629 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:44:30,129 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 FileList 下载完成: 29/29 个文件
+2026-05-06 17:44:42,965 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/3, attempt 1/3)
+2026-05-06 17:45:51,750 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/3, attempt 1/3)
+2026-05-06 17:46:58,886 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 material extract [Vision] request start(batch 3/3, attempt 1/3)
+2026-05-06 17:47:45,085 INFO forceid=a0nC800000I9eP3IAJ stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 30 份附件（3 批），返回 15 个字段
+2026-05-06 17:47:45,086 INFO forceid=a0nC800000I9eP3IAJ stage=fd_parse attempt=0 [39/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:48:10,274 INFO forceid=a0nC800000I9eP3IAJ stage=fd_aviation_lookup attempt=0 [a0nC800000I9eP3IAJ] 飞常准查询成功（候选=CZ8059 PKX）: -> 已到达 [PKX->DOH] route_match=False
+2026-05-06 17:48:10,274 INFO forceid=a0nC800000I9eP3IAJ stage=fd_aviation_lookup attempt=0 [a0nC800000I9eP3IAJ] 飞常准查询成功（候选=QR676 DOH）: -> 已到达 [DOH->MLE] route_match=False
+2026-05-06 17:48:10,276 INFO forceid=a0nC800000I9eP3IAJ stage=fd_hardcheck attempt=0 [39/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:48:10,276 INFO forceid=a0nC800000I9eP3IAJ stage=fd_audit attempt=0 [39/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:48:18,296 INFO forceid=a0nC800000I9eP3IAJ stage=review attempt=0 推送前端成功: a0nC800000I9eP3IAJ
+2026-05-06 17:48:18,921 INFO forceid=a0nC800000I9eP3IAJ stage=review attempt=0 数据库同步成功: a0nC800000I9eP3IAJ
+拒绝 (233s)
+[40/42] a0nC800000MWHyjIAH ... 2026-05-06 17:48:19,215 INFO forceid=a0nC800000MWHyjIAH stage=start attempt=0 [40/42] 开始审核 行李延误-案件号【000006803148】
+2026-05-06 17:48:19,216 INFO forceid=a0nC800000MWHyjIAH stage=baggage_delay_start attempt=0 [40/42] 行李延误审核开始
+2026-05-06 17:48:19,216 INFO forceid=a0nC800000MWHyjIAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:48:47,191 INFO forceid=a0nC800000MWHyjIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:49:33,633 INFO forceid=a0nC800000MWHyjIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:50:02,434 INFO forceid=a0nC800000MWHyjIAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 17 份附件（2 批），返回 37 个字段
+2026-05-06 17:50:02,434 INFO forceid=a0nC800000MWHyjIAH stage=baggage_delay_vision attempt=0 [40/42] 视觉识别完成: has_boarding=true has_delay_proof=True has_receipt_proof=True
+2026-05-06 17:50:18,686 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 17:50:18,686 INFO forceid=- stage=- attempt=0 使用Mock数据: CA457 2026-03-01
+2026-05-06 17:50:18,953 INFO forceid=- stage=fd_aviation_lookup attempt=0 飞常准未返回数据，降级mock: 飞常准查询失败: error_code=10, 暂无数据
+2026-05-06 17:50:18,954 INFO forceid=- stage=- attempt=0 使用Mock数据: CA457 2026-03-01
+2026-05-06 17:50:19,496 INFO forceid=a0nC800000MWHyjIAH stage=review attempt=0 推送前端成功: a0nC800000MWHyjIAH
+2026-05-06 17:50:19,945 INFO forceid=a0nC800000MWHyjIAH stage=review attempt=0 数据库同步成功: a0nC800000MWHyjIAH
+拒绝 (120s)
+[41/42] a0nC800000JFsd9IAD ... 2026-05-06 17:50:20,294 INFO forceid=a0nC800000JFsd9IAD stage=start attempt=0 [41/42] 开始审核 航班延误-案件号【000006704724】
+2026-05-06 17:50:20,294 INFO forceid=a0nC800000JFsd9IAD stage=fd_vision_extract attempt=0 [41/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:50:20,294 INFO forceid=a0nC800000JFsd9IAD stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:50:24,230 INFO forceid=a0nC800000JFsd9IAD stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 17:50:42,883 INFO forceid=a0nC800000JFsd9IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:51:20,468 INFO forceid=a0nC800000JFsd9IAD stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:51:40,140 INFO forceid=a0nC800000JFsd9IAD stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 11 份附件（2 批），返回 15 个字段
+2026-05-06 17:51:40,141 INFO forceid=a0nC800000JFsd9IAD stage=fd_parse attempt=0 [41/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:51:58,397 INFO forceid=a0nC800000JFsd9IAD stage=fd_aviation_lookup attempt=0 [a0nC800000JFsd9IAD] 飞常准查询成功（候选=D7343 PKX）: -> 已到达 [PKX->KUL] route_match=True
+2026-05-06 17:51:58,399 INFO forceid=a0nC800000JFsd9IAD stage=fd_hardcheck attempt=0 [41/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:51:58,402 INFO forceid=a0nC800000JFsd9IAD stage=fd_audit attempt=0 [41/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:52:06,630 INFO forceid=a0nC800000JFsd9IAD stage=review attempt=0 推送前端成功: a0nC800000JFsd9IAD
+2026-05-06 17:52:07,255 INFO forceid=a0nC800000JFsd9IAD stage=review attempt=0 数据库同步成功: a0nC800000JFsd9IAD
+通过 (105s)
+[42/42] a0nC800000JGJLYIA5 ... 2026-05-06 17:52:07,610 INFO forceid=a0nC800000JGJLYIA5 stage=start attempt=0 [42/42] 开始审核 航班延误-案件号【000006704731】
+2026-05-06 17:52:07,610 INFO forceid=a0nC800000JGJLYIA5 stage=fd_vision_extract attempt=0 [42/42] 航班延误-视觉抽取: 启动材料提取...
+2026-05-06 17:52:07,610 INFO forceid=a0nC800000JGJLYIA5 stage=material_extractor attempt=0 材料提取 [Vision] 开始
+2026-05-06 17:52:11,269 INFO forceid=a0nC800000JGJLYIA5 stage=material_extractor attempt=0 FileList 下载完成: 10/10 个文件
+2026-05-06 17:52:29,881 INFO forceid=a0nC800000JGJLYIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/2, attempt 1/3)
+2026-05-06 17:53:16,182 INFO forceid=a0nC800000JGJLYIA5 stage=material_extractor attempt=0 material extract [Vision] request start(batch 2/2, attempt 1/3)
+2026-05-06 17:53:44,912 INFO forceid=a0nC800000JGJLYIA5 stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 12 份附件（2 批），返回 15 个字段
+2026-05-06 17:53:44,912 INFO forceid=a0nC800000JGJLYIA5 stage=fd_parse attempt=0 [42/42] 航班延误-阶段1: 数据解析与时区标准化...
+2026-05-06 17:54:02,813 INFO forceid=- stage=- attempt=0 航班数据命中缓存: D7343 2026-02-14
+2026-05-06 17:54:02,813 INFO forceid=a0nC800000JGJLYIA5 stage=fd_aviation_lookup attempt=0 [a0nC800000JGJLYIA5] 飞常准查询成功（候选=D7343 PKX）: -> 已到达 [PKX->KUL] route_match=True
+2026-05-06 17:54:02,814 INFO forceid=a0nC800000JGJLYIA5 stage=fd_hardcheck attempt=0 [42/42] 航班延误-硬校验: Skills B/C/E/H/I...
+2026-05-06 17:54:02,814 INFO forceid=a0nC800000JGJLYIA5 stage=fd_audit attempt=0 [42/42] 航班延误-阶段2: 理赔判定...
+2026-05-06 17:54:09,752 INFO forceid=a0nC800000JGJLYIA5 stage=review attempt=0 推送前端成功: a0nC800000JGJLYIA5
+2026-05-06 17:54:10,315 INFO forceid=a0nC800000JGJLYIA5 stage=review attempt=0 数据库同步成功: a0nC800000JGJLYIA5
+通过 (121s)
+
+===== P1 续跑完成 =====
+通过: 30, 拒绝: 7, 需补齐资料: 4
+错误: 0, 跳过: 1
+Exception ignored while calling deallocator <function Connection.__del__ at 0x00000201CCF43110>:
+Traceback (most recent call last):
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\venv\Lib\site-packages\aiomysql\connection.py", line 1131, in __del__
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\venv\Lib\site-packages\aiomysql\connection.py", line 339, in close
+  File "D:\app\tools\system\python\Lib\asyncio\proactor_events.py", line 109, in close
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 827, in call_soon
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 550, in _check_closed
+RuntimeError: Event loop is closed

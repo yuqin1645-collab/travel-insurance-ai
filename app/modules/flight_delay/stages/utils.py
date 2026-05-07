@@ -167,7 +167,7 @@ def _has_timezone(value: str) -> bool:
     """判断时间字符串是否包含时区信息（ISO8601 格式的 +HH:MM 或 Z 结尾）"""
     if not value:
         return False
-    return "Z" in value or "+" in value or value.count("-") > 3
+    return bool(re.search(r'(Z|[+-]\d{2}:\d{2}|[+-]\d{4})$', value.strip()))
 
 
 def _parse_utc_dt(value: Any) -> Optional[datetime]:

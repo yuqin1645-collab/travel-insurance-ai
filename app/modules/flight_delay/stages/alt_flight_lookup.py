@@ -29,12 +29,22 @@ async def lookup_alt_flight_data(
     chain = (parsed or {}).get("schedule_revision_chain") or []
     first_alt_flight_no = None
     first_alt_date = None
+    last_alt_flight_no = None
+    last_alt_date = None
     if is_conn_rebooking and isinstance(chain, list) and len(chain) >= 2:
         first_alt = chain[1]
         first_alt_flight_no = str(first_alt.get("original_flight_no") or "").strip()
         first_alt_date = str(first_alt.get("original_date") or "").strip()
         if first_alt_date and first_alt_date.lower() not in ("unknown", ""):
             first_alt_date = first_alt_date[:10]
+        # 联程改签：chain 中偶数索引为原始航班，奇数索引为替代航班
+        # chain长度>=4 表示有末段替代航班（如 chain[3]）
+        if len(chain) >= 4:
+            last_alt = chain[3]
+            last_alt_flight_no = str(last_alt.get("original_flight_no") or "").strip()
+            last_alt_date = str(last_alt.get("original_date") or "").strip()
+            if last_alt_date and last_alt_date.lower() not in ("unknown", ""):
+                last_alt_date = last_alt_date[:10]
 
     alt_local = parsed.get("alternate_local") or {}
     alt_fn = str(alt_local.get("alt_flight_no") or "").strip()
@@ -70,9 +80,8 @@ async def lookup_alt_flight_data(
                 first_actual_dep = first_alt_aviation.get("actual_dep")
                 if first_actual_dep:
                     parsed.setdefault("alternate_local", {})["alt_dep"] = first_actual_dep
-                    parsed.setdefault("actual_local", {})["actual_dep"] = first_actual_dep
                     LOGGER.info(
-                        f"[{forceid}] 联程首班 alt_dep/actual_dep 已覆盖为: {first_actual_dep}",
+                        f"[{forceid}] 联程首班 alt_dep 已覆盖为: {first_actual_dep}",
                         extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
                     )
         except Exception as _first_ae:
@@ -83,11 +92,46 @@ async def lookup_alt_flight_data(
             first_alt_planned_dep = str(first_alt.get("planned_dep") or "").strip()
             if first_alt_planned_dep and first_alt_planned_dep.lower() not in ("unknown", ""):
                 parsed.setdefault("alternate_local", {})["alt_dep"] = first_alt_planned_dep
-                parsed.setdefault("actual_local", {})["actual_dep"] = first_alt_planned_dep
                 LOGGER.info(
-                    f"[{forceid}] 联程首班 alt_dep/actual_dep 已用 Vision 提取时间兜底: {first_alt_planned_dep}",
+                    f"[{forceid}] 联程首班 alt_dep 已用 Vision 提取时间兜底: {first_alt_planned_dep}",
                     extra=log_extra(forceid=forceid, stage="fd_first_alt_aviation_lookup", attempt=0),
                 )
+
+    # 联程改签末段替代航班查询：获取最终目的地实际到达时间
+    if (
+        is_conn_rebooking
+        and last_alt_flight_no
+        and last_alt_flight_no.lower() not in ("unknown", "null", "")
+        and last_alt_date
+        and last_alt_flight_no.upper() not in _already_queried
+    ):
+        try:
+            skill = get_flight_lookup_skill()
+            last_alt_aviation = await skill.lookup_status(
+                flight_no=last_alt_flight_no,
+                date=last_alt_date,
+                dep_iata=None,
+                arr_iata=None,
+                session=session,
+            )
+            alt_results["last_alt_aviation_lookup"] = last_alt_aviation
+            if last_alt_aviation.get("success"):
+                LOGGER.info(
+                    f"[{forceid}] 联程末段替代航班飞常准查询成功: {last_alt_flight_no} {last_alt_date} -> {last_alt_aviation.get('status')}",
+                    extra=log_extra(forceid=forceid, stage="fd_last_alt_aviation_lookup", attempt=0),
+                )
+                last_actual_arr = last_alt_aviation.get("actual_arr")
+                if last_actual_arr and not _is_unknown(str(last_actual_arr)):
+                    parsed.setdefault("alternate_local", {})["alt_arr"] = str(last_actual_arr)
+                    LOGGER.info(
+                        f"[{forceid}] 联程末段 alt_arr 已覆盖为: {last_actual_arr}",
+                        extra=log_extra(forceid=forceid, stage="fd_last_alt_aviation_lookup", attempt=0),
+                    )
+        except Exception as _last_ae:
+            LOGGER.warning(
+                f"[{forceid}] 联程末段替代航班查询失败（降级）: {_last_ae}",
+                extra=log_extra(forceid=forceid, stage="fd_last_alt_aviation_lookup", attempt=0),
+            )
 
     if (
         alt_fn and alt_fn.lower() not in ("unknown", "null", "")
@@ -126,8 +170,6 @@ async def lookup_alt_flight_data(
                 )
                 if actual_arr and alt_arr_needs_fill:
                     parsed.setdefault("alternate_local", {})["alt_arr"] = actual_arr
-                    if is_conn_rebooking:
-                        parsed.setdefault("actual_local", {})["actual_arr"] = actual_arr
 
                 actual_dep = alt_aviation.get("actual_dep")
                 alt_dep_current = str(alt_local.get("alt_dep") or "")
@@ -150,7 +192,7 @@ async def lookup_alt_flight_data(
                 if alt_dep_to_fill:
                     is_conn_rebooking = _truthy((parsed.get("itinerary") or {}).get("is_connecting_rebooking")) is True
                     if is_conn_rebooking:
-                        pass
+                        parsed.setdefault("alternate_local", {})["alt_dep"] = alt_dep_to_fill
                     elif alt_dep_needs_fill:
                         parsed.setdefault("alternate_local", {})["alt_dep"] = alt_dep_to_fill
                         parsed.setdefault("actual_local", {})["actual_dep"] = alt_dep_to_fill

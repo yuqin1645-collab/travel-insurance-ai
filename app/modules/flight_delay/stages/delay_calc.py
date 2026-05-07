@@ -255,19 +255,66 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
         )
     )
 
-    # 联程改签延误计算规则：
-    # 原航班取消后改签为联程航班（如 KL1175+SK4172），
-    # 延误 = max(联程首段实际起飞 - 原航班计划起飞, 联程末段实际到达 - 原航班计划到达)
-    # alt_dep 已在 pipeline 中被覆盖为联程首段起飞时间，alt_arr 为末段到达时间
-    # 所以口径2 (alt_dep_delay, alt_arr_delay) 已经是正确的联程延误值，直接取 max(alt_dep_delay, alt_arr_delay)
+    # 联程改签延误计算规则（修正 2026-05-07）：
+    # 1. 先看末段实际延误：末段实际出发/到达 vs 末段计划出发/到达
+    # 2. 如果前序导致（missed_connection）→ 追溯计算：
+    #    延误 = max(首段实际出发-原计划出发, 末段实际到达-原计划到达)
+    # 3. 否则 → 仅按末段实际延误计算
     if is_conn_rebooking or connecting_rebooking_suspicion:
-        conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
-        if conn_candidates:
-            final_minutes = max(conn_candidates)
-            method = f"联程改签-取max(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 联程首段起飞vs原计划起飞, 联程末段到达vs原计划到达"
+        missed_connection = _truthy(itinerary.get("mentions_missed_connection"))
+
+        # 末段计划时间（从 schedule_revision_chain 最后一项取）
+        chain_last = chain[-1] if chain else {}
+        last_planned_dep_str = _sanitize_date(str(chain_last.get("planned_dep") or "").strip())
+        last_planned_arr_str = _sanitize_date(str(chain_last.get("planned_arr") or "").strip())
+        last_planned_dep_tz = str(chain_last.get("dep_timezone_hint") or "").strip()
+        last_planned_arr_tz = str(chain_last.get("arr_timezone_hint") or "").strip()
+
+        last_planned_dep_utc = (
+            _try_parse_utc(last_planned_dep_str)
+            or _try_parse_local(last_planned_dep_str, last_planned_dep_tz, _dep_iana)
+        )
+        last_planned_arr_utc = (
+            _try_parse_utc(last_planned_arr_str)
+            or _try_parse_local(last_planned_arr_str, last_planned_arr_tz, _arr_iana)
+        )
+
+        # 末段实际时间即 alt_dep_utc / alt_arr_utc（已被 alt_flight_lookup 覆盖为末段实际）
+        last_seg_dep_delay: Optional[int] = None
+        last_seg_arr_delay: Optional[int] = None
+        if last_planned_dep_utc and alt_dep_utc:
+            delta = int((alt_dep_utc - last_planned_dep_utc).total_seconds() // 60)
+            if delta >= 0:
+                last_seg_dep_delay = delta
+        if last_planned_arr_utc and alt_arr_utc:
+            delta = int((alt_arr_utc - last_planned_arr_utc).total_seconds() // 60)
+            if delta >= 0:
+                last_seg_arr_delay = delta
+
+        if missed_connection:
+            # 前序导致：追溯计算，从原计划到末段实际
+            conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
+            if conn_candidates:
+                final_minutes = max(conn_candidates)
+                method = f"联程改签(前序导致)-取max(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 首段实际出发vs原计划出发, 末段实际到达vs原计划到达"
+            else:
+                final_minutes = None
+                method = "联程改签(前序导致)-无法计算：缺少改签航班实际时间数据"
         else:
-            final_minutes = None
-            method = "联程改签-无法计算：缺少改签航班实际时间数据"
+            # 非前序导致：仅按末段实际延误计算
+            last_seg_candidates = [m for m in [last_seg_dep_delay, last_seg_arr_delay] if isinstance(m, int)]
+            if last_seg_candidates:
+                final_minutes = max(last_seg_candidates)
+                method = f"联程改签-末段延误(起飞{last_seg_dep_delay}分/到达{last_seg_arr_delay}分): 末段实际vs末段计划"
+            else:
+                # 末段无法计算，降级使用完整追溯
+                conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
+                if conn_candidates:
+                    final_minutes = max(conn_candidates)
+                    method = f"联程改签-降级追溯(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 末段计划时间缺失"
+                else:
+                    final_minutes = None
+                    method = "联程改签-无法计算：缺少时间数据"
     elif final_alt is not None and final_actual is not None:
         final_minutes = max(final_alt, final_actual)
         method = f"取长: alt(起飞{alt_dep_delay}分/到达{alt_arr_delay}分) vs 实际(起飞{actual_dep_delay}分/到达{actual_arr_delay}分)"
@@ -307,7 +354,7 @@ def _augment_with_computed_delay(
     computed = _compute_delay_minutes(parsed)
     threshold_minutes = _parse_threshold_minutes(policy_terms_excerpt) or FLIGHT_DELAY_DEFAULT_THRESHOLD_MINUTES
 
-    if computed.get("final_minutes") is None and free_text:
+    if computed.get("final_minutes") is None and free_text and computed.get("missing"):
         text_minutes = _extract_delay_minutes_from_text(free_text)
         if text_minutes is not None:
             computed["final_minutes"] = text_minutes

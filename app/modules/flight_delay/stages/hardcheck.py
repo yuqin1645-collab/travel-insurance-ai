@@ -375,11 +375,12 @@ def _run_hardcheck(
 
         vision_alt = (vision_extract or {}).get("alternate") or {}
         vision_is_connecting_missed = str(vision_alt.get("is_connecting_missed") or "").strip().lower()
-        vision_denies_missed = (vision_is_connecting_missed == "false")
+        vision_confirms_missed = (vision_is_connecting_missed == "true")
 
         is_missed_connection = (
-            (mention_missed_connection is True and not vision_denies_missed)
-            or (is_connecting_flight is True and reason_suggests_missed and not vision_denies_missed)
+            mention_missed_connection is True
+            or (is_connecting_flight is True and reason_suggests_missed)
+            or vision_confirms_missed
         )
 
         avi_status = str((parsed or {}).get("aviation_status") or "").strip()
@@ -402,7 +403,7 @@ def _run_hardcheck(
         aviation_delay_proof_override = False
         prev_seg_arrived_ok = False  # 前程正常到达（飞常准确认）
 
-        if is_missed_connection and (avi_status == "取消" or is_conn_rebooking_flag) and has_rebooking:
+        if is_missed_connection and avi_status == "取消" and has_rebooking and not is_conn_rebooking_flag:
             is_missed_connection = False
             rebooking_override = True
 
@@ -465,7 +466,7 @@ def _run_hardcheck(
             "mention_missed_connection": mention_missed_connection,
             "is_connecting_flight": is_connecting_flight,
             "reason_suggests_missed": reason_suggests_missed,
-            "vision_denies_missed": vision_denies_missed,
+            "vision_confirms_missed": vision_confirms_missed,
             "aviation_delay_proof_override": aviation_delay_proof_override,
             "overbooking_override": overbooking_override,
             "rebooking_override": rebooking_override,
@@ -504,6 +505,23 @@ def _run_hardcheck(
         exit_dt = str(evidence.get("exit_datetime") or "").strip()
         if has_exit_entry_record is not True and not _is_unknown(exit_dt):
             has_exit_entry_record = True
+        # 预计算国际航班判定（出入境兜底和护照兜底共用）
+        route_dep_cc = str(dep_info.get("country_code") or "").strip().upper()
+        route_arr_cc = str(arr_info.get("country_code") or "").strip().upper()
+        dep_found = dep_info.get("found", False)
+        arr_found = arr_info.get("found", False)
+        is_international = (
+            (route_dep_cc and route_arr_cc and (route_dep_cc != "CN" or route_arr_cc != "CN"))
+            or (route_dep_cc and route_dep_cc != "CN")
+            or (route_arr_cc and route_arr_cc != "CN")
+        )
+        airport_unknown = (not dep_found or not arr_found) and (dep_iata and arr_iata)
+        # 兜底：国际航班确认 + 任一旅行证件 → 推断已出入境
+        if has_exit_entry_record is not True:
+            has_any_travel_doc = has_passport is True or has_boarding_pass is True or has_id_proof is True
+            if (is_international or airport_unknown) and has_any_travel_doc:
+                has_exit_entry_record = True
+                result["debug_notes"].append("出入境记录兜底：国际航班/机场未知+旅行证件齐全，推断出入境记录已满足")
         id_type_text = str(claim_info.get("ID_Type") or claim_info.get("id_type") or "").strip()
         is_id_card_policy = "身份证" in id_type_text
 
@@ -552,8 +570,8 @@ def _run_hardcheck(
                 has_keyword = any(k in desc for k in keywords)
                 if flight_no and has_keyword:
                     if flight_no in desc.upper() or flight_no in desc:
-                        if has_boarding_pass is True or has_application_form is True or has_id_proof is True:
-                            has_delay_proof = True
+                        has_delay_proof = True
+                        result["debug_notes"].append("delay_proof文本兜底：描述文本含航班号+延误关键词，推断延误证明已满足")
         except Exception as e:
             result["debug_notes"].append(f"delay_proof文本兜底校验降级: {e}")
 
@@ -585,13 +603,29 @@ def _run_hardcheck(
         if has_delay_proof is False:
             missing_required.append("承运人延误书面证明")
         if has_boarding_pass is not True and not (_truthy(evidence.get("aviation_delay_proof")) is True):
-            missing_required.append("登机牌或电子客票行程单")
+            # 兜底：有延误证明 + 有身份证明 → 登机牌非必须（延误证明已含航班信息）
+            if has_delay_proof is True and has_id_proof is True:
+                has_boarding_pass = True
+                result["debug_notes"].append("登机牌兜底：延误证明+身份证明齐全，推断登机牌已满足")
+            else:
+                missing_required.append("登机牌或电子客票行程单")
         if is_id_card_policy:
             if has_exit_entry_record is True and has_passport is False:
-                missing_required.append("被保险人护照照片页")
+                # 兜底：身份证保单但确认国际旅行 → 护照必然存在
+                if is_international:
+                    has_passport = True
+                    result["debug_notes"].append("护照照片页兜底：身份证保单+国际航班确认，推断护照已提供")
+                else:
+                    missing_required.append("被保险人护照照片页")
         else:
             if has_passport is False:
-                missing_required.append("被保险人护照照片页")
+                # 兜底：证件类型为护照 → 推断护照照片页已提供
+                id_type_lower = id_type_text.lower()
+                if "护照" in id_type_text or "passport" in id_type_lower:
+                    has_passport = True
+                    result["debug_notes"].append("护照照片页兜底：证件类型为护照，推断护照已提供")
+                else:
+                    missing_required.append("被保险人护照照片页")
         if has_exit_entry_record is False:
             missing_required.append("中国海关出入境盖章页或电子出入境记录")
 

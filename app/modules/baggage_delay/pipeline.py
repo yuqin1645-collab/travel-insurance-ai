@@ -296,7 +296,10 @@ async def review_baggage_delay_async(
 
         flag = _has_flag("has_boarding_or_ticket")
         if flag == "false":
-            missing_materials.append("交通票据（机票/登机牌/行程单）")
+            # Vision 判定为 false 时，仍检查文本关键词兜底
+            if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
+                       for w in ["机票", "登机牌", "行程单", "ticket", "boarding", "itinerary"]):
+                missing_materials.append("交通票据（机票/登机牌/行程单）")
         elif flag == "unknown":
             if not any(w in f"{text_blob} {' '.join(file_names)}".lower()
                        for w in ["机票", "登机牌", "行程单", "ticket", "boarding", "itinerary"]):
@@ -308,8 +311,8 @@ async def review_baggage_delay_async(
         delay_proof_kw = any(w in joined_text for w in ["行李延误", "行李不正常", "pir", "baggage delay", "delay proof", "property irregularity"])
         receipt_proof_kw = any(w in joined_text for w in ["签收", "领取", "receipt", "delivered", "delivery"])
 
-        has_delay_proof = delay_proof_flag == "true" or (delay_proof_flag == "unknown" and delay_proof_kw)
-        has_receipt_proof = receipt_proof_flag == "true" or (receipt_proof_flag == "unknown" and receipt_proof_kw)
+        has_delay_proof = delay_proof_flag == "true" or (delay_proof_flag != "true" and delay_proof_kw)
+        has_receipt_proof = receipt_proof_flag == "true" or (receipt_proof_flag != "true" and receipt_proof_kw)
 
         if not has_delay_proof and not has_receipt_proof:
             missing_materials.append("行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）")

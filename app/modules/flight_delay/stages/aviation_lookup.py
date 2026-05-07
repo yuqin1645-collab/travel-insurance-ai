@@ -167,6 +167,9 @@ async def lookup_aviation_data(
             last_planned_arr = one_result.get("planned_arr")
             if last_planned_arr and not _is_unknown(str(last_planned_arr)):
                 sched_node["planned_arr"] = str(last_planned_arr)
+            last_actual_arr = one_result.get("actual_arr")
+            if last_actual_arr and not _is_unknown(str(last_actual_arr)):
+                parsed.setdefault("actual_local", {})["actual_arr"] = str(last_actual_arr)
             sched_node["last_seg_dep_iata"] = avi_dep
             sched_node["last_seg_arr_iata"] = avi_arr
 
