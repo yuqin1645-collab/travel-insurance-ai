@@ -158,6 +158,7 @@ class IncrementalDownloadScheduler:
                 _final_status = str(_claim.get("Final_Status") or _claim.get("final_status") or "").strip()
                 _case_no = str(
                     _claim.get("CaseNo") or _claim.get("caseNo") or
+                    _claim.get("ClaimId") or _claim.get("claimId") or
                     _claim.get("PolicyNo") or _claim.get("policyNo") or ""
                 ).strip()
                 _forceid = str(_claim.get("forceid") or _claim.get("Id") or "").strip()
@@ -191,9 +192,17 @@ class IncrementalDownloadScheduler:
             new_count = 0
             try:
                 from scripts.download_claims import run_download_async, AsyncClaimDownloader
+
+                # 构建带时间过滤的 payload，避免每次拉取全量案件
+                last_download_time = self._get_last_download_time()
+                payload = {
+                    "startTime": last_download_time.isoformat() if last_download_time else None,
+                    "pageSize": 100,
+                    "includeUpdated": True,
+                }
                 dl_result = await run_download_async(
                     api_url=self.api_url,
-                    payload={},
+                    payload=payload,
                     output_dir=self.output_dir,
                     force_refresh=False,
                     max_concurrent=10,
@@ -242,9 +251,10 @@ class IncrementalDownloadScheduler:
                 try:
                     existing = await self.status_manager.get_claim_status(forceid)
                     if existing is None:
-                        # New case: register to review queue
+                        # 使用 API 返回的唯一 ClaimId，而非 case_no（可能是 PolicyNo）
+                        actual_claim_id = record.get("claimId") or record.get("ClaimId") or case_no
                         await self.status_manager.create_claim_status(
-                            claim_id=case_no,
+                            claim_id=actual_claim_id,
                             forceid=forceid,
                             claim_type=claim_type,
                             initial_status=ClaimStatus.DOWNLOADED,

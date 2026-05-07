@@ -220,7 +220,7 @@ class ClaimDownloader:
 
     def process_claim(self, claim: Dict) -> None:
         """处理单条理赔记录：只下载缺失/失败的文件，并更新进度 JSON 中的新增字段"""
-        case_no: str = str(claim.get("CaseNo") or claim.get("caseNo") or claim.get("PolicyNo") or claim.get("policyNo") or "").strip()
+        case_no: str = str(claim.get("CaseNo") or claim.get("caseNo") or claim.get("ClaimId") or claim.get("claimId") or claim.get("PolicyNo") or claim.get("policyNo") or "").strip()
         benefit_name: str = str(claim.get("BenefitName") or claim.get("benefitName") or "").strip()
         applicant_name: str = str(claim.get("ApplicantName") or claim.get("applicantName") or claim.get("Applicant_Name") or "").strip()
 
@@ -689,6 +689,7 @@ class AsyncClaimDownloader:
         async with semaphore:
             case_no: str = str(
                 claim.get("CaseNo") or claim.get("caseNo") or
+                claim.get("ClaimId") or claim.get("claimId") or
                 claim.get("PolicyNo") or claim.get("policyNo") or ""
             ).strip()
             benefit_name: str = str(claim.get("BenefitName") or claim.get("benefitName") or "").strip()
