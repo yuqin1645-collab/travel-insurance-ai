@@ -224,6 +224,32 @@ def _postprocess_audit_result(
                 audit["explanation"] = "【材料提取失败】Vision 无法从材料中提取关键信息，需要人工复核"
                 return audit
 
+            # 硬校验确认材料齐全，但 AI 模型误判为需补齐资料 → 覆盖
+            if not missing_required and scanned_all_attachments and not vision_result_is_empty:
+                ai_result = str(audit.get("audit_result") or "").strip()
+                if ai_result == "需补齐资料":
+                    LOGGER.info(
+                        f"postprocess: hardcheck确认材料齐全，覆盖AI模型误判补件",
+                        extra=log_extra(forceid="", stage="fd_postprocess", attempt=0),
+                    )
+                    audit["audit_result"] = "通过"
+                    # 重新生成 explanation
+                    kd = audit.get("key_data") or {}
+                    name = kd.get("passenger_name", "")
+                    mins = kd.get("delay_duration_minutes", "")
+                    reason = kd.get("reason", "")
+                    parts = []
+                    if name:
+                        parts.append(f"被保险人：{name}")
+                    if mins:
+                        parts.append(f"延误时长：{mins}分钟")
+                    if reason:
+                        parts.append(f"延误原因：{reason}")
+                    if parts:
+                        audit["explanation"] = "；".join(parts)
+                    elif not str(audit.get("explanation") or "").strip():
+                        audit["explanation"] = "材料齐全，审核通过"
+
         # ── 写回代码计算的赔付金额 ──
         if payout_result and payout_result.get("status") == "calculated":
             final_amount = payout_result.get("final_amount")

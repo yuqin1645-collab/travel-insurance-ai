@@ -308,8 +308,8 @@ async def review_baggage_delay_async(
         delay_proof_flag = _has_flag("has_baggage_delay_proof")
         receipt_proof_flag = _has_flag("has_baggage_receipt_time_proof")
         joined_text = f"{text_blob} {' '.join(file_names)}".lower()
-        delay_proof_kw = any(w in joined_text for w in ["行李延误", "行李不正常", "pir", "baggage delay", "delay proof", "property irregularity"])
-        receipt_proof_kw = any(w in joined_text for w in ["签收", "领取", "receipt", "delivered", "delivery"])
+        delay_proof_kw = any(w in joined_text for w in ["行李延误", "行李不正常", "行李事故", "行李未到", "pir", "baggage delay", "delay proof", "property irregularity", "lost baggage", "baggage claim", "worldtracer", "world tracer"])
+        receipt_proof_kw = any(w in joined_text for w in ["签收", "领取", "提取", "取件", "派送", "送达", "交付", "行李到达", "行李已", "receipt", "delivered", "delivery", "received", "collected", "picked up", "acknowledgement", "acknowledgment"])
 
         has_delay_proof = delay_proof_flag == "true" or (delay_proof_flag != "true" and delay_proof_kw)
         has_receipt_proof = receipt_proof_flag == "true" or (receipt_proof_flag != "true" and receipt_proof_kw)
@@ -381,16 +381,26 @@ async def review_baggage_delay_async(
         delay_calc["receipt_time_source"] = "transfer_flight_arrival"
         delay_hours = delay_calc.get("delay_hours")
         delay_hours_str = f"{delay_hours:.2f}小时" if delay_hours is not None else "未知"
-        conclusions.append({
-            "checkpoint": "行李签收时间",
-            "Eligible": "需补齐资料",
-            "Remark": f"以行李签收证明中的明确日期/时间为准；无签收证明时，以后续转运航班到达时间为辅助参考，待补件后按实际签收时间修正。当前估算延误时长{delay_hours_str}。",
-        })
-        return _result(
-            forceid,
-            f"需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误{delay_hours_str}，待补件后按实际签收时间修正。",
-            "Y", conclusions, debug,
-        )
+        # 转运航班到达时间作为代理签收时间，若延误已超门槛则直接通过
+        if delay_hours is not None and delay_hours >= BAGGAGE_DELAY_THRESHOLD_HOURS:
+            conclusions.append({
+                "checkpoint": "行李签收时间",
+                "Eligible": "是",
+                "Remark": f"以后续转运航班到达时间为行李签收时间代理，延误时长{delay_hours_str}，达到赔付门槛",
+            })
+            # 标记签收时间已由转运航班代理确认，防止 AI 模型误判补件
+            debug["receipt_proxy_accepted"] = True
+        else:
+            conclusions.append({
+                "checkpoint": "行李签收时间",
+                "Eligible": "需补齐资料",
+                "Remark": f"以行李签收证明中的明确日期/时间为准；无签收证明时，以后续转运航班到达时间为辅助参考，待补件后按实际签收时间修正。当前估算延误时长{delay_hours_str}。",
+            })
+            return _result(
+                forceid,
+                f"需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误{delay_hours_str}，待补件后按实际签收时间修正。",
+                "Y", conclusions, debug,
+            )
     delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
     delay_hours = delay_calc.get("delay_hours")
     debug["delay_calc"] = delay_calc
@@ -452,8 +462,27 @@ async def review_baggage_delay_async(
             missing_materials = sorted(set(missing_materials))
             debug["missing_materials"] = missing_materials
         if ai_audit_result == "需补齐资料" and missing_materials:
-            conclusions.append({"checkpoint": "AI审计补件", "Eligible": "需补齐资料", "Remark": "；".join(missing_materials)})
-            return _result(forceid, "需补齐资料：" + "；".join(missing_materials), "Y", conclusions, debug)
+            # 若转运航班代理签收已确认且延误超门槛，AI 模型误判补件 → 覆盖
+            if debug.get("receipt_proxy_accepted"):
+                receipt_kw = {"签收", "receipt", "领取", "提取", "取件", "派送", "送达", "交付"}
+                non_receipt_missing = [
+                    m for m in missing_materials
+                    if not any(kw in m.lower() for kw in receipt_kw)
+                ]
+                if not non_receipt_missing:
+                    LOGGER.info(
+                        f"baggage_delay: 转运航班代理签收已确认，覆盖AI模型误判补件",
+                        extra=log_extra(forceid=forceid, stage="baggage_delay_audit", attempt=0),
+                    )
+                    missing_materials = []
+                    debug["missing_materials"] = []
+                    debug["ai_supplement_overridden"] = True
+                else:
+                    missing_materials = non_receipt_missing
+                    debug["missing_materials"] = non_receipt_missing
+            if missing_materials:
+                conclusions.append({"checkpoint": "AI审计补件", "Eligible": "需补齐资料", "Remark": "；".join(missing_materials)})
+                return _result(forceid, "需补齐资料：" + "；".join(missing_materials), "Y", conclusions, debug)
         elif ai_audit_result == "拒绝":
             reason = str(ai_audit.get("reason") or ai_audit.get("explanation") or "AI审核拒赔")
             conclusions.append({"checkpoint": "AI审计", "Eligible": "否", "Remark": reason})

@@ -66,8 +66,8 @@ class ClaimStateMachine:
         ClaimStatus.PENDING_SUPPLEMENTARY: [ClaimStatus.SUPPLEMENTARY_RECEIVED, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
         ClaimStatus.SUPPLEMENTARY_RECEIVED: [ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOADED, ClaimStatus.REJECTED],
 
-        ClaimStatus.APPROVED: [ClaimStatus.COMPLETED],
-        ClaimStatus.REJECTED: [ClaimStatus.COMPLETED],
+        ClaimStatus.APPROVED: [ClaimStatus.COMPLETED, ClaimStatus.DOWNLOADED],
+        ClaimStatus.REJECTED: [ClaimStatus.COMPLETED, ClaimStatus.DOWNLOADED],
         ClaimStatus.COMPLETED: [],
 
         ClaimStatus.ERROR: [ClaimStatus.DOWNLOAD_PENDING, ClaimStatus.REVIEW_PENDING, ClaimStatus.DOWNLOADED],

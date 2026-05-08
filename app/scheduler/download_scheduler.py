@@ -147,10 +147,8 @@ class IncrementalDownloadScheduler:
                 force_refresh=False,
             )
             _supplementary_forceids = set()
-            # 终态集合：已到达最终状态的案件不应再被补件逻辑重新触发
+            # 终态集合：真正不可逆的终态，补件逻辑不应重新触发
             _final_states = {
-                ClaimStatus.APPROVED,
-                ClaimStatus.REJECTED,
                 ClaimStatus.COMPLETED,
                 ClaimStatus.MAX_RETRIES_EXCEEDED,
             }
@@ -175,8 +173,11 @@ class IncrementalDownloadScheduler:
                                         f"{_case_no} (forceid={_forceid})"
                                     )
                                     continue
-                        except Exception:
-                            pass
+                        except Exception as _check_err:
+                            LOGGER.warning(
+                                f"状态机查询失败，继续处理补件: "
+                                f"{_case_no} (forceid={_forceid}): {_check_err}"
+                            )
                     # 清空下载记录，让 ClaimDownloader 重新下载补件材料
                     downloader.progress[_case_no]["downloadedFiles"] = []
                     downloader.progress[_case_no]["failedFiles"] = []

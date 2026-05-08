@@ -62,10 +62,6 @@ def _try_parse_local(
     """尝试将值解析为本地时间并转换为 UTC。"""
     if not value or _is_unknown(str(value)):
         return None
-    if fallback_iana:
-        r = _parse_local_dt_iana(str(value), fallback_iana)
-        if r:
-            return r
     if tz_hint:
         tz = _parse_tz_offset(tz_hint)
         if tz:
@@ -77,6 +73,10 @@ def _try_parse_local(
                         return dt.replace(tzinfo=tz).astimezone(timezone.utc)
                     except Exception:
                         continue
+    if fallback_iana:
+        r = _parse_local_dt_iana(str(value), fallback_iana)
+        if r:
+            return r
     return None
 
 
@@ -139,11 +139,11 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
     actual_arr_raw = _sanitize_date(str(actual_local.get("actual_arr") or "").strip())
     actual_dep_utc = (
         _try_parse_utc(actual_dep_raw)
-        or _parse_local_dt_iana(actual_dep_raw, _dep_iana)
+        or _try_parse_local(actual_dep_raw, chain0_dep_tz, _dep_iana)
     )
     actual_arr_utc = (
         _try_parse_utc(actual_arr_raw)
-        or _parse_local_dt_iana(actual_arr_raw, _arr_iana)
+        or _try_parse_local(actual_arr_raw, chain0_arr_tz, _arr_iana)
     )
 
     chain_dep_delay: Optional[int] = None
@@ -263,6 +263,12 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
     if is_conn_rebooking or connecting_rebooking_suspicion:
         missed_connection = _truthy(itinerary.get("mentions_missed_connection"))
 
+        # 末段机场 IANA（优先用 alternate_local 的机场，降级用 route 的机场）
+        _last_dep_iata = str((alternate_local.get("alt_dep_iata") or "")).strip().upper()
+        _last_arr_iata = str((alternate_local.get("alt_arr_iata") or "")).strip().upper()
+        _last_dep_iana = _resolve_iana(_last_dep_iata) if _last_dep_iata else None
+        _last_arr_iana = _resolve_iana(_last_arr_iata) if _last_arr_iata else None
+
         # 末段计划时间（从 schedule_revision_chain 最后一项取）
         chain_last = chain[-1] if chain else {}
         last_planned_dep_str = _sanitize_date(str(chain_last.get("planned_dep") or "").strip())
@@ -272,11 +278,11 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
 
         last_planned_dep_utc = (
             _try_parse_utc(last_planned_dep_str)
-            or _try_parse_local(last_planned_dep_str, last_planned_dep_tz, _dep_iana)
+            or _try_parse_local(last_planned_dep_str, last_planned_dep_tz, _last_dep_iana or _dep_iana)
         )
         last_planned_arr_utc = (
             _try_parse_utc(last_planned_arr_str)
-            or _try_parse_local(last_planned_arr_str, last_planned_arr_tz, _arr_iana)
+            or _try_parse_local(last_planned_arr_str, last_planned_arr_tz, _last_arr_iana or _arr_iana)
         )
 
         # 末段实际时间即 alt_dep_utc / alt_arr_utc（已被 alt_flight_lookup 覆盖为末段实际）

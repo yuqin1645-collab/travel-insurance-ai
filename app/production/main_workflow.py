@@ -924,28 +924,40 @@ class ProductionWorkflow:
             forceids = [row["forceid"] for row in rows]
 
             try:
-                resp = requests.post(
-                    RESULT_API_URL,
-                    json={"pageSize": "100", "pageIndex": "1", "data": forceids},
-                    timeout=30,
-                )
-                resp.raise_for_status()
-                raw = resp.json()
-                if isinstance(raw, list):
-                    items = raw
-                elif isinstance(raw, dict):
-                    inner = raw.get("data")
-                    items = inner if isinstance(inner, list) else [raw]
-                else:
-                    items = []
-
                 result_map = {}
-                for item in items:
-                    if not isinstance(item, dict):
-                        continue
-                    fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
-                    if fid:
-                        result_map[fid] = item
+                page_index = 1
+                page_size = 100
+                while True:
+                    resp = requests.post(
+                        RESULT_API_URL,
+                        json={"pageSize": str(page_size), "pageIndex": str(page_index), "data": forceids},
+                        timeout=30,
+                    )
+                    resp.raise_for_status()
+                    raw = resp.json()
+                    if isinstance(raw, list):
+                        items = raw
+                    elif isinstance(raw, dict):
+                        inner = raw.get("data")
+                        items = inner if isinstance(inner, list) else [raw]
+                    else:
+                        items = []
+
+                    if not items:
+                        break
+
+                    for item in items:
+                        if not isinstance(item, dict):
+                            continue
+                        fid = str(item.get("forceid") or item.get("ForceId") or "").strip()
+                        if fid:
+                            result_map[fid] = item
+
+                    if len(items) < page_size:
+                        break
+                    page_index += 1
+
+                LOGGER.info(f"人工状态接口返回 {len(result_map)} 条 (共 {page_index} 页)")
             except Exception as e:
                 LOGGER.warning(f"批量查询人工状态接口失败: {e}")
                 return 0, len(forceids)
