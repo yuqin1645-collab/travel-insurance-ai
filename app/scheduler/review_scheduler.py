@@ -111,7 +111,7 @@ class ReviewScheduler:
                     # 状态机：downloaded -> review_pending -> reviewing
                     # 先查当前状态，避免对已在 reviewing 的案件重复推 REVIEW_PENDING（会失败）
                     current_record = await self.status_manager.get_claim_status(forceid)
-                    current_status = current_record.current_status if current_record else None
+                    current_status = current_record.get("current_status") if current_record else None
                     if current_status != ClaimStatus.REVIEWING:
                         await self.status_manager.update_claim_status(
                             forceid,
