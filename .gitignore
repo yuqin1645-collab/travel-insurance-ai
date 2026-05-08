@@ -49,3 +49,12 @@ production.pid
 
 # 报告
 *.csv
+
+# 测试/临时输出文件
+_*.json
+_*.txt
+tmp_*.json
+case*_hardcheck*.json
+
+# 一次性脚本（下划线前缀）
+scripts/_*.py

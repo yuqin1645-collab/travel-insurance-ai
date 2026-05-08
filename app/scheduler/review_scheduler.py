@@ -38,6 +38,7 @@ class ReviewScheduler:
         self.batch_size = batch_size
         self.db = get_db_connection()
         self.scheduler_log_dao = get_scheduler_log_dao()
+        self._lock = asyncio.Lock()
 
     async def initialize(self):
         """初始化"""
@@ -54,6 +55,15 @@ class ReviewScheduler:
         Returns:
             (成功数量, 消息)
         """
+        # 防止并发执行导致同一案件被多个任务同时审核
+        if self._lock.locked():
+            LOGGER.info("上一批审核任务仍在执行，跳过本次调度")
+            return 0, "上一批审核任务仍在执行"
+
+        async with self._lock:
+            return await self._process_pending_reviews_impl(limit)
+
+    async def _process_pending_reviews_impl(self, limit: int) -> Tuple[int, str]:
         LOGGER.info(f"开始处理待审核案件 (限制: {limit})")
 
         # 创建任务日志
@@ -99,16 +109,20 @@ class ReviewScheduler:
 
                 try:
                     # 状态机：downloaded -> review_pending -> reviewing
-                    await self.status_manager.update_claim_status(
-                        forceid,
-                        ClaimStatus.REVIEW_PENDING,
-                        "准备审核"
-                    )
-                    await self.status_manager.update_claim_status(
-                        forceid,
-                        ClaimStatus.REVIEWING,
-                        "开始审核"
-                    )
+                    # 先查当前状态，避免对已在 reviewing 的案件重复推 REVIEW_PENDING（会失败）
+                    current_record = await self.status_manager.get_claim_status(forceid)
+                    current_status = current_record.current_status if current_record else None
+                    if current_status != ClaimStatus.REVIEWING:
+                        await self.status_manager.update_claim_status(
+                            forceid,
+                            ClaimStatus.REVIEW_PENDING,
+                            "准备审核"
+                        )
+                        await self.status_manager.update_claim_status(
+                            forceid,
+                            ClaimStatus.REVIEWING,
+                            "开始审核"
+                        )
 
                     # 执行审核
                     result = await self._review_claim(claim)
