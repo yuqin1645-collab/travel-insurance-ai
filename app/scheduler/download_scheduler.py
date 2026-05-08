@@ -152,6 +152,14 @@ class IncrementalDownloadScheduler:
                 ClaimStatus.COMPLETED,
                 ClaimStatus.MAX_RETRIES_EXCEEDED,
             }
+            # 已审核终态：案件已被 AI 审核完毕（approved/rejected），
+            # 若最近 N 小时内刚审核过，跳过补件重下载，避免死循环
+            _reviewed_final_states = {
+                ClaimStatus.APPROVED,
+                ClaimStatus.REJECTED,
+            }
+            _reviewed_skip_hours = 24  # 最近 24 小时内审核过则跳过
+            _now = datetime.now()
             for _claim in _api_claims:
                 _final_status = str(_claim.get("Final_Status") or _claim.get("final_status") or "").strip()
                 _case_no = str(
@@ -166,13 +174,32 @@ class IncrementalDownloadScheduler:
                         try:
                             _existing = await self.status_manager.get_claim_status(_forceid)
                             if _existing is not None:
-                                _current = getattr(_existing, "current_status", None)
+                                _current = _existing.get("current_status") if isinstance(_existing, dict) else getattr(_existing, "current_status", None)
                                 if _current in _final_states:
                                     LOGGER.info(
                                         f"案件已处于终态 {_current}，跳过补件重新下载: "
                                         f"{_case_no} (forceid={_forceid})"
                                     )
                                     continue
+                                # 已审核终态（approved/rejected）：若最近刚审核过，跳过避免死循环
+                                if _current in _reviewed_final_states:
+                                    _last_review = (
+                                        _existing.get("last_review_time") if isinstance(_existing, dict)
+                                        else getattr(_existing, "last_review_time", None)
+                                    )
+                                    if _last_review is not None:
+                                        if isinstance(_last_review, str):
+                                            try:
+                                                _last_review = datetime.fromisoformat(_last_review.replace("Z", "+00:00"))
+                                            except (ValueError, TypeError):
+                                                _last_review = None
+                                        if _last_review is not None and (_now - _last_review) < timedelta(hours=_reviewed_skip_hours):
+                                            LOGGER.info(
+                                                f"案件 {_current} 且最近 {_reviewed_skip_hours}h 内已审核 "
+                                                f"({_last_review.isoformat()})，跳过补件重新下载: "
+                                                f"{_case_no} (forceid={_forceid})"
+                                            )
+                                            continue
                         except Exception as _check_err:
                             LOGGER.warning(
                                 f"状态机查询失败，继续处理补件: "
