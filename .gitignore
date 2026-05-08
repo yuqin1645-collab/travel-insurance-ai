@@ -20,6 +20,8 @@ claims_data/
 
 # 日志
 *.log
+*.log.*
+logs/
 
 # IDE
 .vscode/
