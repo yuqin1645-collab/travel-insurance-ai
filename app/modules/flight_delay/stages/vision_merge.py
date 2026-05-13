@@ -50,6 +50,20 @@ def merge_vision_into_parsed(
                 sched_node["dep_timezone_hint"] = rev_dep_tz
             if not _is_unknown(rev_arr_tz):
                 sched_node["arr_timezone_hint"] = rev_arr_tz
+
+        # 联程场景：从 itinerary_segments 提取末程机场（用于延误计算的机场匹配）
+        # 业务规则（2026-05-11明确）：联程多程只看末程的起飞地和到达地
+        v_segments = vision_extract.get("itinerary_segments") or []
+        if isinstance(v_segments, list) and len(v_segments) >= 2:
+            last_seg = v_segments[-1]
+            if isinstance(last_seg, dict):
+                last_dep_iata = str(last_seg.get("original_dep_iata") or last_seg.get("dep_iata") or "").strip().upper()
+                last_arr_iata = str(last_seg.get("original_arr_iata") or last_seg.get("arr_iata") or "").strip().upper()
+                if last_dep_iata and not _is_unknown(last_dep_iata):
+                    sched_node.setdefault("last_seg_dep_iata", last_dep_iata)
+                if last_arr_iata and not _is_unknown(last_arr_iata):
+                    sched_node.setdefault("last_seg_arr_iata", last_arr_iata)
+
         last_rev = v_chain[-1] if len(v_chain) > 1 else first_rev
         if isinstance(last_rev, dict):
             alt_node = parsed.setdefault("alternate_local", {})
@@ -115,6 +129,22 @@ def merge_vision_into_parsed(
             v_val = str(v_alt.get(src_key) or "").strip()
             if not _is_unknown(v_val) and _is_unknown(alt_node.get(dst_key)):
                 alt_node[dst_key] = v_val
+
+        # 日期一致性校验：若 parse 阶段填了 alt_dep 但日期与 Vision 不同，
+        # 且 Vision 的日期不同于原航班日期，则优先采用 Vision（来自登机牌的实际日期）
+        v_alt_dep = str(v_alt.get("alt_dep") or "").strip()
+        p_alt_dep = str(alt_node.get("alt_dep") or "").strip()
+        if not _is_unknown(v_alt_dep) and not _is_unknown(p_alt_dep):
+            v_date = v_alt_dep[:10] if len(v_alt_dep) >= 10 else ""
+            p_date = p_alt_dep[:10] if len(p_alt_dep) >= 10 else ""
+            if v_date and p_date and v_date != p_date:
+                sched_node = parsed.get("schedule_local") or {}
+                sched_dep = str(sched_node.get("planned_dep") or "")[:10]
+                if v_date != sched_dep:
+                    alt_node["alt_dep"] = v_alt_dep
+                    v_alt_arr = str(v_alt.get("alt_arr") or "").strip()
+                    if not _is_unknown(v_alt_arr):
+                        alt_node["alt_arr"] = v_alt_arr
         is_conn_booking = _truthy(v_alt.get("is_connecting_rebooking")) is True
         if is_conn_booking:
             v_alt_dep = str(v_alt.get("alt_dep") or "").strip()
@@ -187,8 +217,12 @@ def merge_vision_into_parsed(
         if _is_unknown(actual_node.get("actual_arr")):
             actual_node["actual_arr"] = proof_actual_arr
 
-    # 7) boarding_pass_actual_dep
+    # 7) boarding_pass_actual_dep — 被保险人实际乘坐的航班（业务规则 2026-05-11 明确）
+    # 多次改签场景下，以登机牌上提取的航班为准（旅客实际乘坐的），
+    # 而非 schedule_revision_chain 的最后一个元素。
     bp_actual = str(v_evidence.get("boarding_pass_actual_dep") or "").strip()
+    bp_actual_arr = str(v_evidence.get("boarding_pass_actual_arr") or "").strip()
+    bp_flight_no = str(v_evidence.get("boarding_pass_flight_no") or "").strip()
     if not _is_unknown(bp_actual):
         v_alt_fn = str(v_alt.get("alt_flight_no") or "").strip()
         has_alt_flight = not _is_unknown(v_alt_fn)
@@ -197,9 +231,14 @@ def merge_vision_into_parsed(
         is_cancelled = avi_status in ("取消", "cancelled", "CANCELLED")
         is_rebooking = has_alt_flight or has_chain or is_cancelled
         if is_rebooking:
+            # 改签场景：登机牌数据作为实际乘坐航班的权威来源，
+            # 覆盖之前从 chain 中填充的 alternate_local 值
             alt_node = parsed.setdefault("alternate_local", {})
-            if _is_unknown(alt_node.get("alt_dep")):
-                alt_node["alt_dep"] = bp_actual
+            alt_node["alt_dep"] = bp_actual
+            if not _is_unknown(bp_actual_arr):
+                alt_node["alt_arr"] = bp_actual_arr
+            if not _is_unknown(bp_flight_no):
+                alt_node["alt_flight_no"] = bp_flight_no
         else:
             actual_node = parsed.setdefault("actual_local", {})
             if _is_unknown(actual_node.get("actual_dep")):

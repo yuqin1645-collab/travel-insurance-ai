@@ -175,6 +175,13 @@ async def review_flight_delay_async(
             "DebugInfo": ctx,
         }
 
+    # 将 hardcheck 结果注入 parsed，让 AI 审核阶段能感知代码侧判定
+    # 避免 AI 独立重新判定已被代码豁免的免责条款
+    parsed["hardcheck_code_assessment"] = {
+        "missed_connection_check": hardcheck.get("missed_connection_check", {}),
+        "transit_check": hardcheck.get("transit_check", {}),
+    }
+
     # ========== stage2: AI 理赔判定 ==========
     LOGGER.info(f"[{index}/{total}] 航班延误-阶段2: 理赔判定...", extra=log_extra(forceid=forceid, stage="fd_audit", attempt=0))
     audit, err = await runner.run(

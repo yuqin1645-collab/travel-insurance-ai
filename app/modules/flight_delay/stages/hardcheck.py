@@ -5,7 +5,7 @@ flight_delay stages — 硬校验集合（_run_hardcheck）及可预见因素欺
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from app.logging_utils import LOGGER, log_extra
@@ -19,7 +19,7 @@ from app.skills.policy_booking import (
     check_delay_in_coverage_area,
 )
 
-from .utils import _truthy, _is_unknown, _iata, _parse_date_str, _parse_date_any
+from .utils import _truthy, _is_unknown, _iata, _parse_date_str, _parse_date_any, _parse_tz_offset
 from .validators import (
     _check_inheritance_scenario,
     _check_legal_capacity,
@@ -30,6 +30,25 @@ from .validators import (
 
 # 模块级常量
 FRAUD_SUSPECT_DAYS_THRESHOLD = 3  # 投保/订票时间距事故日期≤3天，触发可预见因素欺诈嫌疑
+BEIJING_TZ = timezone(timedelta(hours=8))  # 北京时间 UTC+8
+
+
+def _normalize_to_beijing(time_str: str, tz_hint: Optional[str] = None) -> str:
+    """将时间字符串归一化到北京时间（UTC+8），返回 'YYYY-MM-DD HH:MM' 格式。
+    安联是国内保险公司，保单有效期以北京时间为准。
+    若无法解析时区则返回原字符串。
+    """
+    from .utils import _parse_utc_dt, _parse_local_dt
+
+    if not time_str or _is_unknown(time_str):
+        return time_str
+
+    dt_utc = _parse_utc_dt(time_str)
+    if dt_utc is None and tz_hint:
+        dt_utc = _parse_local_dt(time_str, tz_hint)
+    if dt_utc is None:
+        return time_str
+    return dt_utc.astimezone(BEIJING_TZ).strftime('%Y-%m-%d %H:%M')
 
 
 def _check_foreseeability_fraud(
@@ -246,9 +265,26 @@ def _run_hardcheck(
             time_points: List[tuple] = []
             _all_checked_times: List[tuple] = []
 
+            # 时区提示映射（用于北京时间归一化，安联保单有效期以北京时间为准）
+            _tz_hint_dep = str(sched_local.get("dep_timezone_hint") or "").strip()
+            _tz_hint_arr = str(sched_local.get("arr_timezone_hint") or "").strip()
+            alt_local = (parsed or {}).get("alternate_local") or {}
+            actual_local = (parsed or {}).get("actual_local") or {}
+            _tz_hint_alt = str(alt_local.get("timezone_hint") or "").strip()
+            _tz_hint_act = str(actual_local.get("timezone_hint") or "").strip()
+            _label_to_tz = {
+                "计划起飞时间": _tz_hint_dep,
+                "实际出发时间": _tz_hint_act or _tz_hint_dep,
+                "替代航班起飞时间": _tz_hint_alt or _tz_hint_dep,
+                "实际到达时间": _tz_hint_act or _tz_hint_arr,
+                "替代航班到达时间": _tz_hint_alt or _tz_hint_arr,
+            }
+
             _date_of_insurance_raw = str(claim_info.get("Date_of_Insurance") or claim_info.get("date_of_insurance") or "").strip()
+            # 投保时间仅作参考展示，不作为正向判定依据（投保时间在有效期之前是正常的）
+            _insurance_ref: Optional[tuple] = None
             if _date_of_insurance_raw and _date_of_insurance_raw.lower() not in ("unknown", "null", "none", ""):
-                time_points.append(("投保时间", _date_of_insurance_raw))
+                _insurance_ref = ("投保时间", _date_of_insurance_raw)
 
             _exit_datetime_raw = str((vision_extract or {}).get("evidence", {}).get("exit_datetime") or "").strip()
             if _exit_datetime_raw and _exit_datetime_raw.lower() not in ("unknown", "null", "none", ""):
@@ -271,10 +307,26 @@ def _run_hardcheck(
             if accident_date_raw:
                 time_points.append(("事故发生时间", accident_date_raw))
 
+            # 实际起飞/到达时间（延误事件的真实发生时间，优先级最高）
+            actual_local = (parsed or {}).get("actual_local") or {}
+            actual_dep_raw = str(actual_local.get("actual_dep") or "").strip()
+            if actual_dep_raw and actual_dep_raw.lower() not in ("unknown", "null", "none", ""):
+                time_points.append(("实际出发时间", actual_dep_raw))
+            actual_arr_raw = str(actual_local.get("actual_arr") or "").strip()
+            if actual_arr_raw and actual_arr_raw.lower() not in ("unknown", "null", "none", ""):
+                time_points.append(("实际到达时间", actual_arr_raw))
+
             alt_local = (parsed or {}).get("alternate_local") or {}
             alt_dep_raw = str(alt_local.get("alt_dep") or "").strip()
             if alt_dep_raw and alt_dep_raw.lower() not in ("unknown", "null", "none", ""):
-                time_points.append(("联程延误发生时间", alt_dep_raw))
+                time_points.append(("替代航班起飞时间", alt_dep_raw))
+            alt_arr_raw = str(alt_local.get("alt_arr") or "").strip()
+            if alt_arr_raw and alt_arr_raw.lower() not in ("unknown", "null", "none", ""):
+                time_points.append(("替代航班到达时间", alt_arr_raw))
+
+            # 区分"实际时间"和"计划/参考时间"
+            actual_time_labels = {"实际出发时间", "实际到达时间", "替代航班起飞时间", "替代航班到达时间"}
+            has_actual_times = any(label in actual_time_labels for label, _ in time_points)
 
             in_coverage = None
             passed_times = []
@@ -283,29 +335,118 @@ def _run_hardcheck(
             final_check_result = None
 
             for _label, _time_str in time_points:
+                # 安联保单有效期以北京时间为准，将带时区的时间归一化到北京时间
+                _tz_hint = _label_to_tz.get(_label, "")
+                _time_beijing = _normalize_to_beijing(_time_str, _tz_hint) if _tz_hint else _time_str
+
+                # 时间合理性校验：若"实际时间"与计划起飞日期偏差超过7天，视为AI解析错误，不参与判定
+                _time_unreliable = False
+                if _label in actual_time_labels and planned_dep_raw and not _is_unknown(planned_dep_raw):
+                    _planned_date = (_normalize_to_beijing(planned_dep_raw, _tz_hint_dep) if _tz_hint_dep else planned_dep_raw)[:10]
+                    _actual_date = _time_beijing[:10]
+                    try:
+                        _pd = datetime.strptime(_planned_date, "%Y-%m-%d").date()
+                        _ad = datetime.strptime(_actual_date, "%Y-%m-%d").date()
+                        if abs((_ad - _pd).days) > 7:
+                            _time_unreliable = True
+                    except Exception:
+                        pass
+
+                if _time_unreliable:
+                    continue
+
                 _cov = check_delay_in_coverage(
-                    delay_time=_time_str,
+                    delay_time=_time_beijing,
                     effective_from=effective_from,
                     effective_to=effective_to,
                     is_allianz=is_allianz,
                     first_exit_date=first_exit_date,
                     time_basis_label=_label,
                 )
-                _all_checked_times.append((_label, _time_str, _cov.get("in_coverage"), _cov.get("note", "")))
+                _all_checked_times.append((_label, _time_beijing, _cov.get("in_coverage"), _cov.get("note", "")))
                 if _cov.get("in_coverage") is True:
-                    passed_times.append((_label, _time_str))
-                    if in_coverage is None:
+                    passed_times.append((_label, _time_beijing))
+                elif _cov.get("in_coverage") is False:
+                    failed_times.append((_label, _time_beijing))
+
+            # 有效期判定逻辑（修正 2026-05-08）：
+            # - 如果有实际时间（实际出发/到达、替代航班起飞/到达），以实际时间为准：
+            #   至少一个实际时间在有效期内 → 通过；全部实际时间超出 → 拒绝
+            # - 如果没有实际时间，降级使用计划/参考时间（OR逻辑）
+            if has_actual_times:
+                actual_passed = [t for t in passed_times if t[0] in actual_time_labels]
+                actual_failed = [t for t in failed_times if t[0] in actual_time_labels]
+                if actual_passed:
+                    in_coverage = True
+                    final_check_result = check_delay_in_coverage(
+                        delay_time=actual_passed[0][1],
+                        effective_from=effective_from,
+                        effective_to=effective_to,
+                        is_allianz=is_allianz,
+                        first_exit_date=first_exit_date,
+                        time_basis_label=actual_passed[0][0],
+                    )
+                    final_basis = f"{actual_passed[0][0]}: {actual_passed[0][1]}"
+                elif actual_failed:
+                    # 所有实际时间都超出有效期 → 拒绝
+                    in_coverage = False
+                    final_check_result = {
+                        "in_coverage": False,
+                        "applied_from": effective_from or "unknown",
+                        "applied_to": effective_to or "unknown",
+                        "used_extension": False,
+                        "note": "所有实际航班时间均超出保单有效期",
+                        "basis": f"实际时间全部超出: {', '.join(f'{l}({t})' for l, t in actual_failed)}",
+                    }
+                    final_basis = f"实际时间全部超出有效期"
+                else:
+                    # 实际时间全部无法判定 → 降级OR
+                    if passed_times:
                         in_coverage = True
-                        final_check_result = _cov
-                        final_basis = f"{_label}: {_time_str}"
+                        final_check_result = check_delay_in_coverage(
+                            delay_time=passed_times[0][1],
+                            effective_from=effective_from,
+                            effective_to=effective_to,
+                            is_allianz=is_allianz,
+                            first_exit_date=first_exit_date,
+                            time_basis_label=passed_times[0][0],
+                        )
+                        final_basis = f"{passed_times[0][0]}: {passed_times[0][1]}"
+            else:
+                # 无实际时间，使用计划/参考时间（OR逻辑）
+                if passed_times:
+                    in_coverage = True
+                    final_check_result = check_delay_in_coverage(
+                        delay_time=passed_times[0][1],
+                        effective_from=effective_from,
+                        effective_to=effective_to,
+                        is_allianz=is_allianz,
+                        first_exit_date=first_exit_date,
+                        time_basis_label=passed_times[0][0],
+                    )
+                    final_basis = f"{passed_times[0][0]}: {passed_times[0][1]}"
+
+            # 投保时间加入展示（仅参考，不影响判定）
+            if _insurance_ref:
+                _ins_label, _ins_time = _insurance_ref
+                _ins_cov = check_delay_in_coverage(
+                    delay_time=_ins_time,
+                    effective_from=effective_from,
+                    effective_to=effective_to,
+                    is_allianz=is_allianz,
+                    first_exit_date=first_exit_date,
+                    time_basis_label=_ins_label,
+                )
+                _all_checked_times.insert(0, (_ins_label, _ins_time, _ins_cov.get("in_coverage"), _ins_cov.get("note", "")))
 
             if final_check_result:
                 cov_check = final_check_result
                 _summary_parts = []
                 for _lp, _tp, _ic, _note in _all_checked_times:
                     _summary_parts.append(f"{_lp}({_tp}): {'✓在有效期' if _ic is True else ('✗超出有效期' if _ic is False else '?无法判定')}")
-                cov_check["note"] = f"有效期校验（OR逻辑）: {'; '.join(_summary_parts)}"
-                cov_check["basis"] = f"任一时间点在有效期内: {final_basis}"
+                logic_desc = "实际时间优先" if has_actual_times else "计划时间OR逻辑"
+                cov_check["note"] = f"有效期校验（{logic_desc}）: {'; '.join(_summary_parts)}"
+                cov_check["basis"] = f"判定依据: {final_basis}"
                 cov_check["checked_times"] = [
                     {"label": l, "time": t, "in_coverage": c} for l, t, c, _ in _all_checked_times
                 ]
@@ -351,9 +492,18 @@ def _run_hardcheck(
 
         def _has_connecting_keyword(text: str) -> bool:
             t = text.lower()
-            for kw in ["missed their connecting", "misconnection", "connecting flight", "接驳", "误机后续", "错过后续", "未能搭乘后续", "错过接驳"]:
+            for kw in [
+                "missed their connecting", "misconnection", "connecting flight",
+                "接驳", "误机后续", "错过后续", "未能搭乘后续", "错过接驳",
+                # 新增：更多中转接驳相关表述
+                "前序航班", "前段航班", "前序延误", "前段延误",
+                "转机", "中转", "中转延误", "联程延误",
+                "衔接不上", "赶不上", "来不及",
+                "missed connection", "missed transit", "transit delay",
+                "connection missed", "unable to connect",
+            ]:
                 for m in re.finditer(re.escape(kw), t):
-                    prefix = t[max(0, m.start()-10):m.start()]
+                    prefix = t[max(0, m.start()-15):m.start()]
                     if any(neg in prefix for neg in ["未见", "未发现", "未检测", "无", "not ", "no ", "未提及", "不涉及"]):
                         continue
                     return True
@@ -402,31 +552,23 @@ def _run_hardcheck(
         overbooking_override = False
         aviation_delay_proof_override = False
         prev_seg_arrived_ok = False  # 前程正常到达（飞常准确认）
+        causal_check_available = False  # 因果检查是否执行
 
-        if is_missed_connection and avi_status == "取消" and has_rebooking and not is_conn_rebooking_flag:
-            is_missed_connection = False
-            rebooking_override = True
+        # 业务规则（2026-05-11明确）：不管延误时长够不够，
+        # 都要检查是否前序航班延误导致到达中转站时间延后，造成赶不上后续航班。
+        # 因果检查优先于改签豁免：先判断前序是否延误，再决定是否豁免。
 
-        # 联程场景：用飞常准前程数据判断末段延误是否由前程延误引起
-        # 若前程正常到达（actual_arr 在末段计划出发之前），则末段是独立事件，不触发误机免责
-        # 若前程本身严重延误（actual_arr 晚于末段计划出发），则是前程延误导致，触发误机免责
+        # ── 因果检查：前程 actual_arr vs 末段 planned_dep ──
         connecting_segments = (parsed or {}).get("connecting_segments_data") or []
-        last_seg_dep_utc = None
-        sched_local = (parsed or {}).get("schedule_local") or {}
-        last_seg_dep_iata_val = str(sched_local.get("last_seg_dep_iata") or "").strip()
+        last_seg_dep_iata_val = str((parsed.get("schedule_local") or {}).get("last_seg_dep_iata") or "").strip()
         if connecting_segments and last_seg_dep_iata_val:
-            # 找最后一程的计划出发时间（即中转机场的起飞时间）
-            # 从飞常准数据中取末段的 planned_dep
+            causal_check_available = True
             for seg in connecting_segments:
                 if str(seg.get("arr_iata") or "").strip().upper() == last_seg_dep_iata_val.upper():
-                    # 这段的到达机场 = 末段的出发机场（即中转点）
-                    # 前程 actual_arr = 旅客到达中转机场时间
                     prev_actual_arr_raw = str(seg.get("actual_arr") or "").strip()
                     try:
                         if prev_actual_arr_raw and prev_actual_arr_raw.lower() not in ("", "unknown", "none"):
                             prev_actual_arr_dt = datetime.fromisoformat(prev_actual_arr_raw)
-                            # 末段计划出发时间（从 schedule_local.planned_dep 或 itinerary_segments 里取）
-                            # last_seg_dep 存在于 itinerary_segments 的最后一段 original_date
                             v_segs = (vision_extract or {}).get("itinerary_segments") or []
                             last_seg_planned_dep_raw = ""
                             for vs in v_segs:
@@ -434,21 +576,40 @@ def _run_hardcheck(
                                     last_seg_planned_dep_raw = str(vs.get("original_date") or "").strip()
                                     break
                             if last_seg_planned_dep_raw:
-                                # 尝试用前程的时区解析末段计划出发
                                 last_seg_tz = prev_actual_arr_dt.utcoffset()
                                 if last_seg_tz is not None:
-                                    from datetime import timezone, timedelta
-                                    date_part = last_seg_planned_dep_raw[:16]  # "YYYY-MM-DD HH:MM"
-                                    last_seg_dep_dt = datetime.strptime(date_part, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(last_seg_tz))
-                                    # 前程准时到达 = actual_arr 在末段计划出发之前
+                                    from datetime import timezone as _tz2, timedelta as _td2
+                                    date_part = last_seg_planned_dep_raw[:16]
+                                    last_seg_dep_dt = datetime.strptime(date_part, "%Y-%m-%d %H:%M").replace(tzinfo=_tz2(last_seg_tz))
                                     if prev_actual_arr_dt <= last_seg_dep_dt:
                                         prev_seg_arrived_ok = True
                     except Exception:
                         pass
 
-        # 若前程正常到达，且末段是独立取消（非前程延误导致），则不触发误机免责
-        if is_missed_connection and prev_seg_arrived_ok:
+        # 因果检查确认：前序航班延误导致误机（actual_arr > last_seg planned_dep）
+        # → 主动触发误机免责，不管初始判定结果如何
+        if causal_check_available and not prev_seg_arrived_ok:
+            is_missed_connection = True
+
+        # 若前程正常到达（非前序延误导致），末段是独立事件，不触发误机免责
+        if is_missed_connection and causal_check_available and prev_seg_arrived_ok:
             is_missed_connection = False
+
+        # 改签豁免：仅在因果检查未执行或确认前程正常到达时才适用
+        # 如果因果检查确认前序延误导致了误机，即使有改签也不豁免
+        if is_missed_connection and has_rebooking and not causal_check_available:
+            # 无法确认前序是否延误 → 默认适用改签豁免
+            is_missed_connection = False
+            rebooking_override = True
+
+        if is_missed_connection and avi_status == "取消" and has_rebooking and not is_conn_rebooking_flag and not causal_check_available:
+            is_missed_connection = False
+            rebooking_override = True
+
+        # 联程改签场景豁免：仅在因果检查未执行时才适用
+        if is_missed_connection and is_conn_rebooking_flag and not causal_check_available:
+            is_missed_connection = False
+            rebooking_override = True
 
         _overbooking_keywords = ["超售", "overbooking", "overbooked", "denied boarding", "denied_boarding", "拒绝登机"]
         _all_texts = " ".join([
@@ -522,6 +683,11 @@ def _run_hardcheck(
             if (is_international or airport_unknown) and has_any_travel_doc:
                 has_exit_entry_record = True
                 result["debug_notes"].append("出入境记录兜底：国际航班/机场未知+旅行证件齐全，推断出入境记录已满足")
+        # 额外兜底：有飞常准延误证明 → 推断已出入境（官方数据含出入境信息）
+        if has_exit_entry_record is not True:
+            if _truthy(evidence.get("aviation_delay_proof")) is True:
+                has_exit_entry_record = True
+                result["debug_notes"].append("出入境记录兜底：飞常准延误证明已确认，推断出入境记录已满足")
         id_type_text = str(claim_info.get("ID_Type") or claim_info.get("id_type") or "").strip()
         is_id_card_policy = "身份证" in id_type_text
 
@@ -572,6 +738,14 @@ def _run_hardcheck(
                     if flight_no in desc.upper() or flight_no in desc:
                         has_delay_proof = True
                         result["debug_notes"].append("delay_proof文本兜底：描述文本含航班号+延误关键词，推断延误证明已满足")
+            # 额外兜底：改签场景 + 飞常准查到改签后航班 → 推断延误证明已满足
+            if has_delay_proof is not True:
+                alternate = (parsed or {}).get("alternate") or {}
+                if isinstance(alternate, dict) and alternate.get("alt_flight_no"):
+                    alt_fn = str(alternate.get("alt_flight_no") or "").strip()
+                    if alt_fn and alt_fn.lower() not in ("unknown", ""):
+                        has_delay_proof = True
+                        result["debug_notes"].append("delay_proof兜底：存在改签航班信息，推断延误/改签证明已满足")
         except Exception as e:
             result["debug_notes"].append(f"delay_proof文本兜底校验降级: {e}")
 
@@ -607,6 +781,10 @@ def _run_hardcheck(
             if has_delay_proof is True and has_id_proof is True:
                 has_boarding_pass = True
                 result["debug_notes"].append("登机牌兜底：延误证明+身份证明齐全，推断登机牌已满足")
+            # 兜底：Vision提取到有效航班数据 → 推断登机牌/行程单已提供
+            elif vision_extract and vision_extract.get("flight_no") and not _is_unknown(str(vision_extract.get("flight_no") or "")):
+                has_boarding_pass = True
+                result["debug_notes"].append("登机牌兜底：Vision已提取到航班号，推断登机牌/行程单已提供")
             else:
                 missing_required.append("登机牌或电子客票行程单")
         if is_id_card_policy:

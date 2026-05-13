@@ -177,6 +177,37 @@ app/modules/<claim_type>/
 | `scripts/query.py` | 统一查询入口 | `python query.py forceid xxx`（查案件）<br>`python query.py status`（数据库状态）<br>`python query.py count`（统计数量） |
 | `scripts/data.py` | 统一数据管理入口 | `python data.py download`（全量下载）<br>`python data.py sync --no-delete`（API同步）<br>`python data.py restore --skip-existing`（从数据库恢复） |
 
+### 案件目录结构规范（禁止重复造轮子）
+
+**唯一合法的案件目录结构**：
+
+```
+claims_data/
+├── 航班延误/
+│   └── 航班延误-案件号【000006527387】/
+│       ├── claim_info.json
+│       └── filelist_000.png ...
+├── 行李延误/
+│   └── 行李延误-案件号【000006123456】/
+│       └── ...
+└── .download_progress.json
+```
+
+**禁止创建以下重复结构**：
+- ❌ `claims_data/a0nC800000XXX/` — 直接用forceid作目录名（与标准路径重复）
+- ❌ `claims_data/{forceid}/` — 任何以forceid命名的平级目录
+- ❌ 同一案件同时存在于标准路径和forceid路径
+
+**根因**：`download_claims.py`、`refetch_claims_by_forceid.py`、`restore_claims_from_db.py` 均已正确使用 `{BenefitName}/{BenefitName}-案件号【{PolicyNo}】` 结构。若发现forceid级目录，说明有未规范脚本或临时代码创建了重复目录，应删除重复项并追溯来源。
+
+**查找重复目录命令**：
+```bash
+# 查找 claims_data 下所有非标准命名的目录（非险种名命名的目录即为可疑）
+ls -d claims_data/*/ | grep -v "航班延误\|行李延误\|随身财产\|\.download"
+```
+
+---
+
 ### 独立脚本
 
 | 脚本 | 用途 | 典型用法 |

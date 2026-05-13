@@ -97,6 +97,36 @@ def _merge_aviation_into_parsed(parsed: Dict[str, Any], aviation: Dict[str, Any]
         _fill(["aviation_scheduled", "planned_arr"], aviation.get("planned_arr"))
         _fill(["aviation_scheduled", "dep_timezone_hint"], aviation.get("planned_dep", ""))
         _fill(["aviation_scheduled", "arr_timezone_hint"], aviation.get("planned_arr", ""))
+
+        # 兜底修正：当 schedule_local 存在明显错误时，用飞常准数据强制覆盖
+        # 1. "HH:MM" 字面量占位符 → AI 解析失败，时间不可用
+        # 2. 与飞常准数据相差正好24小时 → 日期跨线错误（如 CDG→CAN 到达日期被算错一天）
+        # 3. "unknown" 时间 → AI 无法解析，用飞常准数据填充
+        for field, avi_val in [("planned_dep", aviation.get("planned_dep")),
+                                ("planned_arr", aviation.get("planned_arr"))]:
+            if _is_unknown(avi_val):
+                continue
+            local_val = (p.get("schedule_local") or {}).get(field)
+            if _is_unknown(local_val):
+                continue
+            local_str = str(local_val)
+            if "HH:MM" in local_str:
+                _force_fill(["schedule_local", field], avi_val)
+                continue
+            # "2026-02-06 unknown" 这种只有日期没有时间的也强制覆盖
+            if "unknown" in local_str.lower():
+                _force_fill(["schedule_local", field], avi_val)
+                continue
+            avi_date_str = str(avi_val)[:10]
+            local_date_str = local_str[:10]
+            if avi_date_str != local_date_str:
+                try:
+                    avi_date = datetime.strptime(avi_date_str, "%Y-%m-%d").date()
+                    local_date = datetime.strptime(local_date_str, "%Y-%m-%d").date()
+                    if abs((avi_date - local_date).days) == 1:
+                        _force_fill(["schedule_local", field], avi_val)
+                except Exception:
+                    pass
     else:
         _force_fill(["schedule_local", "planned_dep"], aviation.get("planned_dep"))
         _force_fill(["schedule_local", "planned_arr"], aviation.get("planned_arr"))
@@ -117,6 +147,23 @@ def _merge_aviation_into_parsed(parsed: Dict[str, Any], aviation: Dict[str, Any]
     if route_matches:
         _force_fill(["actual_local", "actual_dep"], aviation.get("actual_dep"))
         _force_fill(["actual_local", "actual_arr"], aviation.get("actual_arr"))
+    else:
+        # 路线不匹配但飞常准有实际时间 → 飞常准权威，修正路线并写入实际时间
+        # 场景：Vision/AI 解析将航线识别错误（如 9C8534 实际 KTI→PVG 但被识别为 PVG→PNH）
+        avi_has_actual = (
+            not _is_unknown(aviation.get("actual_dep"))
+            or not _is_unknown(aviation.get("actual_arr"))
+        )
+        if avi_has_actual:
+            LOGGER.info(
+                f"飞常准路线({avi_dep}→{avi_arr})与解析路线({route_dep}→{route_arr})不匹配，"
+                f"飞常准有实际时间，信任飞常准修正路线",
+                extra=log_extra(forceid="", stage="fd_merge_aviation", attempt=0),
+            )
+            p.setdefault("route", {})["dep_iata"] = avi_dep
+            p.setdefault("route", {})["arr_iata"] = avi_arr
+            _force_fill(["actual_local", "actual_dep"], aviation.get("actual_dep"))
+            _force_fill(["actual_local", "actual_arr"], aviation.get("actual_arr"))
 
     _fill(["flight", "operating_carrier"], aviation.get("operating_carrier"))
 

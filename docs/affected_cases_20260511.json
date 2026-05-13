@@ -1,0 +1,356 @@
+{
+  "total_flight_delay": 867.0,
+  "total_discrepancy": 354.0,
+  "total_affected": 51.0,
+  "rule_stats": {
+    "rule2_rule3_rebooking": 49.0,
+    "rule4_connecting": 25.0,
+    "rule5_missed_connection": 25.0,
+    "rule2_airport_mismatch_arr": 4.0,
+    "rule2_airport_mismatch_dep": 3.0
+  },
+  "p0_affected": 7.0,
+  "p1_affected": 31.0,
+  "p2_affected": 13.0,
+  "all_affected_forceids": [
+    "a0nC800000Nx1EAIAZ",
+    "a0nC800000NTBhCIAX",
+    "a0nC800000NOKpxIAH",
+    "a0nC800000NKefCIAT",
+    "a0nC800000NCWIDIA5",
+    "a0nC800000MzYbEIAV",
+    "a0nC800000MtAV9IAN",
+    "a0nC800000LxhzKIAR",
+    "a0nC800000LxgVNIAZ",
+    "a0nC800000McPlVIAV",
+    "a0nC800000MY6fpIAD",
+    "a0nC800000MOLugIAH",
+    "a0nC800000L9bM1IAJ",
+    "a0nC800000K37StIAJ",
+    "a0nC800000JpHALIA3",
+    "a0nC800000JmEyfIAF",
+    "a0nC800000JkparIAB",
+    "a0nC800000JVq5uIAD",
+    "a0nC800000JIl0jIAD",
+    "a0nC800000JIVDjIAP",
+    "a0nC800000JI3FuIAL",
+    "a0nC800000JGJLYIA5",
+    "a0nC800000JA2dYIAT",
+    "a0nC800000IxpSNIAZ",
+    "a0nC800000IxpSMIAZ",
+    "a0nC800000IxpSLIAZ",
+    "a0nC800000IuKoBIAV",
+    "a0nC800000IoENCIA3",
+    "a0nC800000IsoQWIAZ",
+    "a0nC800000IsO7sIAF",
+    "a0nC800000IkAlBIAV",
+    "a0nC800000IccjRIAR",
+    "a0nC800000IbiPVIAZ",
+    "a0nC800000IbYy3IAF",
+    "a0nC800000IWp9wIAD",
+    "a0nC800000IWNn7IAH",
+    "a0nC800000IViDhIAL",
+    "a0nC800000IR0EWIA1",
+    "a0nC800000IG4dGIAT",
+    "a0nC800000IEf2XIAT",
+    "a0nC800000ICShPIAX",
+    "a0nC800000IBiOLIA1",
+    "a0nC800000I9eP3IAJ",
+    "a0nC800000I94QDIAZ",
+    "a0nC800000I5vrJIAR",
+    "a0nC800000I4RAXIA3",
+    "a0nC800000I0dDXIAZ",
+    "a0nC800000HReNlIAL",
+    "a0nC800000IGq1uIAD",
+    "a0nC800000LjwLWIAZ",
+    "a0nC800000LRsBWIA1"
+  ],
+  "p0_forceids": [
+    "a0nC800000Nx1EAIAZ",
+    "a0nC800000McPlVIAV",
+    "a0nC800000JIVDjIAP",
+    "a0nC800000IkAlBIAV",
+    "a0nC800000IbiPVIAZ",
+    "a0nC800000IViDhIAL",
+    "a0nC800000IGq1uIAD"
+  ],
+  "p1_forceids": [
+    "a0nC800000MzYbEIAV",
+    "a0nC800000LxhzKIAR",
+    "a0nC800000MY6fpIAD",
+    "a0nC800000L9bM1IAJ",
+    "a0nC800000JmEyfIAF",
+    "a0nC800000JkparIAB",
+    "a0nC800000JVq5uIAD",
+    "a0nC800000JIl0jIAD",
+    "a0nC800000JI3FuIAL",
+    "a0nC800000JGJLYIA5",
+    "a0nC800000JA2dYIAT",
+    "a0nC800000IxpSNIAZ",
+    "a0nC800000IxpSMIAZ",
+    "a0nC800000IxpSLIAZ",
+    "a0nC800000IuKoBIAV",
+    "a0nC800000IoENCIA3",
+    "a0nC800000IsoQWIAZ",
+    "a0nC800000IsO7sIAF",
+    "a0nC800000IccjRIAR",
+    "a0nC800000IbYy3IAF",
+    "a0nC800000IWp9wIAD",
+    "a0nC800000IWNn7IAH",
+    "a0nC800000IR0EWIA1",
+    "a0nC800000IG4dGIAT",
+    "a0nC800000IEf2XIAT",
+    "a0nC800000ICShPIAX",
+    "a0nC800000IBiOLIA1",
+    "a0nC800000I9eP3IAJ",
+    "a0nC800000I5vrJIAR",
+    "a0nC800000I4RAXIA3",
+    "a0nC800000I0dDXIAZ"
+  ],
+  "p2_forceids": [
+    "a0nC800000NTBhCIAX",
+    "a0nC800000NOKpxIAH",
+    "a0nC800000NKefCIAT",
+    "a0nC800000NCWIDIA5",
+    "a0nC800000MtAV9IAN",
+    "a0nC800000LxgVNIAZ",
+    "a0nC800000MOLugIAH",
+    "a0nC800000K37StIAJ",
+    "a0nC800000JpHALIA3",
+    "a0nC800000I94QDIAZ",
+    "a0nC800000HReNlIAL",
+    "a0nC800000LjwLWIAZ",
+    "a0nC800000LRsBWIA1"
+  ],
+  "p0_details": [
+    {
+      "forceid": "a0nC800000Nx1EAIAZ",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 600.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 960.0
+    },
+    {
+      "forceid": "a0nC800000McPlVIAV",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 300.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 346.0
+    },
+    {
+      "forceid": "a0nC800000JIVDjIAP",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 600.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 840.0
+    },
+    {
+      "forceid": "a0nC800000IkAlBIAV",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 600.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 600.0
+    },
+    {
+      "forceid": "a0nC800000IbiPVIAZ",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 600.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 752.0
+    },
+    {
+      "forceid": "a0nC800000IViDhIAL",
+      "ai_result": "通过",
+      "manual_status": "拒绝",
+      "payout": 900.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule2_airport_mismatch_dep",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 1014.0
+    },
+    {
+      "forceid": "a0nC800000IGq1uIAD",
+      "ai_result": "通过",
+      "manual_status": "需补齐资料",
+      "payout": 300.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 578.0
+    }
+  ],
+  "p2_details": [
+    {
+      "forceid": "a0nC800000NTBhCIAX",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 60.0
+    },
+    {
+      "forceid": "a0nC800000NOKpxIAH",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 1998.0
+    },
+    {
+      "forceid": "a0nC800000NKefCIAT",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 456.0
+    },
+    {
+      "forceid": "a0nC800000NCWIDIA5",
+      "ai_result": "拒绝",
+      "manual_status": "需补齐资料",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": null
+    },
+    {
+      "forceid": "a0nC800000MtAV9IAN",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 1410.0
+    },
+    {
+      "forceid": "a0nC800000LxgVNIAZ",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 43.0
+    },
+    {
+      "forceid": "a0nC800000MOLugIAH",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 13.0
+    },
+    {
+      "forceid": "a0nC800000K37StIAJ",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule2_airport_mismatch_arr",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 1063.0
+    },
+    {
+      "forceid": "a0nC800000JpHALIA3",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 1080.0
+    },
+    {
+      "forceid": "a0nC800000I94QDIAZ",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 105.0
+    },
+    {
+      "forceid": "a0nC800000HReNlIAL",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": 375.0
+    },
+    {
+      "forceid": "a0nC800000LjwLWIAZ",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking"
+      ],
+      "delay_minutes": null
+    },
+    {
+      "forceid": "a0nC800000LRsBWIA1",
+      "ai_result": "拒绝",
+      "manual_status": "通过",
+      "payout": 0.0,
+      "rule_hits": [
+        "rule2_rule3_rebooking",
+        "rule2_airport_mismatch_dep",
+        "rule2_airport_mismatch_arr",
+        "rule4_connecting",
+        "rule5_missed_connection"
+      ],
+      "delay_minutes": 5392.0
+    }
+  ]
+}

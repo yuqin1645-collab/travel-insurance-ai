@@ -1,0 +1,263 @@
+D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py:7: SyntaxWarning: "\S" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\S"? A raw string is also an option.
+  venv\Scripts\python.exe scripts\rerun_6_pir_cases.py
+2026-04-28 13:46:04,988 INFO forceid=a0nC800000IBWjlIAH stage=start attempt=0 [1/1] 开始审核 行李延误-案件号【000006635051】
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 630, in review_claim_async
+    LOGGER.info(
+Message: '[1/1] 开始审核 行李延误-案件号【000006635051】'
+Arguments: ()
+2026-04-28 13:46:04,993 INFO forceid=a0nC800000IBWjlIAH stage=baggage_delay_start attempt=0 [1/1] 行李延误审核开始
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 646, in review_claim_async
+    return await review_baggage_delay_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\modules\baggage_delay\pipeline.py", line 460, in review_baggage_delay_async
+    LOGGER.info(
+Message: '[1/1] 行李延误审核开始'
+Arguments: ()
+2026-04-28 13:46:04,995 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 材料提取 [Vision] 开始
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 646, in review_claim_async
+    return await review_baggage_delay_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\modules\baggage_delay\pipeline.py", line 470, in review_baggage_delay_async
+    extraction = await extractor.extract(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 139, in extract
+    return await self._do_vision(claim_folder, claim_info, prompt_name, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 259, in _do_vision
+    LOGGER.info(
+Message: '材料提取 [Vision] 开始'
+Arguments: ()
+2026-04-28 13:46:18,595 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 material extract [Vision] request start(batch 1/1, attempt 1/3)
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 646, in review_claim_async
+    return await review_baggage_delay_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\modules\baggage_delay\pipeline.py", line 470, in review_baggage_delay_async
+    extraction = await extractor.extract(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 139, in extract
+    return await self._do_vision(claim_folder, claim_info, prompt_name, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 315, in _do_vision
+    LOGGER.info(
+Message: 'material extract [Vision] request start(batch 1/1, attempt 1/3)'
+Arguments: ()
+2026-04-28 13:46:33,224 INFO forceid=a0nC800000IBWjlIAH stage=material_extractor attempt=0 材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 646, in review_claim_async
+    return await review_baggage_delay_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\modules\baggage_delay\pipeline.py", line 470, in review_baggage_delay_async
+    extraction = await extractor.extract(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 139, in extract
+    return await self._do_vision(claim_folder, claim_info, prompt_name, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\engine\material_extractor.py", line 379, in _do_vision
+    LOGGER.info(
+Message: '材料提取 [Vision] 完成: Vision分批识别 2 份附件（1 批），返回 37 个字段'
+Arguments: ()
+2026-04-28 13:46:33,226 INFO forceid=a0nC800000IBWjlIAH stage=baggage_delay_vision attempt=0 [1/1] 视觉识别完成: has_boarding=true has_delay_proof=false has_receipt_proof=false
+--- Logging error ---
+Traceback (most recent call last):
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 456, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\app\tools\system\python\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log' -> 'D:\\UserFiles\\Desktop\\travel-insurance-ai-code\\logs\\ai_review.log.20260427'
+Call stack:
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 706, in run_until_complete
+    self.run_forever()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 677, in run_forever
+    self._run_once()
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 2046, in _run_once
+    handle._run()
+  File "D:\app\tools\system\python\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 97, in main
+    result = await rerun_single(fid, session)
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 79, in rerun_single
+    result = await review_claim_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\claim_ai_reviewer.py", line 646, in review_claim_async
+    return await review_baggage_delay_async(
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\app\modules\baggage_delay\pipeline.py", line 482, in review_baggage_delay_async
+    LOGGER.info(
+Message: '[1/1] 视觉识别完成: has_boarding=true has_delay_proof=false has_receipt_proof=false'
+Arguments: ()
+
+[1/6] 重跑: a0nC800000IBWjlIAH
+  [baggage_delay] a0nC800000IBWjlIAH
+    audit_result: 
+    Remark: 需补件：托运行李牌照片（含姓名、航班信息、行李牌号码）；行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）
+    payout: 
+Traceback (most recent call last):
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 152, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\app\tools\system\python\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\app\tools\system\python\Lib\asyncio\base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\UserFiles\Desktop\travel-insurance-ai-code\scripts\rerun_6_pir_cases.py", line 126, in main
+    output_dir = REVIEW_DIR / ct
+                              ^^
+NameError: name 'ct' is not defined. Did you mean: 'oct'?

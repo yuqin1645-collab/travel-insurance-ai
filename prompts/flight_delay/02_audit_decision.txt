@@ -102,6 +102,11 @@
        统一拒赔原因：材料中未见实际乘坐飞机的登机牌，无法确认出行事实。
        （若无法判断是否实际乘坐，则需补材：补充票号使用状态/登机记录）
 6. 联程/中转限制（条款免责必须严格执行）：
+   - **【代码判定优先原则】**：parsed.hardcheck_code_assessment 是代码侧 hardcheck 评估结果，必须尊重，不得覆盖或推翻：
+     * 若 hardcheck_code_assessment.missed_connection_check.is_missed_connection=false → 代码已评估不触发中转接驳免责，你**不得**因"前序延误导致误机"而自行判定免责拒赔
+     * 若 hardcheck_code_assessment.missed_connection_check.rebooking_override=true → 航司已安排改签，不适用中转接驳免责
+     * 若 hardcheck_code_assessment.transit_check.is_domestic_cn=false → 中转地不在境内，不适用境内中转免责
+   - 若 hardcheck_code_assessment 不存在或相关字段为 unknown → 按以下默认规则判定
    - 因前次航班延误导致未能准时搭乘接驳航班的"中转延误"免责，不赔付该段中转延误。
    - 中转联程且中转地在境内：免责，不赔付。
    - 返回境内的联程：若境内段延误，因"返回境内责任终止"与"中转地在境内"双重口径，通常不赔付（按案例口径）。

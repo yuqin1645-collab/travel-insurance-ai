@@ -34,9 +34,17 @@
   "airline_baggage_record_pieces": "行李记录上的行李件数（数字）/unknown",
   "accident_date_in_materials": "YYYY-MM-DD/unknown（从材料中提取的真实事故发生日期，见下方提取规则）",
   "flight_actual_arrival_time": "YYYY-MM-DD HH:MM/unknown（首次乘坐航班的实际到达时间，行李延误时长起算点）",
-  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点。若无明确签收时间，但材料中航司邮件/通知提到了行李搭乘的转运航班及预计到达时间，可将该转运航班的预计到达时间作为临时签收时间填入，并在 notes 中说明来源）",
+  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点。**仅在存在实际行李签收/交付证明时填写**，见下方签收时间提取规则。若无签收证明但航司邮件/通知提到了行李搭乘的转运航班及预计到达时间，**不要**填入 baggage_receipt_time，而应填入 baggage_estimated_arrival_time 字段并在 notes 中说明来源）",
+  "baggage_receipt_time_source": "签收时间的具体来源分类（**必填，不得留空或填unknown，必须从以下5个值中选择一个**）：
+    - actual_receipt：有明确的行李签收/交付单据（含旅客签名+交付日期时间）
+    - airport_counter：机场行李服务柜台出具的交付确认单（含旅客签名）
+    - courier_delivery：快递配送单（行李由快递配送到家，含配送日期+签收人签名）
+    - email_estimate：航司邮件/通知中的预计到达时间（非实际签收，仅作预估参考）
+    - pir_creation：PIR报告上的创建时间（非实际签收，是行李异常报告开具时间）
+    **判断流程：材料中有旅客签名确认收到的单据吗？→是：actual_receipt/airport_counter；→否：有快递配送单吗？→是：courier_delivery；→否：只有PIR报告或航司邮件吗？→是：email_estimate或pir_creation**",
+  "baggage_estimated_arrival_time": "YYYY-MM-DD HH:MM/unknown（仅当无实际签收证明时，若航司邮件/通知中提及行李搭乘的转运航班及预计到达时间，可填入此字段作为参考，**不得**与 baggage_receipt_time 混淆）",
   "receipt_times": ["YYYY-MM-DD HH:MM（若识别到多份签收证明，列出全部签收时间，最晚者写入 baggage_receipt_time）"],
-  "delay_hours": "number/unknown（根据 baggage_receipt_time - flight_actual_arrival_time 计算，结果保留1位小数；信息不足时输出 unknown）",
+  "delay_hours": "number/unknown（根据 baggage_receipt_time - flight_actual_arrival_time 计算，结果保留1位小数；**仅当 baggage_receipt_time_source 为 actual_receipt/airport_counter/courier_delivery 时才可计算**，其他来源一律输出 unknown）",
   "has_id_proof": "true/false/unknown（是否存在被保险人身份证）",
   "has_passport": "true/false/unknown（材料中是否出现护照照片页，含本人照片、姓名、护照号码）",
   "has_exit_entry_record": "true/false/unknown（材料中是否出现中国海关出入境盖章页或电子出入境记录）",
@@ -76,6 +84,8 @@
   "accident_date_in_materials": "...",
   "flight_actual_arrival_time": "...",
   "baggage_receipt_time": "...",
+  "baggage_receipt_time_source": "...",
+  "baggage_estimated_arrival_time": "...",
   "receipt_times": [],
   "delay_hours": "...",
   "has_id_proof": "...",
@@ -106,6 +116,55 @@
 - 如果识别到含"RECEIPT"或"SIGNATURE FOR RECEIPT"的交付单据，则 `has_baggage_receipt_time_proof` **必须**为 true，不得为 false
 - 如果画面中存在行李牌贴纸（含航班号+行李牌号），则 `has_baggage_tag_proof` **必须**为 true，不得为 false
 - **不要**因为材料是葡萄牙语、西班牙语等非英语/中文就填 false —— 判断依据是文件结构特征，不是语言
+
+---
+
+### ⚠️ 行李签收时间提取规则（非常重要，严格执行）
+
+**行李签收时间（baggage_receipt_time）是计算延误时长的终止点，直接决定赔付结果。以下5种常见错误必须避免：**
+
+| 材料类型 | 是实际签收时间吗？ | `baggage_receipt_time_source` | `baggage_receipt_time` | 说明 |
+|---------|------------------|------------------------------|----------------------|------|
+| **行李交付/签收单**（含 RECEIPT OF / SIGNATURE FOR RECEIPT / 签收人签名栏 / 实际交付日期时间） | ✅ 是 | `actual_receipt` | 填写实际签收时间 | 最权威的签收时间证据 |
+| **机场行李服务柜台交付确认单**（航司地服出具，含旅客签名确认收到行李） | ✅ 是 | `airport_counter` | 填写柜台确认时间 | 机场行李服务柜台出具 |
+| **快递配送单**（行李由快递公司配送到家，含配送日期+签收人签名） | ✅ 是 | `courier_delivery` | 填写配送签收时间 | 需确认是实际配送，非预估 |
+| **PIR 报告**（行李异常报告，含 PIR 编号/行李参考号/航班信息） | ❌ 不是 | `pir_creation` | **必须填 unknown** | PIR 报告创建时间≠行李签收时间！PIR 是在行李未到时就开具的异常记录 |
+| **航司邮件/通知中的预计到达时间**（如"您的行李将搭乘XX航班，预计XX:XX到达"） | ❌ 不是 | `email_estimate` | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | 邮件中的时间是预估值，非实际发生时间 |
+| **航旅APP/航司APP中的航班追踪信息**（显示航班到达时间/行李状态） | ❌ 不是 | `app_tracking` | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | APP中的时间是航班信息，非行李实际交付时间 |
+| **旅客文字描述中的签收时间**（如"我于次日10:00收到行李"） | ⚠️ 需谨慎 | 见下方判断流程 | 仅当有对应证明材料时填写 | 纯文字描述不足以作为签收时间证据 |
+| **无任何签收证明，仅凭航班到达时间推算** | ❌ 不是 | `unknown` | **必须填 unknown** | 航班到达≠行李交付，不得将航班到达时间等同于签收时间 |
+
+**关键区分规则：**
+1. **PIR创建时间 vs 行李签收时间**：PIR（Property Irregularity Report）是行李未到或延误时旅客在机场开具的**异常报告**，其上的日期时间（如"07FEB26/1752GMT"）是**报告创建时间**，**绝不是行李签收时间**。行李延误证明≠行李签收证明
+2. **邮件预计时间 vs 实际签收时间**：航司邮件/通知中提到的"预计到达""预计交付"都是**预估值**，**不是实际发生时间**。除非邮件明确说"您的行李已送达/已交付"并附有实际时间，否则不得作为 baggage_receipt_time
+3. **航班到达时间 vs 行李交付时间**：航班到达后，行李还需要从机舱卸下、运送到行李提取区、由地服人员确认交付给旅客。这两个时间**通常相差30分钟到数小时**。不得将航班到达时间等同于行李签收时间
+4. **文字描述中的时间 vs 证明材料中的时间**：旅客在事故描述中可能提到"我于XX时间收到行李"，但这是**主观陈述**，**不是证明材料**。只有当有对应的签收单/交付单/快递单等书面材料佐证时，才能将时间填入 baggage_receipt_time
+5. **无签收证明时的处理**：如果材料中没有专门的行李签收/交付单据（含旅客签名+交付时间），`baggage_receipt_time` **必须填 unknown**，`has_baggage_receipt_time_proof` **必须填 false**。不得用PIR时间、邮件预估时间、航班到达时间、文字描述时间替代
+
+**判断流程（必须严格按顺序执行）：**
+```
+步骤1：材料中有专门的行李交付/签收单据吗？（含旅客签名+交付日期时间，如 RECEIPT OF / SIGNATURE FOR RECEIPT）
+  → 是：填写实际时间，source = actual_receipt
+  → 否：进入步骤2
+
+步骤2：材料有机场行李服务柜台出具的交付确认单吗？（含旅客签名确认收到行李）
+  → 是：填写确认时间，source = airport_counter
+  → 否：进入步骤3
+
+步骤3：材料有快递配送单吗？（行李由快递配送到家，含配送日期+签收人签名）
+  → 是：填写配送签收时间，source = courier_delivery
+  → 否：进入步骤4
+
+步骤4：只有PIR报告或航司邮件吗？
+  → 是：baggage_receipt_time = unknown，source = pir_creation 或 email_estimate
+  → 否：baggage_receipt_time = unknown，source = unknown
+```
+
+**⚠️ 自检要求（输出前必须执行）：**
+- 检查 `baggage_receipt_time_source` 的值是否为 actual_receipt/airport_counter/courier_delivery 之一
+- 如果是，确认材料中确实有对应的签收/交付单据（不是PIR报告、不是邮件预估、不是文字描述）
+- 如果不是（即 pir_creation/email_estimate/unknown），`baggage_receipt_time` **必须填 unknown**，`delay_hours` **必须填 unknown**
+- **绝对禁止**：在没有签收证明的情况下，从文字描述或PIR报告中提取时间填入 baggage_receipt_time
 
 ---
 

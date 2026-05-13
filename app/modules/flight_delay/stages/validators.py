@@ -113,6 +113,28 @@ def _check_name_match(
             "note": f"姓名一致：材料={material_name}，保单={policy_name}",
         }
 
+    # 跨文字系统检测：一侧为拉丁字母，另一侧含CJK字符
+    # 典型场景：登机牌显示拼音(CHEN LAN)，保单显示中文(陈兰)
+    # 无法可靠进行跨文字系统比对，不判定为mismatch
+    def _has_cjk(s: str) -> bool:
+        return bool(re.search(r'[一-鿿㐀-䶿]', s))
+
+    def _is_latin_only(s: str) -> bool:
+        return bool(re.fullmatch(r'[a-zA-Z\s\-·•/]+', s))
+
+    m_has_cjk = _has_cjk(material_name)
+    p_has_cjk = _has_cjk(policy_name)
+    m_is_latin = _is_latin_only(material_name)
+    p_is_latin = _is_latin_only(policy_name)
+
+    if (m_is_latin and p_has_cjk) or (p_is_latin and m_has_cjk):
+        return {
+            "match_result": "unknown",
+            "material_name": material_name,
+            "policy_name": policy_name,
+            "note": f"姓名跨文字系统（材料={'拼音' if m_is_latin else '中文'}，保单={'拼音' if p_is_latin else '中文'}），无法自动比对，建议人工确认：材料={material_name}，保单={policy_name}",
+        }
+
     def _name_tokens(name: str) -> set:
         tokens = set(re.split(r"[\s\-·•/,]+", name.upper()))
         return {t for t in tokens if len(t) > 1}
@@ -336,8 +358,9 @@ def _check_hardcheck_exclusion(hardcheck: Dict[str, Any]) -> Optional[Dict[str, 
 
     war_risk = hardcheck.get("war_risk") or {}
     if war_risk.get("is_war_risk"):
-        note = war_risk.get("note", "命中战争/冲突风险维护表")
-        return _make_denial(f"【战争因素免责】{note}", "war_risk_triggered")
+        # 战争风险不再自动拒赔，仅记录警告
+        # 原因：维护表覆盖整个国家，实际航班可能未受影响
+        pass
 
     coverage = hardcheck.get("coverage_area") or {}
     if coverage.get("in_coverage") is False:

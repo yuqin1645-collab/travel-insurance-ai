@@ -150,40 +150,104 @@ def _check_exclusions(
 ) -> Optional[str]:
     """条款除外责任校验（委托 rules.flight.exclusions）。
 
-    只检查 Assessment_Remark（人工审核意见），不检查 Description_of_Accident。
-    被保险人的事故描述中自然会包含「行李未随」「未到达」等词语，
+    检查 Assessment_Remark（人工审核意见）+ Description_of_Accident（事故描述）+
+    parsed 中的额外标注。被保险人的事故描述中自然会包含「行李未随」「未到达」等词语，
     这些是事故描述而非除外责任判定，不应触发拒赔。
+    但「海关没收」「扣留」「恐怖活动」「战争」等属于客观事实描述，无论在哪个字段中
+    出现都应触发除外责任。
     """
     assessment = str(claim_info.get('Assessment_Remark') or '')
+    description = str(claim_info.get('Description_of_Accident') or '')
+
+    # 先检查 Assessment_Remark（最权威，人工审核意见）
     result = _rules_check_exclusions(assessment, BAGGAGE_DELAY_EXCLUSIONS, extra_text=None)
     if not result.passed:
         return result.reason
+
+    # 再检查 Description_of_Accident 中的"硬除外"关键词（海关没收/恐怖活动/战争）
+    # 这些是客观事实，不论在哪个字段提及都应拒赔
+    _HARD_EXCLUSIONS = [
+        ("海关", "海关扣留/没收导致，属除外责任"),
+        ("没收", "海关/政府部门没收导致，属除外责任"),
+        ("扣留", "海关/政府部门扣留导致，属除外责任"),
+        ("恐怖", "恐怖活动，属除外责任"),
+        ("战争", "战争/军事冲突，属除外责任"),
+        ("暴乱", "暴乱/武装叛乱，属除外责任"),
+        ("罢工", "罢工导致，属除外责任"),
+    ]
+    desc_lower = description.lower()
+    for keyword, reason in _HARD_EXCLUSIONS:
+        if keyword in desc_lower:
+            # 但排除"行李未随"等非实质性描述
+            if keyword in ("海关", "扣留", "没收"):
+                # 需要确认是海关/政府行为，而非一般安检
+                context = description[max(0, description.index(keyword)-10):description.index(keyword)+20]
+                if any(w in context for w in ["海关", "政府", "公安", "边防", "安检扣留", "没收"]):
+                    return f"拒赔：{reason}"
+            else:
+                return f"拒赔：{reason}"
+
     return None
 
 
 def _check_domestic_flight(
     vision_extract: Dict[str, Any],
     ai_parsed: Dict[str, Any],
+    claim_info: Dict[str, Any] | None = None,
 ) -> Optional[str]:
     """纯国内航班检测：出发国和到达国均为中国时，不符合境外险承保范围。
 
-    排除港澳台：香港、澳门、台湾的机场代码/城市名不应被视为国内航班。
+    优先级策略：
+    1. IATA 机场代码 + resolve_country() 确定性查询（最可靠）
+    2. Vision/AI 提取的国家字符串（回退方案）
+    3. 出入境记录兜底：存在出境记录直接豁免
     """
+    from app.skills.airport import resolve_country
+
+    # 出入境记录兜底：有出境记录说明含国际段，直接豁免
+    exit_dt = vision_extract.get("exit_datetime") or (claim_info or {}).get("First_Exit_Date")
+    if exit_dt and str(exit_dt).strip().lower() not in ("", "unknown"):
+        return None
+
+    # 港澳台机场代码和城市关键词
+    hk_macau_tw_iata = {"HKG", "MFM", "TPE", "KHH", "RMQ", "TSA"}
+    hk_macau_tw_city = {"香港", "澳门", "台湾", "台北", "高雄", "台中", "Hong Kong", "Macau", "Taiwan", "Taipei"}
+
+    # 策略1: IATA 机场代码确定性查询
+    dep_iata = str(vision_extract.get("dep_iata") or ai_parsed.get("dep_iata") or "").strip().upper()
+    arr_iata = str(vision_extract.get("arr_iata") or ai_parsed.get("arr_iata") or "").strip().upper()
+
+    if dep_iata and arr_iata and len(dep_iata) == 3 and len(arr_iata) == 3:
+        # 检查是否涉及港澳台
+        if dep_iata in hk_macau_tw_iata or arr_iata in hk_macau_tw_iata:
+            return None
+
+        dep_info = resolve_country(dep_iata)
+        arr_info = resolve_country(arr_iata)
+
+        if dep_info.get("found") and arr_info.get("found"):
+            dep_cc = dep_info.get("country_code", "").upper()
+            arr_cc = arr_info.get("country_code", "").upper()
+            if dep_cc == "CN" and arr_cc == "CN":
+                dep_city = str(vision_extract.get("dep_city") or ai_parsed.get("dep_city") or dep_iata).strip()
+                arr_city = str(vision_extract.get("arr_city") or ai_parsed.get("arr_city") or arr_iata).strip()
+                return f"拒赔：航段为国内航班（{dep_city}→{arr_city}），不符合境外旅行险承保范围"
+            # 非纯国内，放行
+            return None
+
+    # 策略2: 回退到 Vision/AI 提取的国家字符串
     dep_country = str(vision_extract.get("dep_country") or ai_parsed.get("dep_country") or "").strip()
     arr_country = str(vision_extract.get("arr_country") or ai_parsed.get("arr_country") or "").strip()
+
     if dep_country == "中国" and arr_country == "中国":
         dep_city = str(vision_extract.get("dep_city") or ai_parsed.get("dep_city") or "").strip()
         arr_city = str(vision_extract.get("arr_city") or ai_parsed.get("arr_city") or "").strip()
-        dep_iata = str(vision_extract.get("dep_iata") or ai_parsed.get("dep_iata") or "").strip().upper()
-        arr_iata = str(vision_extract.get("arr_iata") or ai_parsed.get("arr_iata") or "").strip().upper()
-        # 港澳台机场代码和城市关键词
-        hk_macau_tw_iata = {"HKG", "MFM", "TPE", "KHH", "RMQ", "TSA"}
-        hk_macau_tw_city = {"香港", "澳门", "台湾", "台北", "高雄", "台中", "Hong Kong", "Macau", "Taiwan", "Taipei"}
-        dep_is_sar = dep_iata in hk_macau_tw_iata or any(kw in dep_city for kw in hk_macau_tw_city)
-        arr_is_sar = arr_iata in hk_macau_tw_iata or any(kw in arr_city for kw in hk_macau_tw_city)
-        if dep_is_sar or arr_is_sar:
-            return None  # 涉及港澳台的航班不是纯国内航班
+        # 再次检查城市名是否包含港澳台关键词
+        if any(kw in dep_city for kw in hk_macau_tw_city) or any(kw in arr_city for kw in hk_macau_tw_city):
+            return None
+
         return f"拒赔：航段为国内航班（{dep_city}→{arr_city}），不符合境外旅行险承保范围"
+
     return None
 
 
@@ -192,21 +256,37 @@ def _check_actual_arrival_vs_policy(
     ai_parsed: Dict[str, Any],
     debug: Dict[str, Any],
 ) -> Optional[str]:
-    """检查实际到达时间是否超出保单有效期。"""
+    """检查实际到达时间是否超出保单有效期。
+
+    使用 policy_validity 模块计算后的顺延日期（applied_eff/applied_exp），
+    而非原始保单日期，确保与前置 _check_policy_validity 判定一致。
+    """
     actual_arr_str = str(ai_parsed.get("flight_actual_arrival_time") or "").strip()
     if not actual_arr_str or actual_arr_str.lower() in ("unknown", ""):
         return None
     actual_arr = _parse_dt_flexible(actual_arr_str)
     if not actual_arr:
         return None
-    eff_str = str(claim_info.get("Effective_Date") or claim_info.get("Insurance_Period_From") or "").strip()
-    exp_str = str(claim_info.get("Expiry_Date") or claim_info.get("Insurance_Period_To") or "").strip()
-    eff_dt = _parse_dt_flexible(eff_str) if eff_str else None
-    exp_dt = _parse_dt_flexible(exp_str) if exp_str else None
+
+    # 优先使用 debug 中已存储的 policy_validity 顺延后日期
+    validity_detail = debug.get("policy_validity") or {}
+    applied_exp_str = validity_detail.get("applied_expiry")
+    applied_eff_str = validity_detail.get("applied_effective")
+
+    # 回退：直接从 claim_info 解析原始日期
+    if not applied_exp_str:
+        applied_exp_str = str(claim_info.get("Expiry_Date") or claim_info.get("Insurance_Period_To") or "").strip()
+    if not applied_eff_str:
+        applied_eff_str = str(claim_info.get("Effective_Date") or claim_info.get("Insurance_Period_From") or "").strip()
+
+    exp_dt = _parse_dt_flexible(applied_exp_str) if applied_exp_str else None
+    eff_dt = _parse_dt_flexible(applied_eff_str) if applied_eff_str else None
+
     if exp_dt and actual_arr > exp_dt:
         debug["actual_arrival_vs_policy"] = {
             "actual_arrival": str(actual_arr),
             "policy_expiry": str(exp_dt),
+            "applied_expiry": validity_detail.get("used_extension", False),
             "exceeded": True,
         }
         return f"拒赔：航班实际到达时间{actual_arr.strftime('%Y-%m-%d %H:%M')}超出保单有效期{exp_dt.strftime('%Y-%m-%d %H:%M')}"

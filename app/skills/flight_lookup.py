@@ -26,6 +26,33 @@ from app.logging_utils import LOGGER
 _FLIGHT_CACHE: Dict[str, Dict[str, Any]] = {}
 _CACHE_TTL_SECONDS = 300  # 5分钟缓存
 
+# 航空公司代码别名映射：子公司/区域代码 → 主 IATA 代码
+# 飞常准等国内数据源通常只认主代码，子公司代码（如 EJU、EZY）会查不到
+# 数字部分不变，只替换前缀
+_AIRLINE_CODE_ALIASES: Dict[str, str] = {
+    "EJU": "U2",   # easyJet Europe → easyJet 主代码
+    "EZY": "U2",   # easyJet UK → easyJet 主代码
+    "EZS": "U2",   # easyJet Switzerland → easyJet 主代码
+}
+
+
+def _expand_flight_number_aliases(flight_no: str) -> list:
+    """根据航空公司代码别名，生成应尝试的所有航班号变体（去重，原号优先）。"""
+    if not flight_no:
+        return []
+    f = flight_no.strip().upper().replace(" ", "")
+    results = [f]
+    for alias_prefix, canonical_prefix in _AIRLINE_CODE_ALIASES.items():
+        if f.startswith(alias_prefix):
+            alt = canonical_prefix + f[len(alias_prefix):]
+            if alt not in results:
+                results.append(alt)
+        elif f.startswith(canonical_prefix):
+            alt = alias_prefix + f[len(canonical_prefix):]
+            if alt not in results:
+                results.append(alt)
+    return results
+
 
 class FlightLookupSkill:
     """
@@ -122,6 +149,26 @@ class FlightLookupSkill:
             use_session = session if (session and not session.closed) else await self._get_session()
 
             result = await self._query_variflight_mcp(use_session, flight_no, date, dep_iata, arr_iata)
+
+            # 主代码查询失败时，尝试航空公司代码别名（如 EJU→U2、EZY→U2）
+            if not result.get("success"):
+                aliases = _expand_flight_number_aliases(flight_no)
+                for alt_fn in aliases:
+                    if alt_fn.upper() == flight_no.strip().upper().replace(" ", ""):
+                        continue
+                    LOGGER.info(
+                        f"飞常准主代码查询失败，尝试别名: {flight_no} → {alt_fn}",
+                        extra={"forceid": "-", "stage": "fd_aviation_lookup", "attempt": 0},
+                    )
+                    alt_result = await self._query_variflight_mcp(use_session, alt_fn, date, dep_iata, arr_iata)
+                    if alt_result.get("success"):
+                        LOGGER.info(
+                            f"飞常准别名查询成功: {alt_fn}",
+                            extra={"forceid": "-", "stage": "fd_aviation_lookup", "attempt": 0},
+                        )
+                        result = alt_result
+                        break
+
             if not result.get("success"):
                 LOGGER.info(
                     f"飞常准未返回数据，降级mock: {result.get('error','')}",

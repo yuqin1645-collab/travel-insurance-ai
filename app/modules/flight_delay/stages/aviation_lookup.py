@@ -10,9 +10,19 @@ from typing import Any, Dict, List
 import aiohttp
 
 from app.logging_utils import LOGGER, log_extra
-from app.skills.flight_lookup import get_flight_lookup_skill
+from app.skills.flight_lookup import get_flight_lookup_skill, _expand_flight_number_aliases
 
 from .utils import _is_unknown, _merge_aviation_into_parsed
+
+
+def _is_duplicate_candidate(flight_no: str, existing_candidates: List) -> bool:
+    """检查航班号是否与已有候选重复（含航空公司代码别名）。"""
+    aliases = _expand_flight_number_aliases(flight_no)
+    existing_upper = [c[0].upper() for c in existing_candidates]
+    for a in aliases:
+        if a.upper() in existing_upper:
+            return True
+    return False
 
 
 async def _query_one_candidate(
@@ -70,7 +80,7 @@ async def lookup_aviation_data(
         cf_candidates.append((cf_fn, cf_dep, cf_arr, flight_date))
 
     ticket_fn = str((parsed.get("flight") or {}).get("ticket_flight_no") or "").strip()
-    if ticket_fn and ticket_fn.lower() not in ("unknown", "") and ticket_fn.upper() not in [c[0].upper() for c in cf_candidates]:
+    if ticket_fn and ticket_fn.lower() not in ("unknown", "") and not _is_duplicate_candidate(ticket_fn, cf_candidates):
         cf_candidates.append((ticket_fn, "", "", flight_date))
 
     if len(cf_candidates) < 2 and all_flights and isinstance(all_flights, list):
@@ -81,7 +91,7 @@ async def lookup_aviation_data(
                 arr = str(fl.get("arr_iata") or "").strip().upper()
                 dt_raw = str(fl.get("date") or "").strip()
                 dt = dt_raw[:10] if dt_raw and dt_raw.lower() not in ("unknown", "") else ""
-                if fn and fn.lower() not in ("unknown", "") and fn.upper() not in [c[0].upper() for c in cf_candidates]:
+                if fn and fn.lower() not in ("unknown", "") and not _is_duplicate_candidate(fn, cf_candidates):
                     cf_candidates.append((fn, dep, arr, dt or flight_date))
                     if len(cf_candidates) >= 2:
                         break
@@ -173,23 +183,103 @@ async def lookup_aviation_data(
             sched_node["last_seg_dep_iata"] = avi_dep
             sched_node["last_seg_arr_iata"] = avi_arr
 
-        # 联程场景：前程飞常准数据
+        aviation_result = one_result
+
+    # 联程场景：前程/前序航段填充（遍历所有候选，不仅限于被选中的）
+    # 条件1：出发机场匹配路线出发，但到达机场不匹配路线到达 → 如PEK→MUC(联程第一程) vs 解析路线PEK→CDG
+    # 条件2：到达机场等于路线出发机场 → 如EVE→OSL衔接OSL→LHR路线，前序航段
+    for entry in aviation_results_all:
+        r = entry["result"]
+        if not r.get("success"):
+            continue
+        cand_fn, cand_date, cand_dep, cand_arr = entry["candidate"]
+        avi_dep = str(r.get("dep_iata") or "").strip().upper()
+        avi_arr = str(r.get("arr_iata") or "").strip().upper()
         dep_matches_route = route_dep_iata and avi_dep and avi_dep == route_dep_iata
         arr_is_transit = route_arr_iata and avi_arr and avi_arr != route_arr_iata
-        if dep_matches_route and arr_is_transit:
+        arr_matches_route_dep = route_dep_iata and avi_arr and avi_arr == route_dep_iata
+        if (dep_matches_route and arr_is_transit) or arr_matches_route_dep:
             seg_entry = {
-                "flight_no": one_result.get("flight_no"),
+                "flight_no": r.get("flight_no"),
                 "dep_iata": avi_dep,
                 "arr_iata": avi_arr,
-                "planned_dep": one_result.get("planned_dep"),
-                "planned_arr": one_result.get("planned_arr"),
-                "actual_dep": one_result.get("actual_dep"),
-                "actual_arr": one_result.get("actual_arr"),
-                "status": one_result.get("status"),
+                "planned_dep": r.get("planned_dep"),
+                "planned_arr": r.get("planned_arr"),
+                "actual_dep": r.get("actual_dep"),
+                "actual_arr": r.get("actual_arr"),
+                "status": r.get("status"),
             }
             parsed.setdefault("connecting_segments_data", []).append(seg_entry)
+            LOGGER.info(
+                f"[{forceid}] 检测到联程前序航段: {cand_fn} [{avi_dep}->{avi_arr}], "
+                f"route={route_dep_iata}->{route_arr_iata}",
+                extra=log_extra(forceid=forceid, stage="fd_aviation_lookup", attempt=0),
+            )
 
-        aviation_result = one_result
+    # 原航班/替代航班颠倒检测（在 merge 之后执行，避免修正值被 _force_fill 覆盖）
+    # 当多个候选同路线，一个"已到达"一个"取消"，
+    # 且取消航班的计划时间早于已到达航班的计划时间 → Vision 可能把实际乘坐的航班当成了"原航班"
+    # 用取消航班的计划时间修正 schedule_local（它才是真正被取消的原航班）
+    cancelled_entry = None
+    arrived_entry = None
+    for entry in aviation_results_all:
+        r = entry["result"]
+        if not r.get("success"):
+            continue
+        status = str(r.get("status") or "").strip()
+        if status == "取消" and not _is_unknown(str(r.get("planned_dep"))):
+            cancelled_entry = entry
+        if status == "已到达" and not _is_unknown(str(r.get("actual_dep"))):
+            arrived_entry = entry
+
+    if cancelled_entry and arrived_entry:
+        cancelled_result = cancelled_entry["result"]
+        arrived_result = arrived_entry["result"]
+        c_dep_iata = str(cancelled_result.get("dep_iata") or "").strip().upper()
+        c_arr_iata = str(cancelled_result.get("arr_iata") or "").strip().upper()
+        a_dep_iata = str(arrived_result.get("dep_iata") or "").strip().upper()
+        a_arr_iata = str(arrived_result.get("arr_iata") or "").strip().upper()
+        # 路线相同才比较
+        if c_dep_iata == a_dep_iata and c_arr_iata == a_arr_iata:
+            c_planned_dep = cancelled_result.get("planned_dep")
+            c_planned_arr = cancelled_result.get("planned_arr")
+            sched = parsed.setdefault("schedule_local", {})
+            cur_planned_dep = str(sched.get("planned_dep") or "").strip()
+            # 当前计划时间比取消航班的计划时间晚 → 说明当前用的是已到达航班的计划时间（错误）
+            if c_planned_dep and cur_planned_dep:
+                try:
+                    from datetime import datetime as _dt
+                    c_dt_str = str(c_planned_dep).replace(" ", "T")[:16]
+                    cur_dt_str = cur_planned_dep.replace(" ", "T")[:16]
+                    c_dt = _dt.fromisoformat(c_dt_str)
+                    cur_dt = _dt.fromisoformat(cur_dt_str)
+                    if cur_dt > c_dt:
+                        # 修正 schedule_local（直接覆盖，merge 已完成不会再次触发）
+                        if not _is_unknown(str(c_planned_dep)):
+                            sched["planned_dep"] = str(c_planned_dep)
+                        if not _is_unknown(str(c_planned_arr)):
+                            sched["planned_arr"] = str(c_planned_arr)
+                        if not _is_unknown(c_dep_iata):
+                            from app.skills.airport import resolve_country as _resolve_ap
+                            _dep_ap = _resolve_ap(c_dep_iata)
+                            if _dep_ap.get("found") and str(_dep_ap.get("timezone") or "").lower() != "unknown":
+                                sched["dep_timezone_hint"] = str(_dep_ap["timezone"])
+                        if not _is_unknown(c_arr_iata):
+                            from app.skills.airport import resolve_country as _resolve_ap2
+                            _arr_ap = _resolve_ap2(c_arr_iata)
+                            if _arr_ap.get("found") and str(_arr_ap.get("timezone") or "").lower() != "unknown":
+                                sched["arr_timezone_hint"] = str(_arr_ap["timezone"])
+                        # 清除错误的 alternate 时间和 chain
+                        parsed.get("alternate_local", {}).pop("alt_dep", None)
+                        parsed.get("alternate_local", {}).pop("alt_arr", None)
+                        parsed.pop("schedule_revision_chain", None)
+                        LOGGER.info(
+                            f"[{forceid}] 检测到原航班/替代航班颠倒（{arrived_result.get('flight_no')}已到达计划较晚，"
+                            f"{cancelled_result.get('flight_no')}取消计划较早），已修正schedule_local.planned_dep={sched.get('planned_dep')}",
+                            extra=log_extra(forceid=forceid, stage="fd_aviation_swap_detect", attempt=0),
+                        )
+                except (ValueError, TypeError):
+                    pass
 
     return {
         "aviation_result": aviation_result,

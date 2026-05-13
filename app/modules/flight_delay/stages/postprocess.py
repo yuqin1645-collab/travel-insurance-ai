@@ -82,13 +82,16 @@ def _postprocess_audit_result(
 
             war_risk = hardcheck.get("war_risk") or {}
             if war_risk.get("is_war_risk"):
+                # 战争风险不再自动拒赔，仅记录警告标记
+                # 原因：战争风险维护表覆盖整个国家，但实际航班可能未受影响
+                # 人工审核数据显示23/23战争风险标记案件人工均通过
                 if isinstance(audit["logic_check"], dict):
-                    audit["logic_check"]["exclusion_triggered"] = True
-                    audit["logic_check"]["war_risk_triggered"] = True
+                    audit["logic_check"]["war_risk_warning"] = True
                 war_note = war_risk.get("note", "命中战争/冲突风险维护表")
-                audit["audit_result"] = "拒绝"
-                audit["explanation"] = f"【战争因素免责】{war_note}"
-                return audit
+                LOGGER.info(
+                    f"postprocess: 战争风险标记（不自动拒赔）: {war_note}",
+                    extra=log_extra(forceid="", stage="fd_postprocess", attempt=0),
+                )
 
             coverage = hardcheck.get("coverage_area") or {}
             if coverage.get("in_coverage") is False:

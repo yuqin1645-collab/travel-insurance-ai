@@ -15,6 +15,7 @@ from app.modules.baggage_delay.stages.utils import (
     _extract_file_names,
     _result,
     _safe_float,
+    _parse_dt_flexible,
 )
 from app.modules.baggage_delay.stages.handlers import (
     _check_policy_validity,
@@ -135,6 +136,7 @@ async def review_baggage_delay_async(
             debug=debug,
             reviewer=reviewer,
             session=session,
+            text_blob=text_blob,
         )
     elif vision_extract and not isinstance(ai_parsed, dict):
         ai_parsed = dict(vision_extract)
@@ -155,7 +157,7 @@ async def review_baggage_delay_async(
         return _result(forceid, identity_violation, "N", conclusions, debug)
 
     # 纯国内航班检测（优先级高于免责条款——产品类型不匹配是更根本的问题）
-    domestic_reason = _check_domestic_flight(vision_extract, ai_parsed or {})
+    domestic_reason = _check_domestic_flight(vision_extract, ai_parsed or {}, claim_info)
     if domestic_reason:
         conclusions.append({"checkpoint": "航段检查", "Eligible": "否", "Remark": domestic_reason})
         return _result(forceid, domestic_reason, "N", conclusions, debug)
@@ -281,12 +283,54 @@ async def review_baggage_delay_async(
         conclusions.append({"checkpoint": "保单有效期", "Eligible": "否", "Remark": arrival_policy_reason})
         return _result(forceid, arrival_policy_reason, "N", conclusions, debug)
 
-    # 事故类型校验
+    # 事故类型校验：行李丢失 vs 行李延误
+    # 关键区分：行李是否最终找回。有有效签收时间=已找回=延误，无签收时间=需人工确认
     parsed_accident_type = str((ai_parsed or {}).get("accident_type") or "").strip().lower()
-    if parsed_accident_type == "baggage_loss" or (("行李丢失" in text_blob) and ("延误" not in text_blob)):
-        conclusions.append({"checkpoint": "事故类型", "Eligible": "否", "Remark": "事故为行李丢失，需转随身财产损失责任"})
-        return _result(forceid, "拒赔：事故类型为行李丢失，非托运行李延误责任", "N", conclusions, debug)
-    conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "未发现行李丢失单独触发，继续按行李延误审核"})
+    raw_receipt = (ai_parsed or {}).get("baggage_receipt_time")
+    has_receipt_time = bool(raw_receipt) and _parse_dt_flexible(str(raw_receipt)) is not None
+    delay_calc_temp = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
+    has_calculable_delay = delay_calc_temp.get("delay_hours") is not None
+
+    # 行李丢失误判修复：很多案件中AI将"行李未到/行李延误"误标为baggage_loss
+    # 宽松策略：只要有航班信息+延误描述，不轻易判定为丢失
+    if parsed_accident_type == "baggage_loss" and has_receipt_time:
+        # 有签收时间说明行李已找回，本质是延误而非丢失
+        if isinstance(ai_parsed, dict):
+            ai_parsed["accident_type"] = "baggage_delay"
+            ai_parsed["accident_type_note"] = "行李曾报丢失但已找回/送达，按行李延误审核"
+        conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "行李曾报丢失但已找回/送达，按行李延误审核"})
+    elif parsed_accident_type == "baggage_loss" and has_calculable_delay:
+        # 能计算出延误时长，说明不是永久丢失
+        if isinstance(ai_parsed, dict):
+            ai_parsed["accident_type"] = "baggage_delay"
+            ai_parsed["accident_type_note"] = "可计算延误时长，按行李延误审核"
+        conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "可计算延误时长，按行李延误审核"})
+    elif parsed_accident_type == "baggage_loss" and not has_receipt_time and not has_calculable_delay:
+        # 真正无法计算延误时长的丢失案件，仍需转人身财产损失
+        # 但这里给一个兜底：检查文本中是否有"找到""送达""领取"等关键词
+        found_keywords = ["找到", "送达", "领取", "取回", "收到", "delivered", "found", "recovered", "retrieved"]
+        text_has_found = any(kw in text_blob.lower() for kw in found_keywords)
+        if text_has_found:
+            # 文本中提到行李找到了，不是丢失
+            if isinstance(ai_parsed, dict):
+                ai_parsed["accident_type"] = "baggage_delay"
+                ai_parsed["accident_type_note"] = "文本提及行李已找到/送达，按行李延误审核"
+            conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "文本提及行李已找到/送达，按行李延误审核"})
+        else:
+            conclusions.append({"checkpoint": "事故类型", "Eligible": "否", "Remark": "事故为行李丢失，需转随身财产损失责任"})
+            return _result(forceid, "拒赔：事故类型为行李丢失，非托运行李延误责任", "N", conclusions, debug)
+    elif ("行李丢失" in text_blob) and ("延误" not in text_blob) and not has_receipt_time and not has_calculable_delay:
+        # 文本提到丢失且未提到延误，且无签收时间无延误时长
+        # 但如果有"找到""送达"等关键词，仍可能是延误
+        found_keywords = ["找到", "送达", "领取", "取回", "收到", "delivered", "found", "recovered"]
+        text_has_found = any(kw in text_blob.lower() for kw in found_keywords)
+        if text_has_found:
+            conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "文本提及行李已找到/送达，按行李延误审核"})
+        else:
+            conclusions.append({"checkpoint": "事故类型", "Eligible": "否", "Remark": "事故为行李丢失，需转随身财产损失责任"})
+            return _result(forceid, "拒赔：事故类型为行李丢失，非托运行李延误责任", "N", conclusions, debug)
+    else:
+        conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "未发现行李丢失单独触发，继续按行李延误审核"})
 
     # 材料门禁
     missing_materials: List[str] = []
@@ -317,23 +361,45 @@ async def review_baggage_delay_async(
         if not has_delay_proof and not has_receipt_proof:
             missing_materials.append("行李延误证明或行李签收单（航空公司出具的行李延误时数/原因书面证明，或含具体签收时间的行李签收单，二选一）")
 
+        # P1 材料门禁放宽：当行李延误证明已确认且其他关键材料齐全时，
+        # 不把行李签收证明缺失作为阻断性补件要求，放行到后续时长计算阶段
+        boarding_flag = _has_flag("has_boarding_or_ticket")
         tag_flag = _has_flag("has_baggage_tag_proof")
-        if tag_flag == "unknown":
-            v_tag = str(vision_extract.get("has_baggage_tag_proof") or "unknown").strip().lower()
-            if v_tag not in ("unknown", ""):
-                tag_flag = v_tag
-
-        if tag_flag in ("false", "unknown"):
-            exception_met = _check_airline_baggage_record_exception(
-                vision_extract, ai_parsed or {}, claim_info, joined_text
-            )
-            if exception_met:
-                debug["baggage_tag_exception"] = "航空公司官方行李记录满足替代条件，视同行李牌已提供"
-            else:
-                missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
-
         id_flag = _has_flag("has_id_proof")
         passport_flag = _has_flag("has_passport")
+
+        has_boarding = boarding_flag == "true" or any(w in f"{text_blob} {' '.join(file_names)}".lower()
+                       for w in ["机票", "登机牌", "行程单", "ticket", "boarding", "itinerary"])
+
+        # 行李牌校验（含替代凭证）
+        has_baggage_tag = tag_flag == "true"
+        if tag_flag in ("false", "unknown"):
+            if tag_flag == "unknown":
+                v_tag = str(vision_extract.get("has_baggage_tag_proof") or "unknown").strip().lower()
+                if v_tag not in ("unknown", ""):
+                    has_baggage_tag = v_tag == "true"
+            if not has_baggage_tag:
+                exception_met = _check_airline_baggage_record_exception(
+                    vision_extract, ai_parsed or {}, claim_info, joined_text
+                )
+                if exception_met:
+                    has_baggage_tag = True
+                    debug["baggage_tag_exception"] = "航空公司官方行李记录满足替代条件，视同行李牌已提供"
+
+        has_id = id_flag == "true" or passport_flag == "true"
+
+        # 关键材料全部确认时，签收证明缺失不阻断
+        key_materials_confirmed = has_delay_proof and has_boarding and has_baggage_tag and has_id
+        if key_materials_confirmed and not has_receipt_proof:
+            debug["receipt_proof_relaxed"] = (
+                "行李延误证明+登机牌+行李牌+身份证已确认，签收证明缺失不阻断，放行到时长计算阶段"
+            )
+
+        # 行李牌缺失检查（使用上面已计算的 has_baggage_tag）
+        if not has_baggage_tag:
+            missing_materials.append("托运行李牌照片（含姓名、航班信息、行李牌号码）")
+
+        # 身份证/护照缺失检查（使用上面已计算的 id_flag / passport_flag）
         if id_flag == "false" and passport_flag == "false":
             missing_materials.append("被保险人身份证正反面或护照")
         if passport_flag == "false" and id_flag in ("false", "unknown"):
@@ -380,6 +446,32 @@ async def review_baggage_delay_async(
         delay_calc = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
         delay_calc["receipt_time_source"] = "transfer_flight_arrival"
         delay_hours = delay_calc.get("delay_hours")
+
+        # Fallback：如果 delay_calc 返回 None，尝试使用 ai_parsed 中预计算的 delay_hours
+        if delay_hours is None:
+            parsed_delay = (ai_parsed or {}).get("delay_hours")
+            if parsed_delay is not None:
+                try:
+                    delay_hours = float(parsed_delay)
+                    delay_calc["delay_hours"] = delay_hours
+                    delay_calc["method"] = "transfer_flight_fallback"
+                except (ValueError, TypeError):
+                    pass
+
+        # 新增 Fallback：直接从转运航班到达时间和航班到达时间计算
+        if delay_hours is None:
+            transfer_receipt = debug.get("transfer_flight_receipt", {})
+            # receipt_time_set 就是转运航班到达时间
+            transfer_arr_str = transfer_receipt.get("receipt_time_set")
+            flight_arr_str = (ai_parsed or {}).get("flight_actual_arrival_time")
+            if transfer_arr_str and flight_arr_str:
+                transfer_dt = _parse_dt_flexible(transfer_arr_str)
+                flight_dt = _parse_dt_flexible(flight_arr_str)
+                if transfer_dt and flight_dt and transfer_dt >= flight_dt:
+                    delay_hours = round((transfer_dt - flight_dt).total_seconds() / 3600.0, 2)
+                    delay_calc["delay_hours"] = delay_hours
+                    delay_calc["method"] = "transfer_flight_direct_calc"
+
         delay_hours_str = f"{delay_hours:.2f}小时" if delay_hours is not None else "未知"
         # 转运航班到达时间作为代理签收时间，若延误已超门槛则直接通过
         if delay_hours is not None and delay_hours >= BAGGAGE_DELAY_THRESHOLD_HOURS:
@@ -410,9 +502,22 @@ async def review_baggage_delay_async(
         conclusions.append({"checkpoint": "延误时长", "Eligible": "需补齐资料", "Remark": "未识别到明确延误时长或签收时间信息"})
         return _result(forceid, "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明", "Y", conclusions, debug)
     if delay_hours < BAGGAGE_DELAY_THRESHOLD_HOURS:
-        conclusions.append({"checkpoint": "赔付门槛", "Eligible": "否", "Remark": f"延误时长{delay_hours:.2f}小时，未达到{BAGGAGE_DELAY_THRESHOLD_HOURS}小时"})
-        return _result(forceid, "拒赔：行李延误时长未达到6小时赔付门槛", "N", conclusions, debug)
-    conclusions.append({"checkpoint": "赔付门槛", "Eligible": "是", "Remark": f"延误时长{delay_hours:.2f}小时，达到赔付门槛"})
+        # 特殊处理1：签收时间为00:00占位符时，延误时长极不可靠
+        if delay_calc.get("receipt_time_midnight_placeholder"):
+            debug["midnight_placeholder_override"] = (
+                f"延误时长{delay_hours:.2f}h但签收时间为00:00占位符，时长不可靠，转AI审计"
+            )
+        # 特殊处理2：2-6h灰度区，不直接拒赔，继续走AI审计
+        elif delay_hours >= 2:
+            debug["delay_gray_zone"] = (
+                f"延误时长{delay_hours:.2f}h处于2-6h灰度区，继续走AI审计"
+            )
+            conclusions.append({"checkpoint": "赔付门槛", "Eligible": "是", "Remark": f"延误时长{delay_hours:.2f}小时，处于灰度区，交AI审计综合判定"})
+        else:
+            conclusions.append({"checkpoint": "赔付门槛", "Eligible": "否", "Remark": f"延误时长{delay_hours:.2f}小时，未达到{BAGGAGE_DELAY_THRESHOLD_HOURS}小时"})
+            return _result(forceid, "拒赔：行李延误时长未达到6小时赔付门槛", "N", conclusions, debug)
+    elif delay_hours >= BAGGAGE_DELAY_THRESHOLD_HOURS:
+        conclusions.append({"checkpoint": "赔付门槛", "Eligible": "是", "Remark": f"延误时长{delay_hours:.2f}小时，达到赔付门槛"})
 
     # 信息一致性校验（已在身份一致性阶段完成，此处不再重复调用）
     # consistency_violation = _check_info_consistency(claim_info, ai_parsed or {})

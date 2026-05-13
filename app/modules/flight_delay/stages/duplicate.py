@@ -47,6 +47,18 @@ def _is_same_event(current: Dict[str, Any], candidate: Dict[str, Any]) -> bool:
     if current_date and candidate_date and current_date != candidate_date:
         return False
 
+    # 增加航班号比对：同一人同天不同航班 ≠ 重复索赔
+    current_flight = (
+        current.get("Flight_No") or current.get("flight_no")
+        or current.get("Operating_Flight_No") or ""
+    ).strip().upper().replace(" ", "")
+    candidate_flight = (
+        candidate.get("Flight_No") or candidate.get("flight_no")
+        or candidate.get("Operating_Flight_No") or ""
+    ).strip().upper().replace(" ", "")
+    if current_flight and candidate_flight and current_flight != candidate_flight:
+        return False
+
     return True
 
 

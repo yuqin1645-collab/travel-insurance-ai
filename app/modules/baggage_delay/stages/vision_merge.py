@@ -6,12 +6,15 @@ baggage_delay stages — 视觉识别结果合并到 AI 结构化抽取结果。
 from __future__ import annotations
 
 import re
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict
 
 import aiohttp
 
 from app.vision_preprocessor import prepare_attachments_for_claim
+
+from .utils import _parse_dt_flexible
 
 
 async def _merge_vision_to_parsed(
@@ -23,6 +26,7 @@ async def _merge_vision_to_parsed(
     debug: Dict[str, Any],
     reviewer: Any,
     session: aiohttp.ClientSession,
+    text_blob: str = "",
 ) -> Dict[str, Any]:
     """将视觉识别结果合并到 AI 结构化抽取结果，含交叉校验、矛盾检测和 PIR 二次提取。"""
 
@@ -32,10 +36,13 @@ async def _merge_vision_to_parsed(
         "has_baggage_tag_proof",
         "has_airline_baggage_record", "airline_baggage_record_name",
         "airline_baggage_record_flight", "airline_baggage_record_pieces",
-        "flight_actual_arrival_time", "baggage_receipt_time", "receipt_times", "delay_hours",
+        "flight_actual_arrival_time", "baggage_receipt_time", "baggage_receipt_time_source",
+        "baggage_estimated_arrival_time",
+        "receipt_times", "delay_hours",
         "has_id_proof", "has_passport", "has_exit_entry_record", "exit_datetime",
         "has_bank_card_proof", "risk_flags",
         "all_flights_found",
+        "alternate",
     ):
         vision_val = vision_extract.get(key)
         parsed_val = ai_parsed.get(key)
@@ -49,6 +56,11 @@ async def _merge_vision_to_parsed(
             existing = ai_parsed.get(key)
             if existing is None or str(existing).lower() in ("unknown", ""):
                 ai_parsed[key] = vision_val
+
+    # 安全网0："次日/第二天"日期匹配修正
+    # 当文本描述包含"第二天/次日/翌日/tomorrow/next day"等关键词，而提取的签收时间
+    # 的日期与航班到达日期相同（或无明确日期）时，自动将签收时间日期+1天
+    _fix_next_day_receipt_time(vision_extract, ai_parsed, text_blob, debug)
 
     # 安全网：交叉校验
     proof_source = vision_extract.get("baggage_delay_proof_source") or ""
@@ -111,6 +123,48 @@ async def _merge_vision_to_parsed(
                     f"has_baggage_receipt_time_proof: vision notes明确时间来自邮件/转运航班，非实际签收证明，纠正为 false"
                 )
                 break
+
+    # 校验：无实际签收证明时，清除 baggage_receipt_time（防止PIR创建时间/航班到达时间被误用）
+    receipt_proof_val = str(ai_parsed.get("has_baggage_receipt_time_proof") or "").strip().lower()
+    receipt_time_val = ai_parsed.get("baggage_receipt_time") or ""
+    receipt_source_val = str(ai_parsed.get("baggage_receipt_time_source") or "").strip().lower()
+    if receipt_proof_val == "false" and receipt_time_val and str(receipt_time_val).lower() not in ("unknown", ""):
+        # 没有签收证明但有签收时间，说明时间来源不可靠（PIR创建时间/航班到达时间等）
+        ai_parsed["baggage_receipt_time"] = None
+        ai_parsed["delay_hours"] = None
+        debug.setdefault("auto_corrected", []).append(
+            f"baggage_receipt_time: 无实际签收证明（has_baggage_receipt_time_proof=false），清除不可靠时间值 {receipt_time_val}"
+        )
+    elif receipt_source_val in ("pir_creation", "email_estimate", "app_tracking"):
+        # 签收时间来源分类明确为不可靠来源，清除
+        ai_parsed["baggage_receipt_time"] = None
+        ai_parsed["delay_hours"] = None
+        debug.setdefault("auto_corrected", []).append(
+            f"baggage_receipt_time: 来源分类为 {receipt_source_val}（非实际签收），清除时间值 {receipt_time_val}"
+        )
+    elif receipt_time_val and str(receipt_time_val).lower() not in ("unknown", ""):
+        # 额外检查：签收时间 = 航班到达时间 → 误将航班到达当成签收
+        arrival_val = ai_parsed.get("flight_actual_arrival_time") or ""
+        def _normalize_for_compare(s):
+            """提取日期时间核心部分用于比较"""
+            s = str(s).strip()
+            # 移除时区、秒、分隔符
+            s = s.split("+")[0].split("Z")[0].replace("T", " ").strip()
+            # 移除秒
+            parts = s.split(":")
+            if len(parts) >= 3:
+                s = ":".join(parts[:2])
+            return s.replace(" ", "").replace("-", "").replace(":", "")
+
+        if arrival_val and _normalize_for_compare(receipt_time_val) == _normalize_for_compare(arrival_val):
+            ai_parsed["baggage_receipt_time"] = None
+            ai_parsed["delay_hours"] = None
+            ai_parsed["has_baggage_receipt_time_proof"] = False
+            debug["no_receipt_proof_confirmed"] = True
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: 签收时间与航班到达时间完全相同（{receipt_time_val} vs {arrival_val}），"
+                f"疑为误将航班到达当成行李签收，清除时间并标记无签收证明"
+            )
 
     # 校验：Vision 模型内部矛盾检测 —— document_sources 中标记为 absent 但顶层 flag 为 true
     doc_sources = vision_extract.get("document_sources") or {}
@@ -177,3 +231,52 @@ async def _merge_vision_to_parsed(
             debug["pir_receipt_extract_warning"] = str(e)[:200]
 
     return ai_parsed
+
+
+def _fix_next_day_receipt_time(
+    vision_extract: Dict[str, Any],
+    ai_parsed: Dict[str, Any],
+    text_blob: str,
+    debug: Dict[str, Any],
+) -> None:
+    """修正"第二天/次日"场景下的签收时间日期匹配错误。
+
+    当文本描述包含"第二天/次日/翌日"等关键词，而提取的签收时间日期与航班到达日期
+    相同时，自动将签收时间日期+1天。
+    """
+    receipt_time = ai_parsed.get("baggage_receipt_time") or vision_extract.get("baggage_receipt_time")
+    if not receipt_time:
+        return
+
+    # 检查文本中是否有"次日/第二天"等关键词
+    next_day_markers = [
+        "第二天", "次日", "翌日", "第二天的",
+        "tomorrow", "next day", "the following day", "the next day",
+        "隔天", "隔日", "过后", "才收到", "才送达",
+    ]
+    has_next_day = any(m in text_blob.lower() for m in next_day_markers)
+    if not has_next_day:
+        return
+
+    # 尝试解析签收时间和航班到达时间
+    receipt_dt = _parse_dt_flexible(receipt_time)
+    arrival_raw = ai_parsed.get("flight_actual_arrival_time") or vision_extract.get("flight_actual_arrival_time")
+    arrival_dt = _parse_dt_flexible(arrival_raw) if arrival_raw else None
+
+    if not receipt_dt:
+        return
+
+    # 如果签收时间 <= 到达时间（不可能），说明日期配错了
+    if arrival_dt and receipt_dt <= arrival_dt:
+        from datetime import timedelta
+        fixed_dt = receipt_dt + timedelta(days=1)
+        ai_parsed["baggage_receipt_time"] = fixed_dt.strftime("%Y-%m-%d %H:%M")
+        debug.setdefault("auto_corrected", []).append(
+            f"baggage_receipt_time: 次日场景修正 {receipt_time} -> {fixed_dt.strftime('%Y-%m-%d %H:%M')}（签收时间≤到达时间，日期+1天）"
+        )
+    elif not arrival_dt:
+        # 无到达时间参考，但文本明确说"第二天"，且签收时间的时间部分与PIR常见时间格式一致
+        # 这种情况不做自动修正，只记录警告
+        debug.setdefault("next_day_warning", []).append(
+            f"baggage_receipt_time={receipt_time}，文本提及次日但无到达时间参考，未自动修正"
+        )
