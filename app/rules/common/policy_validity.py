@@ -137,8 +137,15 @@ def check(claim_info: Dict[str, Any]) -> RuleResult:
         if fex:
             diff_days = (fex.date() - eff_dt.date()).days
             if abs(diff_days) <= 15:
-                applied_eff = eff_dt + timedelta(days=diff_days)
-                applied_exp = exp_dt + timedelta(days=diff_days)
+                # 【P2修复】负数顺延不应缩小保障窗口 — 仅当出境日期晚于生效日时才顺延
+                if diff_days >= 0:
+                    applied_eff = eff_dt + timedelta(days=diff_days)
+                    applied_exp = exp_dt + timedelta(days=diff_days)
+                else:
+                    # 出境日期早于生效日：说明出境发生在保单生效之前，
+                    # 此时不应做顺延，直接使用原始保单有效期
+                    applied_eff = eff_dt
+                    applied_exp = exp_dt
                 used_extension = True
                 detail["allianz_extension_days"] = diff_days
     # 安联无出境记录时不补件，直接用原始保单有效期判断

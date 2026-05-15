@@ -42,6 +42,13 @@
    - 若 hardcheck.war_risk.is_war_risk=true，**立即输出"拒绝"，explanation 注明"【战争因素免责】+ war_risk.note"，不再执行后续任何判定步骤**。
    - 战争免责的权重高于保单有效期、延误时长、材料完整性等所有其他条件。
    - 注意：战争免责命中时，explanation 中**不得**同时列出延误时长不足、材料缺失等其他理由，以免混淆拒赔依据。
+0.5 **重复理赔检测（代码判定优先，禁止LLM自行判定）**：
+   - 重复理赔检测已由代码在审核前完成，结果在 `parsed.hardcheck_code_assessment.duplicate_claim_check` 中：
+     * `triggered=true` → 代码已确认重复，按代码判定结果拒绝
+     * `triggered=false` → **代码已检测无重复，你不得自行判定重复理赔**
+   - 禁止行为：不得根据 claim_info 中的 ClaimId、PolicyNo、SamePolicyClaim 等字段推断"这是另一个案件的重复申请"
+   - 禁止行为：不得自行构造"已在#XXXXXX做出赔付结论"或"一事不二理"的拒赔理由
+   - 若 parsed 中无 duplicate_claim_check 字段，视为无重复检测，正常审核
 1. 前置准入审核（不通过则直接拒赔）：
    1.1 主险合同状态/权益有效性：若 claim_info 或 parsed.policy_hint 显示保单无效/终止/失效，直接"拒绝"。
    1.2 权益有效期（含安联顺延/提前规则）：

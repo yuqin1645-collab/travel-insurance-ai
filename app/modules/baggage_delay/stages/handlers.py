@@ -187,6 +187,37 @@ def _check_exclusions(
             else:
                 return f"拒赔：{reason}"
 
+    # 【新增 2026-05-15】旅客通过非航空交通方式（铁路/地铁/自驾等）提前到达目的地并提取行李，
+    # 不在行李延误险保障范围内。行李延误险保障的是航空托运导致的行李延误损失，
+    # 若旅客自行选择其他交通方式离开机场并提取行李，属于旅客自主行为，非航司责任。
+    # 场景：OUo3DIAT — 旅客通过铁路提前到达目的地并提取行李
+    _EARLY_PICKUP_INDICATORS = [
+        ("铁路", "railway"),
+        ("火车", "train"),
+        ("高铁", "high-speed rail"),
+        ("地铁", "metro"),
+        ("自驾", "self-drive"),
+        ("自行提取", "collected by own means"),
+        ("自行前往", "traveled independently"),
+        ("非航空", "non-air transport"),
+        ("提前到达", "arrived early"),
+        ("提前离开", "left early"),
+    ]
+    for indicator_kw, _ in _EARLY_PICKUP_INDICATORS:
+        if indicator_kw in desc_lower:
+            # 需要上下文确认是"旅客自行通过XX方式离开"而非"行李通过XX转运"
+            idx = desc_lower.index(indicator_kw)
+            context = description[max(0, idx - 30):idx + 50]
+            # 如果上下文中同时出现"旅客"/"客人"/"insured"/"passenger"+"提取"/"到达"/"离开"
+            # 或出现"行李"+"未随"+"铁路/火车"的组合
+            if any(w in context for w in ["旅客", "客人", "insured", "passenger", "被保险人"]) and \
+               any(w in context for w in ["提取", "到达", "离开", "前往", "collected", "arrived", "left"]):
+                return f"拒赔：旅客通过非航空交通方式提前到达目的地并提取行李，不在行李延误险保障范围内"
+            # "行李未随"+"铁路/火车"也视为除外
+            if any(w in context for w in ["行李未随", "行李未到达", "行李未到", "baggage not arrived"]) and \
+               indicator_kw in ("铁路", "火车", "高铁"):
+                return f"拒赔：旅客通过非航空交通方式提前到达目的地并提取行李，不在行李延误险保障范围内"
+
     return None
 
 

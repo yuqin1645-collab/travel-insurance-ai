@@ -60,6 +60,8 @@ async def review_flight_delay_async(
             extra=log_extra(forceid=forceid, stage="fd_duplicate_check", attempt=0),
         )
         return duplicate_check
+    # 代码侧重复检测未命中，注入结果防止 LLM 自行判定重复理赔
+    ctx["fd_duplicate_check"] = {"triggered": False, "note": "代码侧重复理赔检测未命中"}
 
     # ========== stage0_vision: 视觉/OCR 材料抽取 ==========
     LOGGER.info(
@@ -180,6 +182,7 @@ async def review_flight_delay_async(
     parsed["hardcheck_code_assessment"] = {
         "missed_connection_check": hardcheck.get("missed_connection_check", {}),
         "transit_check": hardcheck.get("transit_check", {}),
+        "duplicate_claim_check": ctx.get("fd_duplicate_check", {"triggered": False}),
     }
 
     # ========== stage2: AI 理赔判定 ==========

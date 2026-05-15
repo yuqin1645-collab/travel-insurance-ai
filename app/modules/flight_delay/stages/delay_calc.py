@@ -479,6 +479,39 @@ def _augment_with_computed_delay(
             computed["method"] = f"文本提取兜底: 从案件描述提取到{text_minutes}分钟"
             computed["source"] = "text_fallback"
 
+    # 【修复 2026-05-15】当延误证明明确记录了延误时长，且 computed_delay 严重偏大时，
+    # 说明 chain[0] 基准时间可能是占位值（如 "00:00/unknown"），应以延误证明为准。
+    # 场景：Ogop0IAB — 延误证明记录 起飞4h23m/到达3h41m，但 AI 计算 23h+
+    proof_delay = _extract_delay_proof_ceiling(parsed)
+    if proof_delay is not None:
+        computed_minutes = computed.get("final_minutes")
+        if isinstance(computed_minutes, int) and computed_minutes > proof_delay:
+            cap_note = (
+                f"延误证明明确记录延误时长为{proof_delay}分钟（起飞/到达证明时间），"
+                f"计算值{computed_minutes}分钟严重偏大，疑似chain[0]基准为占位时间，"
+                f"以延误证明值{proof_delay}分钟为上限"
+            )
+            computed["final_minutes"] = proof_delay
+            computed["method"] = f"以延误证明为准({proof_delay}分钟)"
+            computed["proof_delay_ceiling_applied"] = True
+            computed["proof_delay_ceiling_original"] = computed_minutes
+            computed.setdefault("missing", []).append(cap_note)
+    else:
+        # 回退：延误证明中计划=实际（提取异常），尝试从飞常准数据获取延误上限
+        avi_delay = _extract_aviation_delay_ceiling(parsed)
+        if avi_delay is not None:
+            computed_minutes = computed.get("final_minutes")
+            if isinstance(computed_minutes, int) and computed_minutes > avi_delay:
+                cap_note = (
+                    f"延误证明提取异常（计划=实际），飞常准记录延误{avi_delay}分钟，"
+                    f"计算值{computed_minutes}分钟严重偏大，以飞常准值为上限"
+                )
+                computed["final_minutes"] = avi_delay
+                computed["method"] = f"以飞常准延误记录为准({avi_delay}分钟)"
+                computed["aviation_delay_ceiling_applied"] = True
+                computed["aviation_delay_ceiling_original"] = computed_minutes
+                computed.setdefault("missing", []).append(cap_note)
+
     computed["threshold_minutes"] = threshold_minutes
     computed["threshold_source"] = "policy_terms_excerpt" if _parse_threshold_minutes(policy_terms_excerpt) else "default(5h)"
     computed["threshold_met"] = (
@@ -486,3 +519,100 @@ def _augment_with_computed_delay(
     )
     parsed["computed_delay"] = computed
     return parsed
+
+
+def _extract_delay_proof_ceiling(parsed: Dict[str, Any]) -> Optional[int]:
+    """从延误证明字段中提取明确的延误时长（分钟），作为计算上限。
+
+    当延误证明（delay proof）明确记录了计划/实际出发时间时，
+    计算证明延误时长。若同时有起飞和到达证明延误，取较大值（取长原则）。
+    返回 None 表示无法从延误证明提取明确时长。
+
+    注意：延误证明中的时间是当地时刻（无时区信息），但计算同一机场的
+    actual - planned 时，时区偏移抵消，直接用 naive datetime 计算即可。
+
+    特殊处理：若延误证明的计划=实际时间（Vision 可能提取了修订后时间），
+    则用 chain[0] 原始计划 vs 证明时间 计算延误，作为上限。
+    """
+    evidence = (parsed or {}).get("evidence") or {}
+    if not isinstance(evidence, dict):
+        return None
+
+    proof_planned_dep = str(evidence.get("delay_proof_planned_dep") or "").strip()
+    proof_actual_dep = str(evidence.get("delay_proof_actual_dep") or "").strip()
+    proof_planned_arr = str(evidence.get("delay_proof_planned_arr") or "").strip()
+    proof_actual_arr = str(evidence.get("delay_proof_actual_arr") or "").strip()
+    proof_reason = str(evidence.get("delay_proof_reason_text") or "").strip()
+
+    def _parse_naive_dt(s: str) -> Optional[datetime]:
+        """解析无时区的日期时间为 naive datetime。"""
+        if not s or s.lower() == "unknown":
+            return None
+        if "/" in s:
+            s = s.split("/")[0].strip()
+        for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(s[:19], fmt)
+            except Exception:
+                continue
+        return None
+
+    has_proof_dep_times = (
+        proof_planned_dep and proof_planned_dep.lower() != "unknown"
+        and proof_actual_dep and proof_actual_dep.lower() != "unknown"
+    )
+    has_proof_arr_times = (
+        proof_planned_arr and proof_planned_arr.lower() != "unknown"
+        and proof_actual_arr and proof_actual_arr.lower() != "unknown"
+    )
+
+    dep_delay_minutes: Optional[int] = None
+    arr_delay_minutes: Optional[int] = None
+
+    if has_proof_dep_times:
+        dep_planned = _parse_naive_dt(proof_planned_dep)
+        dep_actual = _parse_naive_dt(proof_actual_dep)
+        if dep_planned and dep_actual:
+            dep_delay_minutes = int((dep_actual - dep_planned).total_seconds() // 60)
+
+    if has_proof_arr_times:
+        arr_planned = _parse_naive_dt(proof_planned_arr)
+        arr_actual = _parse_naive_dt(proof_actual_arr)
+        if arr_planned and arr_actual:
+            arr_delay_minutes = int((arr_actual - arr_planned).total_seconds() // 60)
+
+    proof_values = [m for m in [dep_delay_minutes, arr_delay_minutes] if isinstance(m, int) and m > 0]
+    if proof_values:
+        return max(proof_values)
+
+    # 【特殊处理 2026-05-15】延误证明的计划=实际时间（Vision 提取了修订后时间），
+    # 尝试用 chain[0] 原始计划 vs 证明实际时间 计算延误。
+    # 场景：Ogop0IAB — proof planned_dep=actual_dep=16:10（修订后时间），
+    # 但 chain[0].planned_dep=12:30，实际延误=16:10-12:30=220min
+    if has_proof_dep_times and has_proof_arr_times:
+        dep_actual = _parse_naive_dt(proof_actual_dep)
+        arr_actual = _parse_naive_dt(proof_actual_arr)
+        if dep_actual and arr_actual:
+            chain = (parsed or {}).get("schedule_revision_chain") or []
+            chain0 = chain[0] if chain and isinstance(chain[0], dict) else {}
+            chain0_planned_dep = _parse_naive_dt(str(chain0.get("planned_dep") or "").strip())
+            chain0_planned_arr = _parse_naive_dt(str(chain0.get("planned_arr") or "").strip())
+            fallback_values = []
+            if chain0_planned_dep and dep_actual:
+                diff = int((dep_actual - chain0_planned_dep).total_seconds() // 60)
+                if diff > 0:
+                    fallback_values.append(diff)
+            if chain0_planned_arr and arr_actual:
+                diff = int((arr_actual - chain0_planned_arr).total_seconds() // 60)
+                if diff > 0:
+                    fallback_values.append(diff)
+            if fallback_values:
+                return max(fallback_values)
+
+    # 回退：从延误证明原因文本中提取延误时长
+    if proof_reason and proof_reason.lower() != "unknown":
+        text_minutes = _extract_delay_minutes_from_text(proof_reason)
+        if text_minutes is not None and text_minutes > 0:
+            return text_minutes
+
+    return None

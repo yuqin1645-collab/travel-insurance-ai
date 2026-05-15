@@ -217,12 +217,43 @@ async def _merge_vision_to_parsed(
                 f"baggage_receipt_time: GDS检测已生效，跳过 Vision 不可靠来源清除"
             )
         else:
-            low_confidence_markers = ["/unknown", "/未知", "~", "约", "左右", "estimated", "大概"]
+            # 【P1修复】先清洗 receipt_time 中的 /unknown 后缀
+            _raw_time = str(receipt_time).strip()
+            for suffix in ("/unknown", "/未知", "/Unknown"):
+                if _raw_time.endswith(suffix):
+                    _raw_time = _raw_time[:_raw_time.rfind(suffix)].strip()
+                    receipt_time = _raw_time
+                    debug.setdefault("auto_corrected", []).append(
+                        f"baggage_receipt_time: 清洗 /unknown 后缀，{_raw_time}"
+                    )
+                    break
+
+            low_confidence_markers = ["~", "约", "左右", "estimated", "大概"]
             is_low_confidence = any(m in str(receipt_time) for m in low_confidence_markers)
-            # 检查签收时间来源：邮件/APP估算、PIR创建时间等非实际签收来源不可靠
+
+            # 检查签收时间来源
             _receipt_source = str(vision_extract.get("baggage_receipt_time_source") or ai_parsed.get("baggage_receipt_time_source") or "").strip().lower()
             _unreliable_sources = {"email_estimate", "app_estimate", "app_tracking", "pir_creation", "email_notification", "transfer_flight_estimate"}
             _is_unreliable_source = _receipt_source in _unreliable_sources
+
+            # 【P1修复】email_estimate 区分：确认收到 vs 预估值
+            # 如果乘客描述中明确说"收到行李到达邮件"或"收到行李"，且时间匹配，说明邮件通知的时间就是实际签收时间
+            _is_email_confirmed = False
+            if _receipt_source == "email_estimate":
+                _confirmed_keywords = [
+                    "收到行李", "收到行李到达邮件", "收到行李邮件",
+                    "luggage arrived", "baggage arrived", "received luggage", "received baggage",
+                    "行李已送达", "行李已到达", "行李已收到",
+                ]
+                _text_blob_lower = text_blob.lower() if text_blob else ""
+                has_confirmed_receipt = any(kw.lower() in _text_blob_lower for kw in _confirmed_keywords)
+                if has_confirmed_receipt:
+                    _is_email_confirmed = True
+                    _receipt_source = "confirmed_email_receipt"  # 覆盖为可靠来源
+                    _is_unreliable_source = False
+                    debug.setdefault("auto_corrected", []).append(
+                        f"baggage_receipt_time: email_estimate 但乘客描述确认收到行李，视为已确认签收时间"
+                    )
             # P1修复：GDS结案记录是有效间接证明，明确标记为可靠
             _is_gds_close = _receipt_source == "gds_close"
             if _is_gds_close:
@@ -234,7 +265,8 @@ async def _merge_vision_to_parsed(
                 debug.setdefault("auto_corrected", []).append(f"baggage_receipt_time: GDS结案时间 {_receipt_source} 作为有效间接证明接受")
             # 也检查 vision notes 是否表明时间来自邮件/转运航班预估
             _vision_notes = str(vision_extract.get("notes") or "").strip()
-            _notes_indicate_email = any(kw in _vision_notes for kw in ["邮件", "邮件通知", "邮件预计", "转运航班", "行李将搭乘", "luggage will arrive", "baggage will arrive"])
+            # 【P1修复】已确认的 email_estimate 不应被 notes 中的"邮件"关键词误伤
+            _notes_indicate_email = False if _is_email_confirmed else any(kw in _vision_notes for kw in ["邮件", "邮件通知", "邮件预计", "转运航班", "行李将搭乘", "luggage will arrive", "baggage will arrive"])
             # 交叉校验：签收时间 = alternate航班起飞时间 且 alternate来源为航司邮件 → 非实际签收
             _alternate = ai_parsed.get("alternate") or vision_extract.get("alternate") or {}
             _alt_dep = str(_alternate.get("alt_dep") or "").strip()
@@ -249,11 +281,16 @@ async def _merge_vision_to_parsed(
                     f"判定为转运航班预估时间而非实际签收，清除"
                 )
                 return  # 已清除，不再继续auto-correct
-            if not is_low_confidence and not _is_unreliable_source and not _notes_indicate_email:
-                hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
-                if not hr_val or str(hr_val).lower() == "false":
+            if _is_email_confirmed or (not is_low_confidence and not _is_unreliable_source and not _notes_indicate_email):
+                if _is_email_confirmed:
                     ai_parsed["has_baggage_receipt_time_proof"] = True
-                    debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
+                    ai_parsed["baggage_receipt_time_source"] = "confirmed_email_receipt"
+                    debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: email_estimate 但乘客确认收到行李，接受为已确认签收时间")
+                else:
+                    hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
+                    if not hr_val or str(hr_val).lower() == "false":
+                        ai_parsed["has_baggage_receipt_time_proof"] = True
+                        debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
             else:
                 _reason = []
                 if is_low_confidence:
@@ -287,18 +324,21 @@ async def _merge_vision_to_parsed(
     # 校验：如果 vision notes 明确说明签收时间来自航空公司邮件通知/转运航班预计到达时间，
     # 说明并非真正的行李签收证明，应将 has_baggage_receipt_time_proof 纠正为 false
     # P1 修复：但有"签收单"关键词时例外 — 不正常行李运输签收单是有效证明
+    # P1 修复：已确认的 email_estimate 不应被此块清除
     receipt_time_email_markers = [
         "航空公司邮件", "邮件通知", "邮件预计", "邮件预计",
         "转运航班", "行李搭乘", "预计.*到达", "行李将搭乘",
         "luggage will arrive", "baggage will arrive",
     ]
+    # 检查是否为已确认的 email_estimate（在 upstream 块中设置）
+    _upstream_confirmed = ai_parsed.get("baggage_receipt_time_source") == "confirmed_email_receipt"
     # P1 修复：签收单关键词 — 这些是有效行李延误证明，不应被误判为邮件/转运航班
     _RECEIPT_DOC_KEYWORDS = ["签收单", "运输签收", "不正常行李", "行李事故记录", "PIR"]
     _proof_source = str(vision_extract.get("baggage_delay_proof_source") or "").strip()
     _has_receipt_doc = any(kw in _proof_source for kw in _RECEIPT_DOC_KEYWORDS)
     _notes_has_receipt_doc = any(kw in vision_notes for kw in _RECEIPT_DOC_KEYWORDS)
 
-    if ai_parsed.get("has_baggage_receipt_time_proof") and vision_notes and not _has_receipt_doc and not _notes_has_receipt_doc:
+    if not _upstream_confirmed and ai_parsed.get("has_baggage_receipt_time_proof") and vision_notes and not _has_receipt_doc and not _notes_has_receipt_doc:
         for marker in receipt_time_email_markers:
             if re.search(marker, vision_notes):
                 ai_parsed["has_baggage_receipt_time_proof"] = False
@@ -323,16 +363,26 @@ async def _merge_vision_to_parsed(
         )
     elif receipt_source_val in ("pir_creation", "email_estimate", "app_tracking"):
         # 签收时间来源分类明确为不可靠来源，清除
-        # P1修复：但如果 has_baggage_receipt_time_proof=true（说明 Vision 识别到了签收/交接单据），
-        # 且时间是从文本描述中提取的（与交接单日期一致），则保留时间并修正来源
+        # 【P1修复】但若乘客描述确认收到行李（email_estimate 升级为 confirmed），保留时间
         _has_proof = ai_parsed.get("has_baggage_receipt_time_proof")
         _vision_notes = str(vision_extract.get("notes") or "").strip()
-        _text_has_time = any(kw in _vision_notes for kw in ["文字描述", "文本描述", "description", "旅客"])
-        if receipt_source_val == "pir_creation" and _has_proof and _text_has_time:
+        _text_blob_lower = text_blob.lower() if text_blob else ""
+        _confirmed_keywords = [
+            "收到行李", "收到行李到达邮件", "收到行李邮件",
+            "luggage arrived", "baggage arrived", "received luggage", "received baggage",
+        ]
+        _is_email_confirmed = receipt_source_val == "email_estimate" and any(kw in _text_blob_lower for kw in _confirmed_keywords)
+        if receipt_source_val == "pir_creation" and _has_proof and any(kw in _vision_notes for kw in ["文字描述", "文本描述", "description", "旅客"]):
             # 文本描述提供了签收时间，且有交接单证明日期，接受该时间
             ai_parsed["baggage_receipt_time_source"] = "airport_counter"
             debug.setdefault("auto_corrected", []).append(
                 f"baggage_receipt_time: 来源修正为 airport_counter（交接单存在但时间来自文本描述，日期一致）"
+            )
+        elif _is_email_confirmed:
+            # 乘客描述确认收到行李，保留时间，修正来源
+            ai_parsed["baggage_receipt_time_source"] = "confirmed_email_receipt"
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: email_estimate 但乘客确认收到，保留时间，来源修正为 confirmed_email_receipt"
             )
         else:
             ai_parsed["baggage_receipt_time"] = None
