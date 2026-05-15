@@ -253,6 +253,35 @@ def _postprocess_audit_result(
                     elif not str(audit.get("explanation") or "").strip():
                         audit["explanation"] = "材料齐全，审核通过"
 
+            # 硬校验全部通过 + 延误门槛满足 + 材料齐全，但AI输出"拒绝" → 覆盖为"通过"
+            # 适用场景：AI模型误判拒绝，但确定性硬校验全部确认通过
+            if not missing_required and scanned_all_attachments and not vision_result_is_empty:
+                ai_result = str(audit.get("audit_result") or "").strip()
+                if ai_result == "拒绝":
+                    exclusion_triggered = (audit.get("logic_check") or {}).get("exclusion_triggered")
+                    if not exclusion_triggered and threshold_met:
+                        LOGGER.info(
+                            f"postprocess: hardcheck确认全部通过，覆盖AI模型误判拒绝",
+                            extra=log_extra(forceid="", stage="fd_postprocess", attempt=0),
+                        )
+                        audit["audit_result"] = "通过"
+                        # 重新生成 explanation
+                        kd = audit.get("key_data") or {}
+                        name = kd.get("passenger_name", "")
+                        mins = kd.get("delay_duration_minutes", "")
+                        reason = kd.get("reason", "")
+                        parts = []
+                        if name:
+                            parts.append(f"被保险人：{name}")
+                        if mins:
+                            parts.append(f"延误时长：{mins}分钟")
+                        if reason:
+                            parts.append(f"延误原因：{reason}")
+                        if parts:
+                            audit["explanation"] = "；".join(parts)
+                        elif not str(audit.get("explanation") or "").strip():
+                            audit["explanation"] = "硬校验全部通过，审核通过"
+
         # ── 写回代码计算的赔付金额 ──
         if payout_result and payout_result.get("status") == "calculated":
             final_amount = payout_result.get("final_amount")

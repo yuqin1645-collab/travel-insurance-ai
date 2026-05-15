@@ -9,7 +9,19 @@
 
 ## 文档
 
-- 生成的文档放置在/docs
+- 生成的文档放置在 `/docs`，**必须按以下分类存放，禁止在 docs 根目录平铺新文件**：
+
+| 目录 | 内容 | 示例 |
+|------|------|------|
+| `docs/` 根目录 | 仅保留 3 个核心活跃文档 | `issue_cluster_tracker.md`、`module_architecture_and_new_claim_template.md`、`patch_tracker.md` |
+| `docs/governance/` | AI 审核报告、审计轮次报告、Bug 调查、人工审核清单、字段分析 | `audit_report_round1.md`、`bug_investigation_report_*.md` |
+| `docs/architecture/` | ADR、架构决策、部署指南、数据库改进方案、系统架构总结 | `ADR-001-*.md`、`production_deployment_guide.md` |
+| `docs/data/` | JSON 数据文件、forceid 列表、聚类分析数据 | `cluster_analysis_data.json`、`p2_forceids.json` |
+| `docs/archive/` | 临时脚本输出、rerun 日志、历史分析、业务逻辑问题文档 | `rerun_*.txt`、`business_logic_questions_*.md` |
+| `docs/wiki_kb/` | 知识库（已有子目录结构，保持不变） | `index.md`、`concepts/`、`entities/` |
+
+- **写文档时先判断归属目录**，不确定时放 `archive/` 而非根目录。
+- **定期清理**：当 docs 根目录出现新文件时，移动到对应子目录。
 
 ---
 

@@ -141,6 +141,35 @@ async def review_baggage_delay_async(
     elif vision_extract and not isinstance(ai_parsed, dict):
         ai_parsed = dict(vision_extract)
 
+    # 行李转运航班修复：若 alternate.alt_flight_no 是行李转运航班（非乘客改签），清除改签标记
+    if isinstance(ai_parsed, dict):
+        _alt = ai_parsed.get("alternate") or {}
+        if isinstance(_alt, dict):
+            _alt_fn = str(_alt.get("alt_flight_no") or "").strip().upper()
+            if _alt_fn:
+                _import_re = __import__("re")
+                _bf_hints = [
+                    "行李装载", "行李装在", "行李装在今日", "行李转运", "行李已装载",
+                    "行李将搭乘", "行李运抵", "行李托运回", "行李送达", "行李将运",
+                    "您的行李将", "行李会搭乘", "行李后续",
+                    "baggage loaded", "baggage forwarded", "baggage will arrive",
+                    "baggage will travel", "luggage will arrive",
+                ]
+                for _src in (ai_parsed, vision_extract):
+                    for _fl in (_src.get("all_flights_found") or []):
+                        if str(_fl.get("flight_no") or "").strip().upper() == _alt_fn:
+                            _role = str(_fl.get("role_hint") or "").strip()
+                            _src_f = str(_fl.get("source") or "").strip()
+                            if any(h in _role or h in _src_f for h in _bf_hints):
+                                _alt["is_connecting_rebooking"] = "false"
+                                _alt["is_connecting_missed"] = "false"
+                                debug["alternate_cleared_baggage_forwarding"] = (
+                                    f"alternate航班号{_alt_fn}为行李转运航班，非乘客改签，清除改签标记"
+                                )
+                                break
+                    if debug.get("alternate_cleared_baggage_forwarding"):
+                        break
+
     # 前置准入校验
     policy_violation = _check_policy_validity(claim_info, debug, vision_extract=vision_extract)
     if policy_violation:
@@ -185,7 +214,99 @@ async def review_baggage_delay_async(
             _FLIGHT_NO_PATTERN = _re.compile(r'^[A-Za-z]{2}\d{1,4}$')
             _valid_flight_no = bool(_FLIGHT_NO_PATTERN.match(flight_no)) if flight_no else False
 
-            # 收集 all_flights_found 中的候选航班号（去重保序）
+            # 行李转运航班关键词（用于过滤）
+            _BAGGAGE_FORWARDING_HINTS = [
+                # 行李转运/装载类
+                "行李装载", "行李装在", "行李装在今日", "行李转运", "行李已装载",
+                # 行李将搭乘/运抵类（航司邮件常见描述）
+                "行李将搭乘", "行李运抵", "行李托运回", "行李送达", "行李将运",
+                "您的行李将", "行李会搭乘", "行李后续",
+                # 英文
+                "baggage loaded", "baggage forwarded", "baggage will arrive",
+                "baggage will travel", "luggage will arrive", "luggage will be",
+                "baggage will be forwarded", "baggage will be delivered",
+            ]
+
+            # 第一步：从 all_flights_found 中预先识别行李转运航班号
+            _baggage_forwarding_nos: set = set()
+            for _src in (ai_parsed, vision_extract):
+                for _fl in (_src.get("all_flights_found") or []):
+                    _fn = str(_fl.get("flight_no") or "").strip()
+                    if not _fn or not _FLIGHT_NO_PATTERN.match(_fn):
+                        continue
+                    _role = str(_fl.get("role_hint") or "").strip()
+                    _src_field = str(_fl.get("source") or "").strip()
+                    if any(h in _role or h in _src_field for h in _BAGGAGE_FORWARDING_HINTS):
+                        _baggage_forwarding_nos.add(_fn.upper())
+
+            # 第二步：若主 flight_no 命中行李转运航班，拒绝并标记
+            if _valid_flight_no and flight_no.upper() in _baggage_forwarding_nos:
+                debug["flight_no_baggage_forwarding_rejected"] = (
+                    f"{flight_no} 为行李转运航班（非乘客航班），拒绝作为主航班查询，从 all_flights_found 回退"
+                )
+                _valid_flight_no = False
+
+            # P1 修复：联程航班场景 — 行李延误的触发点是旅客实际到达最终目的地的末段航班
+            # 如果有多个航段，将目标航班设为末程航班，确保航空查询优先使用末程实际到达时间
+            _itinerary_segments = (ai_parsed.get("itinerary_segments") or vision_extract.get("itinerary_segments") or [])
+            if _valid_flight_no and len(_itinerary_segments) > 1:
+                # 改签场景：优先使用 alternate 中的改签航班，而非 itinerary_segments 的末程
+                _alternate = ai_parsed.get("alternate") or vision_extract.get("alternate") or {}
+                _is_rebooking = str(_alternate.get("is_connecting_rebooking") or "").strip().lower() == "true"
+                if _is_rebooking:
+                    _alt_fn = str(_alternate.get("alt_flight_no") or "").strip().upper()
+                    _alt_date = _extract_date_yyyy_mm_dd(_alternate.get("alt_dep") or _alternate.get("alt_arr"))
+                    if _alt_fn and _FLIGHT_NO_PATTERN.match(_alt_fn) and _alt_fn != flight_no.upper():
+                        debug["flight_no_corrected_for_connecting"] = (
+                            f"改签场景，目标航班从 {flight_no} 修正为改签航班 {_alt_fn}（{_alt_date}）"
+                        )
+                        flight_no = _alt_fn
+                        flight_date = _alt_date or flight_date
+                        _valid_flight_no = True
+                else:
+                    # 非改签联程：只取与事故日期接近的航段（排除返程航班）
+                    _accident_date = _extract_date_yyyy_mm_dd(claim_info.get("Date_of_Accident"))
+                    _outbound_segments = []
+                    for _seg in _itinerary_segments:
+                        if not isinstance(_seg, dict):
+                            continue
+                        _seg_date = _extract_date_yyyy_mm_dd(_seg.get("original_date"))
+                        if _seg_date and _accident_date:
+                            # 与事故日期相差 <=3 天视为同一旅程方向
+                            try:
+                                from datetime import datetime as _dt
+                                _diff = abs((_dt.strptime(_seg_date, "%Y-%m-%d") - _dt.strptime(_accident_date, "%Y-%m-%d")).days)
+                                if _diff <= 3:
+                                    _outbound_segments.append(_seg)
+                            except ValueError:
+                                _outbound_segments.append(_seg)
+                        else:
+                            _outbound_segments.append(_seg)
+
+                    if len(_outbound_segments) > 1:
+                        _last_segment = None
+                        for _seg in _outbound_segments:
+                            _seg_no = _seg.get("segment_no") or 0
+                            if _last_segment is None or _seg_no > _last_segment.get("segment_no", 0):
+                                _last_segment = _seg
+                        if _last_segment and isinstance(_last_segment, dict):
+                            _last_fn = str(_last_segment.get("original_flight_no") or "").strip().upper()
+                            _last_date = _extract_date_yyyy_mm_dd(_last_segment.get("original_date")) or flight_date
+                            _last_arr = ""
+                            for _fl in (ai_parsed.get("all_flights_found") or vision_extract.get("all_flights_found") or []):
+                                if isinstance(_fl, dict) and str(_fl.get("flight_no") or "").strip().upper() == _last_fn:
+                                    _last_arr = str(_fl.get("arr_iata") or "").strip().upper()
+                                    break
+                            if _last_fn and _last_fn != flight_no.upper():
+                                debug["flight_no_corrected_for_connecting"] = (
+                                    f"联程航班 {len(_outbound_segments)} 段（去程），目标航班从 {flight_no} 修正为末程 {_last_fn}"
+                                )
+                                flight_no = _last_fn
+                                flight_date = _last_date
+                                arr_iata = _last_arr
+                                _valid_flight_no = bool(_FLIGHT_NO_PATTERN.match(flight_no)) if flight_no else False
+
+            # 第三步：收集 all_flights_found 中的候选航班号（去重保序，过滤行李转运）
             _candidates: list = []
             _seen = set()
             if _valid_flight_no:
@@ -194,15 +315,36 @@ async def review_baggage_delay_async(
             for _src in (ai_parsed, vision_extract):
                 for _fl in (_src.get("all_flights_found") or []):
                     _fn = str(_fl.get("flight_no") or "").strip()
-                    if _fn and _FLIGHT_NO_PATTERN.match(_fn) and _fn.upper() not in _seen:
-                        _fd = _extract_date_yyyy_mm_dd(_fl.get("date")) or flight_date
-                        _dep = str(_fl.get("dep_iata") or "").strip().upper()
-                        _arr = str(_fl.get("arr_iata") or "").strip().upper()
-                        _candidates.append((_fn, _fd, _dep if _dep != "UNKNOWN" else "", _arr if _arr != "UNKNOWN" else ""))
-                        _seen.add(_fn.upper())
+                    if not _fn or not _FLIGHT_NO_PATTERN.match(_fn) or _fn.upper() in _seen:
+                        continue
+                    if _fn.upper() in _baggage_forwarding_nos:
+                        debug.setdefault("baggage_forwarding_filtered", []).append(
+                            f"{_fn}（role_hint={_fl.get('role_hint')}, source={_fl.get('source')}）")
+                        continue
+                    _fd = _extract_date_yyyy_mm_dd(_fl.get("date")) or flight_date
+                    _dep = str(_fl.get("dep_iata") or "").strip().upper()
+                    _arr = str(_fl.get("arr_iata") or "").strip().upper()
+                    _candidates.append((_fn, _fd, _dep if _dep != "UNKNOWN" else "", _arr if _arr != "UNKNOWN" else ""))
+                    _seen.add(_fn.upper())
 
             if not _valid_flight_no and _candidates:
-                debug["flight_no_corrected"] = f"{flight_no} -> {_candidates[0][0]}（格式校验失败，从 all_flights_found 回退）"
+                # 联程航班场景：优先选日期最晚的航班（末段），因为行李延误的触发点是旅客实际到达最终目的地的末段航班
+                _best_idx = 0
+                for _i, (_fn, _fd, _dep, _arr) in enumerate(_candidates):
+                    if _fd and _candidates[_best_idx][1] and _fd > _candidates[_best_idx][1]:
+                        _best_idx = _i
+                debug["flight_no_corrected"] = f"{flight_no} -> {_candidates[_best_idx][0]}（从 all_flights_found 回退，优先末段航班）"
+                flight_no = _candidates[_best_idx][0]
+                flight_date = _candidates[_best_idx][1]
+                dep_iata = _candidates[_best_idx][2]
+                arr_iata = _candidates[_best_idx][3]
+                # 同步回 ai_parsed，确保后续计算器使用正确的航班号
+                ai_parsed["flight_no"] = flight_no
+                if flight_date:
+                    ai_parsed["flight_date"] = flight_date
+
+            # 记录修正后的目标航班号，用于后续校验航空查询结果
+            _target_flight_no = flight_no.upper() if flight_no else None
 
             # 过滤有效候选并并行查询
             _valid_candidates = [(_fn, _fd, _dep, _arr) for _fn, _fd, _dep, _arr in _candidates[:5] if _fn and _fd]
@@ -219,22 +361,34 @@ async def review_baggage_delay_async(
                     for _fn, _fd, _dep, _arr in _valid_candidates
                 ]
                 raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+                # 优先使用目标航班（修正后的航班）的查询结果
+                _target_result = None
+                _fallback_result = None
                 for (_fn, _fd, _dep, _arr), raw in zip(_valid_candidates, raw_results):
                     if isinstance(raw, Exception):
                         one_result = {"success": False, "error": str(raw), "_exception": True}
                     else:
                         one_result = raw
-                    if one_result.get("success"):
-                        actual_arr = one_result.get("actual_arr")
-                        if actual_arr:
-                            ai_parsed["flight_actual_arrival_time"] = actual_arr
-                            debug["arrival_source"] = "variflight_actual_arr"
-                        aviation_lookup = one_result
-                        break
-                    debug.setdefault("aviation_candidates_tried", []).append(
-                        {"flight_no": _fn, "date": _fd, "success": False,
-                         "error": str(one_result.get("error") or "")[:80]}
-                    )
+                    if one_result.get("success") and one_result.get("actual_arr"):
+                        if _fn.upper() == _target_flight_no:
+                            _target_result = (_fn, one_result)
+                            break
+                        elif _fallback_result is None:
+                            _fallback_result = (_fn, one_result)
+                    else:
+                        debug.setdefault("aviation_candidates_tried", []).append(
+                            {"flight_no": _fn, "date": _fd, "success": False,
+                             "error": str(one_result.get("error") or "")[:80]}
+                        )
+                # 优先用目标航班结果，否则用第一个成功的备选
+                _chosen = _target_result or _fallback_result
+                if _chosen:
+                    _fn_chosen, _result_chosen = _chosen
+                    ai_parsed["flight_actual_arrival_time"] = _result_chosen["actual_arr"]
+                    debug["arrival_source"] = "variflight_actual_arr"
+                    aviation_lookup = _result_chosen
+                    if _target_result is None and _fallback_result is not None:
+                        debug["aviation_used_fallback"] = f"目标航班{_target_flight_no}未查到，使用{_fallback_result[0]}"
 
             if not aviation_lookup.get("success"):
                 debug["arrival_source"] = "material_or_llm_fallback"
@@ -288,6 +442,22 @@ async def review_baggage_delay_async(
     parsed_accident_type = str((ai_parsed or {}).get("accident_type") or "").strip().lower()
     raw_receipt = (ai_parsed or {}).get("baggage_receipt_time")
     has_receipt_time = bool(raw_receipt) and _parse_dt_flexible(str(raw_receipt)) is not None
+
+    # P1 修复：签收时间来源放宽 — 即使 baggage_receipt_time 被 vision_merge 清除，
+    # 只要 receipt_times 列表中有有效时间，也认为行李已找回（非永久丢失）
+    _receipt_times_list = (ai_parsed or {}).get("receipt_times") or []
+    _has_any_receipt_time = has_receipt_time or any(
+        _parse_dt_flexible(str(rt)) is not None
+        for rt in _receipt_times_list
+        if rt and str(rt).lower() not in ("unknown", "")
+    )
+
+    # P1 修复：行李延误证明放宽 — 有PIR报告/签收单/不正常行李运输签收单，
+    # 即使尚未提取到具体签收时间，也不轻易判定为永久丢失
+    _has_delay_proof = str((ai_parsed or {}).get("has_baggage_delay_proof") or "").strip().lower() == "true"
+    _has_delay_proof_source = str((vision_extract or {}).get("baggage_delay_proof_source") or "").strip()
+    _has_receipt_doc = any(kw in _has_delay_proof_source for kw in ["签收单", "不正常行李", "运输签收", "行李事故记录"])
+
     delay_calc_temp = _compute_delay_hours_by_rule(ai_parsed or {}, text_blob)
     has_calculable_delay = delay_calc_temp.get("delay_hours") is not None
 
@@ -305,6 +475,18 @@ async def review_baggage_delay_async(
             ai_parsed["accident_type"] = "baggage_delay"
             ai_parsed["accident_type_note"] = "可计算延误时长，按行李延误审核"
         conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "可计算延误时长，按行李延误审核"})
+    elif parsed_accident_type == "baggage_loss" and _has_any_receipt_time:
+        # P1 修复：receipt_times 列表中有有效签收时间，说明行李已找回
+        if isinstance(ai_parsed, dict):
+            ai_parsed["accident_type"] = "baggage_delay"
+            ai_parsed["accident_type_note"] = "receipt_times列表中有签收时间，行李已找回，按行李延误审核"
+        conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": "签收时间列表中有有效时间，行李已找回，按行李延误审核"})
+    elif parsed_accident_type == "baggage_loss" and (_has_delay_proof or _has_receipt_doc):
+        # P1 修复：有行李延误证明（PIR报告/签收单），不轻易判定为永久丢失
+        if isinstance(ai_parsed, dict):
+            ai_parsed["accident_type"] = "baggage_delay"
+            ai_parsed["accident_type_note"] = f"有行李延误证明（{_has_delay_proof_source}），按行李延误审核"
+        conclusions.append({"checkpoint": "事故类型", "Eligible": "是", "Remark": f"有{_has_delay_proof_source}，按行李延误审核"})
     elif parsed_accident_type == "baggage_loss" and not has_receipt_time and not has_calculable_delay:
         # 真正无法计算延误时长的丢失案件，仍需转人身财产损失
         # 但这里给一个兜底：检查文本中是否有"找到""送达""领取"等关键词
@@ -319,7 +501,8 @@ async def review_baggage_delay_async(
         else:
             conclusions.append({"checkpoint": "事故类型", "Eligible": "否", "Remark": "事故为行李丢失，需转随身财产损失责任"})
             return _result(forceid, "拒赔：事故类型为行李丢失，非托运行李延误责任", "N", conclusions, debug)
-    elif ("行李丢失" in text_blob) and ("延误" not in text_blob) and not has_receipt_time and not has_calculable_delay:
+    elif ("行李丢失" in text_blob) and ("延误" not in text_blob) and not _has_any_receipt_time and not has_calculable_delay:
+        # P1 修复：用 _has_any_receipt_time 替代 has_receipt_time，检查 receipt_times 列表
         # 文本提到丢失且未提到延误，且无签收时间无延误时长
         # 但如果有"找到""送达"等关键词，仍可能是延误
         found_keywords = ["找到", "送达", "领取", "取回", "收到", "delivered", "found", "recovered"]
@@ -421,12 +604,22 @@ async def review_baggage_delay_async(
         return _result(forceid, "需补齐资料：" + "；".join(missing_materials), "Y", conclusions, debug)
     conclusions.append({"checkpoint": "材料完整性", "Eligible": "是", "Remark": "视觉识别确认关键材料已提供"})
 
-    # 人工复核触发
+    # 人工复核触发：仅基于 Vision 识别结果中的 risk_flags，不在旅客自述文本中搜索
+    # （旅客描述"手写纸条"等是正常事实陈述，不代表材料有风险）
     manual_flags = []
-    manual_keywords = ["手写", "多语言", "伪造", "ps", "涂改", "争议", "模糊"]
-    for kw in manual_keywords:
-        if kw in text_blob.lower():
-            manual_flags.append(kw)
+    vision_risk_flags = vision_extract.get("risk_flags") or []
+    if isinstance(vision_risk_flags, list):
+        for flag in vision_risk_flags:
+            flag_lower = str(flag).strip().lower()
+            # Vision risk_flags 中的值映射到人工复核标记
+            # 注意：multilang 不作为人工复核触发——国际旅行行李延误案件中出现
+            # 多语言材料（葡萄牙语PIR、英语邮件、中文GDS截图等）是正常现象
+            if flag_lower in ("handwritten", "手写"):
+                manual_flags.append("handwritten")
+            elif flag_lower in ("conflict", "冲突"):
+                manual_flags.append("conflict")
+            elif flag_lower in ("fraud_suspect", "疑似伪造"):
+                manual_flags.append("疑似伪造")
     parsed_risk = str((ai_parsed or {}).get("manual_review_risk") or "").strip().lower()
     if parsed_risk and parsed_risk not in {"none", "unknown"}:
         manual_flags.append(parsed_risk)

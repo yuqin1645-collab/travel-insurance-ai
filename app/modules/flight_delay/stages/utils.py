@@ -187,6 +187,10 @@ def _merge_aviation_into_parsed(parsed: Dict[str, Any], aviation: Dict[str, Any]
     if avi_status and not _is_unknown(avi_status):
         p["aviation_status"] = avi_status
 
+    avi_status_raw = aviation.get("status_raw")
+    if avi_status_raw and not _is_unknown(avi_status_raw):
+        p["aviation_status_raw"] = avi_status_raw
+
     p.setdefault("aviation_lookup_note", f"来自AviationStack: status={aviation.get('status')}, source={aviation.get('source')}")
 
     return p

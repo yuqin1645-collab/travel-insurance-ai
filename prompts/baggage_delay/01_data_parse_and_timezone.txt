@@ -21,7 +21,7 @@
   "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown",
   "receipt_times": ["YYYY-MM-DD HH:MM"],
   "delay_hours": "number/unknown",
-  "manual_review_risk": "none/handwritten/multilang/conflict/fraud_suspect/unknown",
+  "manual_review_risk": "none/conflict/fraud_suspect/unknown",
   "notes": "提取依据与不确定点"
 }}
 
@@ -38,7 +38,8 @@
 - manual_review_risk 判定规则：
   * 仅在存在**实质性责任冲突**时标记 conflict（如同一事故已从其他保险获得全额赔付、申请人陈述与证明材料明显矛盾）
   * **不应**标记 conflict 的情形：航空公司小额补偿（如50欧元购买生活必需品），这不属于保险责任冲突，只是航司的善意补偿
-  * 仅在文本中出现明显手写体图片、多语言混合且难以判断、或欺诈线索时标记对应值
+  * 仅在文本中出现明确欺诈线索时标记 fraud_suspect
+  * **注意**：旅客在事故描述中提到"手写纸条""手写收据"等属于正常事实陈述，不代表欺诈风险，不要因此标记 fraud_suspect
 
 注意：如材料表明存在以下任一情形，属于条款除外责任，应在 notes 中注明具体除外类型：
 - 托运行李被海关或其他政府部门没收、扣留、隔离、检验或销毁；

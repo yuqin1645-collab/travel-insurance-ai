@@ -1,30 +1,25 @@
 {
-  "total_records": 1271,
+  "total_records": 1256,
   "cross_tab": [
     {
       "ai": "通过",
       "manual": "通过",
-      "count": 688
+      "count": 658
     },
     {
       "ai": "拒绝",
       "manual": "通过",
-      "count": 222
+      "count": 243
     },
     {
       "ai": "拒绝",
       "manual": "拒绝",
-      "count": 196
+      "count": 194
     },
     {
       "ai": "需补齐资料",
       "manual": "通过",
-      "count": 33
-    },
-    {
-      "ai": "通过",
-      "manual": "拒绝",
-      "count": 10
+      "count": 31
     },
     {
       "ai": "拒绝",
@@ -34,22 +29,27 @@
     {
       "ai": "通过",
       "manual": "需补齐资料",
-      "count": 7
+      "count": 6
+    },
+    {
+      "ai": "通过",
+      "manual": "拒绝",
+      "count": 5
     },
     {
       "ai": "需补齐资料",
       "manual": "需补齐资料",
-      "count": 2
+      "count": 3
     },
     {
       "ai": "需补齐资料",
       "manual": "拒绝",
-      "count": 2
+      "count": 3
     }
   ],
-  "consistent_count": 886,
-  "total_with_both": 1167,
-  "consistency_rate": 75.9,
+  "consistent_count": 855,
+  "total_with_both": 1150,
+  "consistency_rate": 74.3,
   "p0": [
     {
       "forceid": "a0nC800000Nx1EAIAZ",
@@ -68,15 +68,6 @@
       "manual_note": "根据提供的材料，会员权益仅保障国际直飞航班延误，本次申请取消航班MU6531为国内段航班，且依据权益免除责任（权益人因乘坐前次航班的任何延误，导致其未能准时搭乘到原预定的接驳航班所造成的航班中转延误），本次申请未达赔付标准，歉难赔付。",
       "remark": "航班延误: 延误9小时，赔付金额：300元",
       "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000OEMMDIA5",
-      "claim_type": "baggage_delay",
-      "ai": "通过",
-      "manual": "拒绝",
-      "manual_note": "根据提供的材料，依据权益责任免除：权益人的托运行李被海关或其他政府部门没收、扣留、隔离、检验或销毁（本次延误原因为扣留安检），歉难给付。",
-      "remark": "审核通过：行李延误24.00小时，建议赔付1000.00元",
-      "payout": 1000.0
     },
     {
       "forceid": "a0nC800000OIisnIAD",
@@ -104,42 +95,6 @@
       "manual_note": "经审核，5/6航班HU7974航班于4/20 13:56取消，早于投保时间4/20 15:08，依据权益责任免除：权益人在获赠本权益前或为该次旅行预订航班时已存在可能导致航班延误的情况或条件，包括但不限于当时已经宣布或已经发生的任何罢工或其他工人抗议活动，以及当时已经发生的任何恶劣天气或自然灾害，歉难给付。",
       "remark": "航班延误: 延误49小时1分钟，赔付金额：1200元",
       "payout": 1200.0
-    },
-    {
-      "forceid": "a0nC800000OUo3DIAT",
-      "claim_type": "baggage_delay",
-      "ai": "通过",
-      "manual": "拒绝",
-      "manual_note": "航班延误：根据提供的材料，4/25航班OS16起飞延误31分钟，到达延误55分钟，未达到起赔标准5小时，且依据权益免除责任（权益人因乘坐前次航班的任何延误，导致其未能准时搭乘到原预定的接驳航班所造成的航班中转延误），本次申请未达赔付标准，歉难给付。\n行李延误：根据提供的材料，本次申请不符合权益人在旅行期间搭乘公共交通工具抵达预定目的地后，由该公共交通工具承运人保管及随行托运的行李未在本权益载明的时间限度内送抵，且延误连续时间达到会员权益救援服务卡此项权益所载的时间，歉难给付。",
-      "remark": "审核通过：行李延误26.17小时，建议赔付1000.00元",
-      "payout": 1000.0
-    },
-    {
-      "forceid": "a0nC800000OdGf2IAF",
-      "claim_type": "flight_delay",
-      "ai": "通过",
-      "manual": "拒绝",
-      "manual_note": "境外投保不符合投保规则，保单自始无效，可拨打95342申请全额退保费。且本次申请延误航班CX254航空公司通知调整时间为5月11日09:56 (GMT+1)（北京时间为5/11 16:56），早于投保时间2026/5/11 21:07，依据责任免除（权益人在获赠本权益前或为该次旅行预订航班时已存在可能导致航班延误的情况或条件，包括但不限于当时已经宣布或已经发生的任何罢工或其他工人抗议活动，以及当时已经发生的任何恶劣天气或自然灾害）；本次申请歉难给付。",
-      "remark": "航班延误: 延误15小时45分钟，赔付金额：900元",
-      "payout": 900.0
-    },
-    {
-      "forceid": "a0nC800000Ogop0IAB",
-      "claim_type": "flight_delay",
-      "ai": "通过",
-      "manual": "拒绝",
-      "manual_note": "根据提供的材料，5/8航班BA2611起飞延误4小时23分钟，到达延误3小时41分钟，未达到起赔标准5小时，且依据权益免除责任（权益人因乘坐前次航班的任何延误，导致其未能准时搭乘到原预定的接驳航班所造成的航班中转延误），本次申请未达赔付标准，歉难给付。",
-      "remark": "航班延误: 延误32小时41分钟，赔付金额：600元",
-      "payout": 600.0
-    },
-    {
-      "forceid": "a0nC800000OgpmfIAB",
-      "claim_type": "flight_delay",
-      "ai": "通过",
-      "manual": "拒绝",
-      "manual_note": "根据提供的材料，5/8航班BA2611起飞延误4小时23分钟，到达延误3小时41分钟，未达到起赔标准5小时，且依据权益免除责任（权益人因乘坐前次航班的任何延误，导致其未能准时搭乘到原预定的接驳航班所造成的航班中转延误），本次申请未达赔付标准，歉难给付。",
-      "remark": "航班延误: 延误33小时41分钟，赔付金额：600元",
-      "payout": 600.0
     }
   ],
   "p1": [
@@ -153,6 +108,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000OUo3DIAT",
+      "claim_type": "baggage_delay",
+      "ai": "需补齐资料",
+      "manual": "拒绝",
+      "manual_note": "航班延误：根据提供的材料，4/25航班OS16起飞延误31分钟，到达延误55分钟，未达到起赔标准5小时，且依据权益免除责任（权益人因乘坐前次航班的任何延误，导致其未能准时搭乘到原预定的接驳航班所造成的航班中转延误），本次申请未达赔付标准，歉难给付。\n行李延误：根据提供的材料，本次申请不符合权益人在旅行期间搭乘公共交通工具抵达预定目的地后，由该公共交通工具承运人保管及随行托运的行李未在本权益载明的时间限度内送抵，且延误连续时间达到会员权益救援服务卡此项权益所载的时间，歉难给付。",
+      "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "payout": 1000.0
+    },
+    {
       "forceid": "a0nC800000NujMzIAJ",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -162,12 +126,48 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IgxR9IAJ",
+      "forceid": "a0nC800000IR0EUIA1",
+      "claim_type": "baggage_delay",
+      "ai": "需补齐资料",
+      "manual": "通过",
+      "manual_note": "1500.00",
+      "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IRuwcIAD",
+      "claim_type": "baggage_delay",
+      "ai": "需补齐资料",
+      "manual": "通过",
+      "manual_note": "1000.00",
+      "remark": "转人工复核：存在材料识别或真实性争议",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000NGaLfIAL",
       "claim_type": "baggage_delay",
       "ai": "需补齐资料",
       "manual": "通过",
       "manual_note": "1000.00",
       "remark": "需补齐资料：请补充行李签收证明（含签收时间）或承运人出具的行李延误时长证明",
+      "payout": 1000.0
+    },
+    {
+      "forceid": "a0nC800000IgxR9IAJ",
+      "claim_type": "baggage_delay",
+      "ai": "需补齐资料",
+      "manual": "通过",
+      "manual_note": "1000.00",
+      "remark": "需补齐资料：行李签收证明（含签收时间），当前以后续转运航班到达时间辅助参考，估算行李延误3.35小时，待补件后按实际签收时间修正。",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IuYB8IAN",
+      "claim_type": "baggage_delay",
+      "ai": "需补齐资料",
+      "manual": "通过",
+      "manual_note": "1500.00",
+      "remark": "需补齐资料：原航班计划起飞日期（含年份）",
       "payout": 0
     },
     {
@@ -240,15 +240,6 @@
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 【必备材料缺失】请补充：中国海关出入境盖章页或电子出入境记录；硬校验标记：[缺必备材料] 中国海关出入境盖章页或电子出入境记录",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000IGm6PIAT",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄7岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄7岁，为未成年人，需补充监护人身份证明及监护关系证明",
       "payout": 300.0
     },
     {
@@ -360,24 +351,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IBecVIAT",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄11岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄11岁，为未成年人，需补充监护人身份证明及监护关系证明",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000ICFAbIAP",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄8岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄8岁，为未成年人，需补充监护人身份证明及监护关系证明",
-      "payout": 300.0
-    },
-    {
       "forceid": "a0nC800000L9bM1IAJ",
       "claim_type": "flight_delay",
       "ai": "需补齐资料",
@@ -421,33 +394,6 @@
       "manual_note": "600.00",
       "remark": "航班延误: 【必备材料缺失】请补充：被保险人护照照片页；硬校验标记：[缺必备材料] 被保险人护照照片页",
       "payout": 1200.0
-    },
-    {
-      "forceid": "a0nC800000IOWcJIAX",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄3岁，为未成年人，需补充监护人身份证明及监护关系证明",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000I935yIAB",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄4岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄4岁，为未成年人，需补充监护人身份证明及监护关系证明",
-      "payout": 300.0
-    },
-    {
-      "forceid": "a0nC800000IR10tIAD",
-      "claim_type": "flight_delay",
-      "ai": "需补齐资料",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【需监护人材料】被保险人年龄15岁，为未成年人，需补充监护人身份证明及监护关系证明，请补充监护人身份证明及监护关系证明；硬校验标记：[未成年/限制行为能力人] 被保险人年龄15岁，为未成年人，需补充监护人身份证明及监护关系证明",
-      "payout": 300.0
     },
     {
       "forceid": "a0nC800000JGJLYIA5",
@@ -709,7 +655,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【中转接驳免责】前序航班延误导致无法搭乘后续接驳航班，不予赔付",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=张梦楠，保单被保险人姓名=张裕鑫，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -754,7 +700,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【中转接驳免责】前序航班延误导致无法搭乘后续接驳航班，不予赔付",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=张海波，保单被保险人姓名=肖伟群，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -763,7 +709,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【中转接驳免责】前序航班延误导致无法搭乘后续接驳航班，不予赔付",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=张文质，保单被保险人姓名=肖伟群，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -772,7 +718,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【中转接驳免责】前序航班延误导致无法搭乘后续接驳航班，不予赔付",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=周锦言，保单被保险人姓名=刘梅，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -794,6 +740,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000I5nCFIAZ",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=石天童，保单被保险人姓名=尹相霞，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000I5vrJIAR",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -812,6 +767,51 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000I7iQEIAZ",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "600.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=LIU ZHAOYANG，保单被保险人姓名=常郁苗，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000I8vd4IAB",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=X ULINSHEN，保单被保险人姓名=胡晓琳，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000I935yIAB",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=刘豪臻，保单被保险人姓名=刘鸿昌，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000I935zIAB",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=X UWENBO，保单被保险人姓名=钟莉，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000I93VwIAJ",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "600.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=S HENWEIDA，保单被保险人姓名=许轶舒，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000IBVR7IAP",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -826,7 +826,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【未达起赔门槛】延误时长36分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=H UANGXUANXI，保单被保险人姓名=刘亚哲，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -844,7 +844,16 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "600.00",
-      "remark": "航班延误: 【未达起赔门槛】延误时长87分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=CEN GAOBIN，保单被保险人姓名=周凌伊，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IA9R3IAL",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "600.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=G UOGUIYING，保单被保险人姓名=吴明建，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -875,6 +884,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000IBecVIAT",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=纪昊德，保单被保险人姓名=纪鑫，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000IBiOLIA1",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -899,6 +917,51 @@
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 【未达起赔门槛】延误时长50分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IC7BSIA1",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=W UJINLIN，保单被保险人姓名=吴明建，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000ICFAbIAP",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=王忆歌，保单被保险人姓名=常玉倩，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000ICFAcIAP",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=王迅，保单被保险人姓名=常玉倩，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IDEsQIAX",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=Z HENGHARRY，保单被保险人姓名=杜娟，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IDGm9IAH",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=Z HENGSUMMER，保单被保险人姓名=杜娟，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -938,6 +1001,24 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000IGm6PIAT",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=李灼迩，保单被保险人姓名=李剑昂，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IGmj6IAD",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=S UNYI，保单被保险人姓名=孙腾，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000IGycBIAT",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -952,7 +1033,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【承保区域不符】保险计划承保欧洲，出发地(CAI/EG)或目的地(PVG/CN)均不在欧洲承保区域内",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=ZHANG WEIYONG，保单被保险人姓名=张尧蒨，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -961,7 +1042,7 @@
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【承保区域不符】保险计划承保欧洲，出发地(CAI/EG)或目的地(PVG/CN)均不在欧洲承保区域内",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=WANG CHUNLEI，保单被保险人姓名=张尧蒨，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -983,6 +1064,15 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000IKeF7IAL",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=CHEN YUTONG，保单被保险人姓名=陈军，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000IKuIEIA1",
       "claim_type": "flight_delay",
       "ai": "拒绝",
@@ -992,12 +1082,21 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000ILCTeIAP",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=ZHAO YICHENG，保单被保险人姓名=程丽丽，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000ILHrVIAX",
       "claim_type": "flight_delay",
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【中转接驳免责】前序航班延误导致无法搭乘后续接驳航班，不予赔付",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=ZHAO JIANYA，保单被保险人姓名=程丽丽，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -1019,12 +1118,84 @@
       "payout": 0
     },
     {
+      "forceid": "a0nC800000IOWcJIAX",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=侯映任，保单被保险人姓名=奠雨洁，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IP5jhIAD",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "1200.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=孙天蕙，保单被保险人姓名=邵锐，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IPqAjIAL",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=DENG ZIWEI，保单被保险人姓名=罗月湄，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IQ5PuIAL",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "600.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=冯佳华，保单被保险人姓名=郭婧婧，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IQ64EIAT",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=陈艳苹，保单被保险人姓名=陈南，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IQ64FIAT",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=王爱琴，保单被保险人姓名=吴斯怡，请核实是否为同一人",
+      "payout": 0
+    },
+    {
       "forceid": "a0nC800000IQ64GIAT",
       "claim_type": "flight_delay",
       "ai": "拒绝",
       "manual": "通过",
       "manual_note": "300.00",
-      "remark": "航班延误: 【未达起赔门槛】延误时长298分钟，未达起赔门槛300分钟（取长原则计算），不予赔付。",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=陈刚，保单被保险人姓名=陈南，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IQBjqIAH",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=吴龙潭，保单被保险人姓名=吴斯怡，请核实是否为同一人",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IQNmeIAH",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "600.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=W ANGYIYUAN，保单被保险人姓名=张晗，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -1043,6 +1214,15 @@
       "manual": "通过",
       "manual_note": "300.00",
       "remark": "航班延误: 【承保区域不符】保险计划承保欧洲，出发地(IST/TR)或目的地(CAN/CN)均不在欧洲承保区域内",
+      "payout": 0
+    },
+    {
+      "forceid": "a0nC800000IR10tIAD",
+      "claim_type": "flight_delay",
+      "ai": "拒绝",
+      "manual": "通过",
+      "manual_note": "300.00",
+      "remark": "航班延误: 【姓名不符】姓名不符：材料上乘客姓名=焦文瀚，保单被保险人姓名=邝敏婷，请核实是否为同一人",
       "payout": 0
     },
     {
@@ -2063,15 +2243,6 @@
       "payout": 0
     },
     {
-      "forceid": "a0nC800000IR0EUIA1",
-      "claim_type": "baggage_delay",
-      "ai": "拒绝",
-      "manual": "通过",
-      "manual_note": "1500.00",
-      "remark": "拒赔：保单剩余保障额度为0.00元，行李延误责任保额1500元已全额赔付（2月16日案件），本次无可赔付额度。",
-      "payout": 0
-    },
-    {
       "forceid": "a0nC800000IuhPiIAJ",
       "claim_type": "baggage_delay",
       "ai": "拒绝",
@@ -2421,53 +2592,17 @@
       "manual_note": "1500.00",
       "remark": "拒赔：航班实际到达时间2026-05-11 00:56超出保单有效期2026-05-09 23:59",
       "payout": 0
-    },
-    {
-      "forceid": "a0nC800000OayB7IAJ",
-      "claim_type": "baggage_delay",
-      "ai": "拒绝",
-      "manual": "通过",
-      "manual_note": "1000.00",
-      "remark": "拒赔：行李延误时长未达到6小时赔付门槛",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000OcYAwIAN",
-      "claim_type": "flight_delay",
-      "ai": "拒绝",
-      "manual": "通过",
-      "manual_note": "300.00",
-      "remark": "航班延误: 【承保区域不符】保险计划承保欧洲，出发地(IST/TR)或目的地(PEK/CN)均不在欧洲承保区域内",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000OPlvZIAT",
-      "claim_type": "flight_delay",
-      "ai": "拒绝",
-      "manual": "通过",
-      "manual_note": "600.00",
-      "remark": "航班延误: 拒绝。重复理赔：您本次申请的理赔已在#202605003346做出赔付结论。根据一事不二理原则，本次重复申请不予赔付。",
-      "payout": 0
-    },
-    {
-      "forceid": "a0nC800000OgDFxIAN",
-      "claim_type": "flight_delay",
-      "ai": "拒绝",
-      "manual": "通过",
-      "manual_note": "0.00",
-      "remark": "航班延误: 【超出有效期】有效期校验（实际时间优先）: 投保时间(20260415212656): ✗超出有效期; 出境时间(2026-04-29 11:20/unknown): ✓在有效期; 计划起飞时间(2026-05-06 19:15): ✓在有效期; 航班日期(2026-04-29 11:20/unknown): ✓在有效期; 事故发生时间(2026-05-06): ✓在有效期; 实际出发",
-      "payout": 0
     }
   ],
-  "p0_flight_count": 8,
-  "p0_baggage_count": 2,
-  "p1_flight_count": 30,
-  "p1_baggage_count": 5,
-  "p2_flight_count": 209,
-  "p2_baggage_count": 13,
+  "p0_flight_count": 5,
+  "p0_baggage_count": 0,
+  "p1_flight_count": 24,
+  "p1_baggage_count": 10,
+  "p2_flight_count": 232,
+  "p2_baggage_count": 11,
   "p2_flight_reasons": {
     "中转接驳免责": {
-      "count": 17,
+      "count": 12,
       "total_payout": 0.0
     },
     "纯国内航班": {
@@ -2475,19 +2610,19 @@
       "total_payout": 0.0
     },
     "重复索赔": {
-      "count": 26,
+      "count": 25,
       "total_payout": 0.0
     },
     "其他": {
-      "count": 100,
+      "count": 133,
       "total_payout": 0.0
     },
     "超出有效期": {
-      "count": 3,
+      "count": 2,
       "total_payout": 0.0
     },
     "延误0分钟": {
-      "count": 47,
+      "count": 44,
       "total_payout": 0.0
     },
     "境内中转免责": {
@@ -2496,54 +2631,43 @@
     }
   },
   "p2_baggage_reasons": {
-    "其他": 4,
+    "其他": 3,
     "超出保单有效期": 6,
-    "事故类型为行李丢失": 2,
-    "延误未达6h门槛": 1
+    "事故类型为行李丢失": 2
   },
   "p1_flight_keywords": {
     "登机牌/行程单": 4,
     "出入境记录": 10,
     "延误证明/航班变动证明": 1,
-    "监护人材料": 9,
+    "监护人材料": 3,
     "改签相关": 4,
     "护照照片页": 3
   },
   "p1_baggage_keywords": {
-    "行李签收证明": 3,
+    "行李签收证明": 6,
     "交通票据": 1
   },
   "pending_stats": {
-    "待定": 5,
+    "待定": 7,
     "拒绝": 2,
     "通过": 12,
     "需补齐资料": 2
   },
   "daily_trend": [
     {
-      "date": "2026-05-15",
-      "total": 4,
-      "consistent": "4"
-    },
-    {
-      "date": "2026-05-14",
-      "total": 9,
-      "consistent": "1"
-    },
-    {
       "date": "2026-05-13",
-      "total": 10,
-      "consistent": "4"
+      "total": 8,
+      "consistent": "2"
     },
     {
       "date": "2026-05-12",
-      "total": 18,
-      "consistent": "11"
+      "total": 17,
+      "consistent": "10"
     },
     {
       "date": "2026-05-11",
-      "total": 15,
-      "consistent": "11"
+      "total": 14,
+      "consistent": "10"
     },
     {
       "date": "2026-05-10",
@@ -2553,7 +2677,7 @@
     {
       "date": "2026-05-09",
       "total": 12,
-      "consistent": "7"
+      "consistent": "8"
     },
     {
       "date": "2026-05-08",
@@ -2592,10 +2716,15 @@
     },
     {
       "date": "2026-05-01",
-      "total": 3,
-      "consistent": "2"
+      "total": 4,
+      "consistent": "3"
+    },
+    {
+      "date": "2026-04-30",
+      "total": 2,
+      "consistent": "0"
     }
   ],
   "p2_with_payout": [],
-  "analysis_time": "2026-05-15 10:37"
+  "analysis_time": "2026-05-14 10:33"
 }

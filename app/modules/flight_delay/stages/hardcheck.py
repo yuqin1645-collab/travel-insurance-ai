@@ -98,6 +98,64 @@ def _check_foreseeability_fraud(
         ]
         reason_is_foreseeable = any(kw in delay_reason for kw in foreseeable_keywords)
 
+        # 新增：航班取消早于投保检测（既存条件免责）
+        # 当飞常准确认航班取消且投保时取消已存在 → 触发既存条件免责
+        try:
+            avi_status = str((parsed or {}).get("aviation_status") or "").strip()
+            avi_status_raw = str((parsed or {}).get("aviation_status_raw") or "").strip()
+            is_cancelled = avi_status == "取消" or "取消" in avi_status_raw
+
+            if is_cancelled:
+                date_of_insurance_raw = str(claim_info.get("Date_of_Insurance") or claim_info.get("date_of_insurance") or "").strip()
+                insurance_dt = _parse_date_any(date_of_insurance_raw)
+
+                if insurance_dt:
+                    # 从 aviation_lookup 获取计划起飞时间
+                    planned_dep_raw = str((parsed or {}).get("aviation_scheduled", {}).get("planned_dep") or "").strip()
+                    if not planned_dep_raw:
+                        planned_dep_raw = str((parsed or {}).get("schedule_local", {}).get("planned_dep") or "").strip()
+                    planned_dep_dt = _parse_date_any(planned_dep_raw)
+
+                    if planned_dep_dt:
+                        # 投保日期在计划起飞日期之前 → 正常投保行为
+                        # 但航班已取消 → 需要判断取消是否早于投保
+                        # 对于"提前取消"，取消必然在计划起飞前很久就已宣布
+                        # 如果投保日期距计划起飞日期 >= 7天，且航班状态为"提前取消"
+                        # → 高度疑似投保时已知航班取消
+                        days_before_departure = (planned_dep_dt.date() - insurance_dt.date()).days
+
+                        if "提前取消" in avi_status_raw:
+                            # 提前取消 + 投保在计划起飞前 >= 7天
+                            # → 取消公告很可能在投保前已发布
+                            fn = str((parsed or {}).get("flight", {}).get("ticket_flight_no") or (parsed or {}).get("flight", {}).get("operating_flight_no") or "").strip()
+                            route = (parsed or {}).get("route") or {}
+                            dep = str(route.get("dep_iata") or "").strip()
+                            arr = str(route.get("arr_iata") or "").strip()
+                            result["fraud_suspected"] = True
+                            result["fraud_level"] = "confirmed"
+                            result["reason"] = (
+                                f"既存条件：航班{fn or 'unknown'}（{dep or ''}->{arr or ''}）"
+                                f"被飞常准确认为提前取消，"
+                                f"投保时间（{date_of_insurance_raw}）距计划起飞（{planned_dep_raw[:16]}）尚有{days_before_departure}天，"
+                                f"提前取消的公告通常在起飞前多日发布，投保时航班取消已成既定事实"
+                            )
+                            result["note"] = "命中既存条件免责：航班取消早于投保，不予赔付"
+                            return result
+                        elif days_before_departure <= 1:
+                            # 投保在计划起飞前1天内，航班已取消
+                            # → 取消公告可能刚发布
+                            fn = str((parsed or {}).get("flight", {}).get("ticket_flight_no") or (parsed or {}).get("flight", {}).get("operating_flight_no") or "").strip()
+                            result["fraud_suspected"] = True
+                            result["fraud_level"] = "suspect"
+                            result["reason"] = (
+                                f"既存条件嫌疑：航班{fn or 'unknown'}已取消，"
+                                f"投保时间（{date_of_insurance_raw}）距计划起飞（{planned_dep_raw[:16]}）仅{days_before_departure}天，"
+                                f"投保时航班可能已被取消，需人工复核"
+                            )
+                            result["note"] = "投保时航班取消状态可能已存在，建议人工复核"
+        except Exception:
+            pass
+
         if not reason_is_foreseeable:
             result["note"] = "延误原因非典型可预见因素（天气/罢工等），跳过欺诈检测"
             return result

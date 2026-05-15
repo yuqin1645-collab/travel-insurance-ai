@@ -8,13 +8,127 @@ from __future__ import annotations
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
 from app.vision_preprocessor import prepare_attachments_for_claim
 
 from .utils import _parse_dt_flexible
+
+
+def _detect_gds_close_receipt(
+    claim_folder: Path,
+    claim_info: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """
+    代码级检测：GDS/航司系统结案记录截图。
+
+    当 Vision 模型无法识别 GDS 结案截图时，用 Tesseract OCR 直接检测：
+    - "CLOSED" / "结案" / "已关闭" 状态
+    - 结案时间戳（如 "2026-02-08 03:50"）
+    - 档案号、航班信息等
+
+    返回: {"baggage_receipt_time": "YYYY-MM-DD HH:MM", "source": "gds_close", ...} 或 None
+    """
+    try:
+        import pytesseract
+        from PIL import Image
+        from app.config import config
+
+        tesseract_path = str(getattr(config, "TESSERACT_PATH", ""))
+        if not Path(tesseract_path).exists():
+            return None
+
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    except ImportError:
+        return None
+
+    # 获取所有附件 — GDS 检测优先使用原始图片（预处理会破坏档案号文字）
+    try:
+        # 先尝试从 claim_folder 直接读取原始图片
+        original_files = list(claim_folder.glob("file_*.[jpJP][npPN]*"))
+        if original_files:
+            # 使用原始文件构建附件列表
+            att_list = [type('Attachment', (), {'path': p}) for p in sorted(original_files)]
+        else:
+            # 回退到预处理的附件
+            attachments, _ = prepare_attachments_for_claim(claim_folder, claim_info=claim_info, max_attachments=0)
+            att_list = attachments
+    except Exception:
+        return None
+
+    # GDS 结案关键词模式
+    closed_patterns = [
+        r'CLOSED',
+        r'结案',
+        r'已关闭',
+    ]
+
+    # 时间戳模式（匹配 "2026-02-08 03:50" 或 "2026-02-08 03:50:51"）
+    timestamp_pattern = r'(\d{4}[-/]\d{2}[-/]\d{2})\s+(\d{2}:\d{2}(?::\d{2})?)'
+
+    # 档案号/参考号模式（GDS特征）- 放宽匹配，包含字母+数字组合
+    archive_patterns = [
+        r'[A-Z]{2,6}\d{4,10}',      # 标准格式: RSYC15746
+        r'[A-Z]{3,8}\d{3,8}',        # 变体: AHLxxx, RSYCA15746
+        r'AHL\s*[:：]?\s*[A-Z0-9]+', # AHL: RSYC15746
+        r'卷宗.*[:：]?\s*[A-Z0-9]+', # 卷宗号
+    ]
+
+    for att in att_list:
+        try:
+            img = Image.open(att.path)
+            text = pytesseract.image_to_string(img, lang='chi_sim+eng')
+            text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+        except Exception:
+            continue
+
+        # 检查是否有 CLOSED/结案关键词
+        has_closed = any(re.search(p, text, re.IGNORECASE) for p in closed_patterns)
+        if not has_closed:
+            continue
+
+        # 检查是否有时间戳
+        time_matches = re.findall(timestamp_pattern, text)
+        if not time_matches:
+            continue
+
+        # 检查是否有档案号（GDS特征）
+        has_archive = any(re.search(pat, text) for pat in archive_patterns)
+
+        if has_closed and time_matches and has_archive:
+            # 找到最晚的时间戳作为结案时间
+            latest_time = None
+            latest_str = ""
+            for date_str, time_str in time_matches:
+                time_str = time_str.rstrip(':')
+                full_str = f"{date_str} {time_str}"
+                dt = _parse_dt_flexible(full_str)
+                if dt and (latest_time is None or dt > latest_time):
+                    latest_time = dt
+                    latest_str = full_str
+
+            if latest_time:
+                # 验证结案时间晚于航班到达时间（合理）
+                flight_arrival = None
+                # 尝试从 claim_info 获取 Date_of_Accident
+                doa = claim_info.get("Date_of_Accident", "")
+                if doa:
+                    flight_arrival = _parse_dt_flexible(doa)
+
+                # 结案时间应该在事故日期之后
+                if flight_arrival is None or latest_time >= flight_arrival:
+                    return {
+                        "baggage_receipt_time": latest_str,
+                        "baggage_receipt_time_source": "gds_close",
+                        "has_baggage_receipt_time_proof": True,
+                        "source_file": att.path.name,
+                        "confidence": "medium",
+                        "notes": f"GDS结案记录检测：{att.path.name} 显示 CLOSED 状态，结案时间 {latest_str}",
+                    }
+
+    return None
 
 
 async def _merge_vision_to_parsed(
@@ -74,19 +188,84 @@ async def _merge_vision_to_parsed(
             ai_parsed["has_baggage_tag_proof"] = True
             debug.setdefault("auto_corrected", []).append("has_baggage_tag_proof: PIR报告含航班+行李信息，等效行李牌，已自动纠正")
 
+    # 安全网2：GDS/航司系统结案记录代码检测
+    # 当 Vision 未提取到签收时间，或来源不可靠（pir_creation/email_estimate）时，用 OCR 直接检测 GDS 结案截图
+    _current_receipt = ai_parsed.get("baggage_receipt_time") or ""
+    _current_source = str(ai_parsed.get("baggage_receipt_time_source") or "").strip().lower()
+    _unreliable_sources_gds = {"pir_creation", "email_estimate", "app_tracking", "email_notification", "transfer_flight_estimate"}
+    _needs_gds_fallback = (
+        (not _current_receipt or str(_current_receipt).lower() in ("unknown", ""))
+        or _current_source in _unreliable_sources_gds
+    )
+    _gds_detected = False
+    if _needs_gds_fallback:
+        gds_result = _detect_gds_close_receipt(claim_folder, claim_info)
+        if gds_result:
+            ai_parsed["baggage_receipt_time"] = gds_result["baggage_receipt_time"]
+            ai_parsed["baggage_receipt_time_source"] = gds_result["baggage_receipt_time_source"]
+            ai_parsed["has_baggage_receipt_time_proof"] = gds_result["has_baggage_receipt_time_proof"]
+            _gds_detected = True
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: GDS结案记录代码检测成功 {gds_result['baggage_receipt_time']}（文件: {gds_result['source_file']}）"
+            )
+
     receipt_time = vision_extract.get("baggage_receipt_time") or ""
     if receipt_time and str(receipt_time).lower() not in ("unknown", ""):
-        low_confidence_markers = ["/unknown", "/未知", "~", "约", "左右", "estimated", "大概"]
-        is_low_confidence = any(m in str(receipt_time) for m in low_confidence_markers)
-        if not is_low_confidence:
-            hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
-            if not hr_val or str(hr_val).lower() == "false":
-                ai_parsed["has_baggage_receipt_time_proof"] = True
-                debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
+        # 如果 GDS 检测已经成功，跳过 Vision 不可靠来源的清除逻辑
+        if _gds_detected:
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: GDS检测已生效，跳过 Vision 不可靠来源清除"
+            )
         else:
-            ai_parsed["baggage_receipt_time"] = None
-            ai_parsed["delay_hours"] = None
-            debug.setdefault("auto_corrected", []).append(f"baggage_receipt_time: 清除低置信度时间值 {receipt_time}")
+            low_confidence_markers = ["/unknown", "/未知", "~", "约", "左右", "estimated", "大概"]
+            is_low_confidence = any(m in str(receipt_time) for m in low_confidence_markers)
+            # 检查签收时间来源：邮件/APP估算、PIR创建时间等非实际签收来源不可靠
+            _receipt_source = str(vision_extract.get("baggage_receipt_time_source") or ai_parsed.get("baggage_receipt_time_source") or "").strip().lower()
+            _unreliable_sources = {"email_estimate", "app_estimate", "app_tracking", "pir_creation", "email_notification", "transfer_flight_estimate"}
+            _is_unreliable_source = _receipt_source in _unreliable_sources
+            # P1修复：GDS结案记录是有效间接证明，明确标记为可靠
+            _is_gds_close = _receipt_source == "gds_close"
+            if _is_gds_close:
+                # GDS结案时间是有效间接证明，确保 has_baggage_receipt_time_proof = true
+                hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
+                if not hr_val or str(hr_val).lower() != "true":
+                    ai_parsed["has_baggage_receipt_time_proof"] = True
+                    debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: GDS结案记录是有效间接证明，已纠正为 true")
+                debug.setdefault("auto_corrected", []).append(f"baggage_receipt_time: GDS结案时间 {_receipt_source} 作为有效间接证明接受")
+            # 也检查 vision notes 是否表明时间来自邮件/转运航班预估
+            _vision_notes = str(vision_extract.get("notes") or "").strip()
+            _notes_indicate_email = any(kw in _vision_notes for kw in ["邮件", "邮件通知", "邮件预计", "转运航班", "行李将搭乘", "luggage will arrive", "baggage will arrive"])
+            # 交叉校验：签收时间 = alternate航班起飞时间 且 alternate来源为航司邮件 → 非实际签收
+            _alternate = ai_parsed.get("alternate") or vision_extract.get("alternate") or {}
+            _alt_dep = str(_alternate.get("alt_dep") or "").strip()
+            _alt_source = str(_alternate.get("alt_source") or "").strip().lower()
+            _is_email_alt = any(kw in _alt_source for kw in ["邮件", "email", "通知", "航司邮件"])
+            if _alt_dep and str(receipt_time).strip() == _alt_dep and _is_email_alt:
+                ai_parsed["baggage_receipt_time"] = None
+                ai_parsed["delay_hours"] = None
+                ai_parsed["has_baggage_receipt_time_proof"] = False
+                debug.setdefault("auto_corrected", []).append(
+                    f"baggage_receipt_time: 签收时间 {receipt_time} = alternate航班起飞时间且来源为{_alternate.get('alt_source')}，"
+                    f"判定为转运航班预估时间而非实际签收，清除"
+                )
+                return  # 已清除，不再继续auto-correct
+            if not is_low_confidence and not _is_unreliable_source and not _notes_indicate_email:
+                hr_val = ai_parsed.get("has_baggage_receipt_time_proof")
+                if not hr_val or str(hr_val).lower() == "false":
+                    ai_parsed["has_baggage_receipt_time_proof"] = True
+                    debug.setdefault("auto_corrected", []).append("has_baggage_receipt_time_proof: 签收时间已提取但 vision 误判为 false，已自动纠正")
+            else:
+                _reason = []
+                if is_low_confidence:
+                    _reason.append(f"低置信度标记")
+                if _is_unreliable_source:
+                    _reason.append(f"来源{_receipt_source}不可靠")
+                if _notes_indicate_email:
+                    _reason.append("vision notes表明时间来自邮件/转运预估")
+                ai_parsed["baggage_receipt_time"] = None
+                ai_parsed["delay_hours"] = None
+                ai_parsed["has_baggage_receipt_time_proof"] = False
+                debug.setdefault("auto_corrected", []).append(f"baggage_receipt_time: 清除不可靠时间值 {receipt_time}（{'；'.join(_reason)}）")
 
     vision_notes = str(vision_extract.get("notes") or "").strip()
 
@@ -107,12 +286,19 @@ async def _merge_vision_to_parsed(
 
     # 校验：如果 vision notes 明确说明签收时间来自航空公司邮件通知/转运航班预计到达时间，
     # 说明并非真正的行李签收证明，应将 has_baggage_receipt_time_proof 纠正为 false
+    # P1 修复：但有"签收单"关键词时例外 — 不正常行李运输签收单是有效证明
     receipt_time_email_markers = [
         "航空公司邮件", "邮件通知", "邮件预计", "邮件预计",
         "转运航班", "行李搭乘", "预计.*到达", "行李将搭乘",
         "luggage will arrive", "baggage will arrive",
     ]
-    if ai_parsed.get("has_baggage_receipt_time_proof") and vision_notes:
+    # P1 修复：签收单关键词 — 这些是有效行李延误证明，不应被误判为邮件/转运航班
+    _RECEIPT_DOC_KEYWORDS = ["签收单", "运输签收", "不正常行李", "行李事故记录", "PIR"]
+    _proof_source = str(vision_extract.get("baggage_delay_proof_source") or "").strip()
+    _has_receipt_doc = any(kw in _proof_source for kw in _RECEIPT_DOC_KEYWORDS)
+    _notes_has_receipt_doc = any(kw in vision_notes for kw in _RECEIPT_DOC_KEYWORDS)
+
+    if ai_parsed.get("has_baggage_receipt_time_proof") and vision_notes and not _has_receipt_doc and not _notes_has_receipt_doc:
         for marker in receipt_time_email_markers:
             if re.search(marker, vision_notes):
                 ai_parsed["has_baggage_receipt_time_proof"] = False
@@ -137,11 +323,23 @@ async def _merge_vision_to_parsed(
         )
     elif receipt_source_val in ("pir_creation", "email_estimate", "app_tracking"):
         # 签收时间来源分类明确为不可靠来源，清除
-        ai_parsed["baggage_receipt_time"] = None
-        ai_parsed["delay_hours"] = None
-        debug.setdefault("auto_corrected", []).append(
-            f"baggage_receipt_time: 来源分类为 {receipt_source_val}（非实际签收），清除时间值 {receipt_time_val}"
-        )
+        # P1修复：但如果 has_baggage_receipt_time_proof=true（说明 Vision 识别到了签收/交接单据），
+        # 且时间是从文本描述中提取的（与交接单日期一致），则保留时间并修正来源
+        _has_proof = ai_parsed.get("has_baggage_receipt_time_proof")
+        _vision_notes = str(vision_extract.get("notes") or "").strip()
+        _text_has_time = any(kw in _vision_notes for kw in ["文字描述", "文本描述", "description", "旅客"])
+        if receipt_source_val == "pir_creation" and _has_proof and _text_has_time:
+            # 文本描述提供了签收时间，且有交接单证明日期，接受该时间
+            ai_parsed["baggage_receipt_time_source"] = "airport_counter"
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: 来源修正为 airport_counter（交接单存在但时间来自文本描述，日期一致）"
+            )
+        else:
+            ai_parsed["baggage_receipt_time"] = None
+            ai_parsed["delay_hours"] = None
+            debug.setdefault("auto_corrected", []).append(
+                f"baggage_receipt_time: 来源分类为 {receipt_source_val}（非实际签收），清除时间值 {receipt_time_val}"
+            )
     elif receipt_time_val and str(receipt_time_val).lower() not in ("unknown", ""):
         # 额外检查：签收时间 = 航班到达时间 → 误将航班到达当成签收
         arrival_val = ai_parsed.get("flight_actual_arrival_time") or ""

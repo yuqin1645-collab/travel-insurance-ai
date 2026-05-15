@@ -73,29 +73,69 @@ def fetch_by_forceid(forceid: str, api_url: str = API_URL) -> Dict:
 CACHE_DIR = ROOT / ".cache" / "ocr"
 
 
+def _normalize_forceid(query: str) -> str:
+    """
+    标准化 forceid：如果输入是 Nx1EAIAZ 这种短格式（9位字母数字），
+    自动补全 Salesforce 前缀，变成 a0nC800000Nx1EAIAZ。
+    """
+    s = query.strip()
+    if s.startswith("a0n"):
+        return s
+    # 短格式通常是 forceid 的后缀（最后9位或更多）
+    for json_file in REVIEW_DIR.rglob("*_ai_review.json"):
+        try:
+            data = json.loads(json_file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        fid = str(data.get("forceid") or "").strip()
+        if fid and fid.endswith(s):
+            return fid
+    # review_results 没找到，再扫描 claims_data
+    for info_file in CLAIMS_DIR.rglob("claim_info.json"):
+        try:
+            data = json.loads(info_file.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        fid = str(data.get("forceid") or "").strip()
+        if fid and fid.endswith(s):
+            return fid
+    return s
+
+
 def find_claim_path(query, absolute=False):
-    """根据 forceid 或 ClaimId 查找案件路径"""
+    """根据 forceid（支持短格式）或 ClaimId 查找案件路径"""
     query = query.strip()
     if not query:
         return None
+
+    # 先尝试标准化 forceid
+    normalized_fid = _normalize_forceid(query)
 
     claims_path = None
     review_file = None
     matched_forceid = None
     matched_by = None
 
-    # 按 forceid（文件名）查找
-    ns_candidates = list(REVIEW_DIR.glob("**/{}_ai_review.json".format(query)))
-    if ns_candidates:
-        review_file = sorted(ns_candidates, key=lambda p: len(str(p)))[0]
-        matched_forceid = query
-        matched_by = "forceid"
-    else:
-        flat = REVIEW_DIR / "{}_ai_review.json".format(query)
-        if flat.exists():
-            review_file = flat
+    # 按 forceid（文件名）查找，优先用标准化后的完整 forceid
+    if normalized_fid != query:
+        ns_candidates = list(REVIEW_DIR.glob("**/{}_ai_review.json".format(normalized_fid)))
+        if ns_candidates:
+            review_file = sorted(ns_candidates, key=lambda p: len(str(p)))[0]
+            matched_forceid = normalized_fid
+            matched_by = "forceid"
+
+    if review_file is None:
+        ns_candidates = list(REVIEW_DIR.glob("**/{}_ai_review.json".format(query)))
+        if ns_candidates:
+            review_file = sorted(ns_candidates, key=lambda p: len(str(p)))[0]
             matched_forceid = query
             matched_by = "forceid"
+        else:
+            flat = REVIEW_DIR / "{}_ai_review.json".format(query)
+            if flat.exists():
+                review_file = flat
+                matched_forceid = query
+                matched_by = "forceid"
 
     # 扫描审核结果JSON，通过 ClaimId 匹配
     if review_file is None:

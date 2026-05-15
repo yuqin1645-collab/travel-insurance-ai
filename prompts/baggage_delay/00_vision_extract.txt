@@ -21,12 +21,138 @@
 
 ## 行李延误专属字段
 
+⚠️ **【最高优先级】行李签收时间提取规则 — 必须先阅读此节再处理其他字段**
+
+行李签收时间是计算延误时长的关键终止点。**错误提取签收时间会直接导致赔付金额错误。** 以下规则必须严格执行：
+
+** 在开始处理前，请先对所有材料进行快速扫描，寻找以下任一类型的签收/交接单据：**
+1. **标准签收单**：含"RECEIPT OF / SIGNATURE FOR RECEIPT / 签收单 / 交付确认单" + 旅客签名 + 交付时间
+2. **航空公司行李交接/损坏处理单**：航司官方表格（含航司logo/名称），有"投递日/投递时间/通知时间/DISPATCH TIME/DELIVERY TIME"字段 + 航班信息
+3. **机场行李柜台交付单**：航司地服出具 + 旅客签名确认收到
+4. **快递配送单**：行李由快递配送到家 + 签收人签名
+5. **GDS/航司系统结案记录截图**：行李追踪系统界面截图（如 Amadeus/Sabre/国航行李服务系统），特征包括：
+   - 状态栏显示 **CLOSED / 结案 / 已关闭**
+   - 包含**结案时间/关闭时间戳**（如"结案时间 2026-02-08 03:50"）
+   - 包含档案号（如 AHL: RSYC15746）、航班号、行李信息
+   - 界面有中文/英文系统菜单（如"报文信息"、"图片/附件"、"服务记录"等标签页）
+
+**⚠️ 特别注意中国境内案件**：国内航司（国航、东航、南航等）出具的行李交接单/损坏处理单是常见签收凭证，通常没有旅客签名栏，但有"投递日/投递时间/通知时间"字段，应视为有效签收证明。**不要因为缺少签名就忽略此类文件！**
+
+**⚠️ 特别注意 GDS/航司系统截图**：如果看到行李追踪系统界面显示 CLOSED/结案状态，这是行李已交付的间接证明，结案时间可作为签收时间。**不要因为这是"系统截图"就忽略它！**
+
+### 第一步：判断材料中是否有行李签收证明
+
+在填写 baggage_receipt_time 之前，**必须先回答这个问题**：
+
+> 材料中是否存在专门的行李交付/签收单据？
+
+**签收单据的判定标准（满足以下任一类即可判定为签收证明）：**
+
+**A类：标准签收单（含旅客签名）**
+1. 文件标题或正文明确表明是"交付/签收/领取"行为（如 RECEIPT OF DELIVERY / SIGNATURE FOR RECEIPT / 签收单 / 交付确认单）
+2. 包含**旅客签名栏**（ASSINATURA/Signature/签字/SIGNATURE）
+3. 包含明确的交付日期和时间
+
+**B类：航空公司官方行李交接/损坏处理单（无需旅客签名）**
+1. 由航空公司地服/行李部门出具的官方表格（含航司logo/名称/官方编号）
+2. 包含**投递日/交付日/交付时间/通知时间**等字段（如 DELIVERY DAY / DELIVERY TIME / 投递日 / 投递时间 / 通知时间 / DISPATCH TIME）
+3. 包含航班信息（航班号/航段）和旅客信息
+- **典型示例**：国航"行李不正常行李运输交接单"、航司行李损坏赔偿交接单、机场行李服务柜台交接单
+- **判定要点**：此类表格是航空公司将行李交还旅客的官方凭证，"投递日/投递时间"即为行李实际交付时间
+- **重要提醒**：此类表格通常**没有旅客签名栏**（因为是航司交接单而非签收单），但有航司官方编号和航班信息，应视为有效签收证明
+
+**C类：GDS/航司系统结案记录（间接证明）**
+1. 行李追踪系统截图（如 Amadeus/Sabre/航司内部系统）
+2. 显示档案状态为 **CLOSED/结案/已关闭**
+3. 包含**结案时间/关闭时间戳**（如 "结案时间 2026-02-08 02:03:51" / "CLOSED 2026-02-08 02:03:51"）
+4. 包含航班信息和旅客信息
+- **判定要点**：GDS 结案意味着行李问题已解决（行李已交付），结案时间可作为行李签收时间的间接证据
+- **典型特征**：档案号（如 TSXK135767）、状态 CLOSED、结案时间戳、航班号（如 CA875/CA933）、行李件数
+- **重要提醒**：结案时间通常在行李实际交付后不久，可作为签收时间的合理代理
+
+**没有A类签收单、B类交接单且没有C类结案记录 = 不是签收证明！**
+
+### 第二步：如果没有签收证明 → 立即停止
+
+**如果材料中既没有A类签收单据、B类交接单、也没有C类结案记录，则：**
+- baggage_receipt_time **必须填 unknown**
+- has_baggage_receipt_time_proof **必须填 false**
+- delay_hours **必须填 unknown**
+- **绝对禁止**从以下材料中提取时间填入 baggage_receipt_time：
+
+| 材料类型 | 材料中的时间 | 为什么不能用 |
+|---------|------------|------------|
+| **PIR 不正常行李报告** | 报告创建时间（如 25.04.26, 19:50 或 07FEB26/1752GMT） | PIR 是行李未到时的异常登记，创建时间 ≠ 签收时间 |
+| **航司邮件/通知** | 行李转运航班的起飞/到达时间（如"行李将搭乘 XX 航班，预计 XX:XX 到达"） | 这是预估值，不是实际交付时间 |
+| **改签通知邮件** | 新航班的起飞/到达时间（如 07:25 VIE→09:00 NAP） | 这是航班时间，不是行李交付时间 |
+| **行程单/登机牌** | 航班到达时间（如 19:00 NAP） | 航班到达 ≠ 行李交付，行李通常滞后30分钟到数小时 |
+| **旅客文字描述** | "我于 XX 时间收到行李" | 主观陈述，没有书面证明佐证 |
+| **APP 截图/追踪信息** | 行李状态更新/航班追踪时间 | 系统状态更新时间 ≠ 实际交付时间 |
+
+### 第三步：如果有签收证明 → 按以下规则提取
+
+只有当材料中存在**签收单据（A类、B类或C类）**时，才允许填写 baggage_receipt_time：
+
+| 单据类型 | 关键特征 | source 值 |
+|---------|---------|----------|
+| 行李交付/签收单（A类） | RECEIPT OF / SIGNATURE FOR RECEIPT / 旅客签名确认收到 | actual_receipt |
+| 机场行李柜台交付单（A类） | 航司地服出具 + 旅客签名确认收到 | airport_counter |
+| 快递配送单（A类） | 行李由快递配送到家 + 签收人签名 | courier_delivery |
+| 航空公司行李交接/损坏处理单（B类） | 航司官方表格 + 投递日/投递时间/通知时间 + 航班信息（**无需旅客签名**） | airport_counter |
+| GDS/航司系统结案记录（C类） | 行李追踪系统截图，状态 CLOSED/结案 + 结案时间戳 | gds_close |
+
+**判断流程（必须严格按顺序执行）：**
+```
+步骤1：材料中有A类签收单据吗？（含旅客签名+交付日期时间，如 RECEIPT OF / SIGNATURE FOR RECEIPT）
+  → 是：填写实际时间，source = actual_receipt 或 airport_counter → 结束
+  → 否：进入步骤2
+
+步骤2：材料有B类航空公司行李交接/损坏处理单吗？（航司官方表格，含投递日/投递时间/通知时间字段，含航班号）
+  → 是：填写投递时间（或通知时间如投递时间空白），source = airport_counter → 结束
+  → 否：进入步骤3
+
+步骤3：材料有C类 GDS/航司系统结案记录吗？（行李追踪系统截图，状态 CLOSED/结案 + 结案时间戳）
+  → 是：填写结案时间，source = gds_close → 结束
+  → 否：进入步骤4
+
+步骤4：材料有快递配送单吗？（行李由快递配送到家，含配送日期+签收人签名）
+  → 是：填写配送签收时间，source = courier_delivery → 结束
+  → 否：baggage_receipt_time = unknown，source = unknown，delay_hours = unknown
+```
+
+### 第四步：强制自检（输出前必须执行）
+
+在提交 JSON 之前，**必须对自己提问并回答**：
+
+> "我看到了什么具体证据证明行李已被签收？"
+> - 如果有A类签收单（含旅客签名+交付时间），写出证据详情（如"文件标题为 RECEIPT OF DELIVERY，有旅客 ZHENG LI 的签名，交付时间为 2026-04-26 12:00"）
+> - 如果有B类航空公司交接单（含投递日/投递时间+航班信息），写出证据详情（如"国航行李不正常行李运输交接单，投递日 26年3月3日，通知时间 12时51分"）
+> - 如果有C类 GDS结案记录（含 CLOSED 状态+结案时间戳），写出证据详情（如"GDS行李追踪截图，档案号 TSXK135767，状态 CLOSED，结案时间 2026-02-08 02:03:51"）
+> - 如果**没有**A类、B类或C类签收证明，回答："无签收证明，baggage_receipt_time 必须填 unknown"
+
+> "材料中的 PIR 报告/航司邮件是否被误当作签收证明？"
+> - PIR 报告上**只有行李异常登记信息**，没有旅客签收确认 → 不能作签收证明
+> - 航司邮件中提到"行李将搭乘 XX 航班"是**预估值** → 不能作签收证明
+
+> "如果我把 baggage_receipt_time 填为 actual_receipt/airport_counter，我能指出签收单/交接单在材料的哪一页、哪一区域吗？"
+> - 如果指不出具体位置 → 说明没有真正的签收证明，必须填 unknown
+
+**关键提醒：**
+- **PIR 报告永远不包含行李签收时间** — PIR 是行李异常登记，签收是后续行为
+- **改签邮件/通知中的航班时间永远不是签收时间** — 那是航班运行时间
+- **航空公司官方行李交接单（B类）是有效签收证明** — 含投递日/投递时间+航班信息，无需旅客签名
+- **GDS/航司系统结案记录（C类）是间接签收证明** — CLOSED 状态+结案时间戳表明行李问题已解决
+- **航班到达时间永远不是行李交付时间** — 行李通常滞后到达
+- **"不确定"时一律填 unknown，不要猜测**
+
+---
+
 在上述航班字段基础上，额外抽取以下行李延误相关信息：
 
   "has_boarding_or_ticket": "true/false/unknown（材料中是否存在登机牌或电子客票行程单，见下方登机牌识别规则）",
   "has_baggage_delay_proof": "true/false/unknown（材料中是否存在**承运人出具的行李延误/不正常行李证明文件**——判断依据是文件功能和结构，而非语言关键词。典型特征：①航司官方抬头/格式（logo或公司名）；②含旅客姓名/联系方式；③含航班信息（航班号/航段/日期）；④含行李信息（行李件数/行李牌号/行李特征描述如颜色材质）；⑤有PIR编号或异常记录编号（格式通常为机场三字码+航司代码+数字，如CWBLA31684）；⑥有日期戳。满足以上多数特征即为行李延误证明。此类文件可能以任何语言出具（英语/葡萄牙语/西班牙语/法语/德语/阿拉伯语/日语等均可），**不要被非中文/英文材料误导为不是证明文件**）",
   "baggage_delay_proof_source": "证明材料的原文描述（PIR编号/航司出具函件/文件标题等）/unknown",
-  "has_baggage_receipt_time_proof": "true/false/unknown（材料中是否存在**行李签收/交付/领取的时间证明**——判断依据是文件功能，而非语言。典型特征：①航司/机场/快递出具的签收单或交付单；②含旅客姓名和联系方式；③含行李件数或描述；④含签收/交付的日期和时间（或至少日期）；⑤有签收人签名栏（ASSINATURA/Signature/签字）或签收动作确认字样；⑥有日期戳或条形码。满足以上多数特征即为行李签收时间证明。此类文件可能以任何语言出具，**重点识别日期时间字段和签收确认动作，不要被语言差异误导**）",
+  "has_baggage_receipt_time_proof": "true/false/unknown（材料中是否存在**行李签收/交付/领取的时间证明**——**必须存在旅客签名确认收到行李的专门单据**才可填 true。仅凭 PIR 报告、航司邮件、航班到达时间不足以证明已签收。详见上方签收时间提取规则）",
   "has_baggage_tag_proof": "true/false/unknown（材料中是否存在托运行李牌照片，需含姓名、航班信息、行李牌号码三要素，见下方识别规则）",
   "has_airline_baggage_record": "true/false/unknown（是否存在航空公司官方出具的行李运输记录/行李查询单/行李追踪报告，见下方替代凭证规则）",
   "airline_baggage_record_name": "行李记录上的旅客姓名/unknown",
@@ -34,24 +160,24 @@
   "airline_baggage_record_pieces": "行李记录上的行李件数（数字）/unknown",
   "accident_date_in_materials": "YYYY-MM-DD/unknown（从材料中提取的真实事故发生日期，见下方提取规则）",
   "flight_actual_arrival_time": "YYYY-MM-DD HH:MM/unknown（首次乘坐航班的实际到达时间，行李延误时长起算点）",
-  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点。**仅在存在实际行李签收/交付证明时填写**，见下方签收时间提取规则。若无签收证明但航司邮件/通知提到了行李搭乘的转运航班及预计到达时间，**不要**填入 baggage_receipt_time，而应填入 baggage_estimated_arrival_time 字段并在 notes 中说明来源）",
+  "baggage_receipt_time": "YYYY-MM-DD HH:MM/unknown（最晚的行李签收时间，行李延误时长终止点。**仅在存在含旅客签名的实际行李签收/交付证明时填写**。若无签收证明但航司邮件/通知提到了行李搭乘的转运航班及预计到达时间，**不要**填入 baggage_receipt_time，而应填入 baggage_estimated_arrival_time 字段并在 notes 中说明来源。**不确定时填 unknown，禁止猜测**）",
   "baggage_receipt_time_source": "签收时间的具体来源分类（**必填，不得留空或填unknown，必须从以下5个值中选择一个**）：
     - actual_receipt：有明确的行李签收/交付单据（含旅客签名+交付日期时间）
     - airport_counter：机场行李服务柜台出具的交付确认单（含旅客签名）
     - courier_delivery：快递配送单（行李由快递配送到家，含配送日期+签收人签名）
     - email_estimate：航司邮件/通知中的预计到达时间（非实际签收，仅作预估参考）
     - pir_creation：PIR报告上的创建时间（非实际签收，是行李异常报告开具时间）
-    **判断流程：材料中有旅客签名确认收到的单据吗？→是：actual_receipt/airport_counter；→否：有快递配送单吗？→是：courier_delivery；→否：只有PIR报告或航司邮件吗？→是：email_estimate或pir_creation**",
+    **判断流程**：有旅客签名确认的签收单吗？→ 是：actual_receipt/airport_counter → 否：baggage_receipt_time=unknown，source=pir_creation或email_estimate。**PIR报告永远不是签收证明，只有行李异常登记信息，没有签收确认**",
   "baggage_estimated_arrival_time": "YYYY-MM-DD HH:MM/unknown（仅当无实际签收证明时，若航司邮件/通知中提及行李搭乘的转运航班及预计到达时间，可填入此字段作为参考，**不得**与 baggage_receipt_time 混淆）",
   "receipt_times": ["YYYY-MM-DD HH:MM（若识别到多份签收证明，列出全部签收时间，最晚者写入 baggage_receipt_time）"],
-  "delay_hours": "number/unknown（根据 baggage_receipt_time - flight_actual_arrival_time 计算，结果保留1位小数；**仅当 baggage_receipt_time_source 为 actual_receipt/airport_counter/courier_delivery 时才可计算**，其他来源一律输出 unknown）",
+  "delay_hours": "number/unknown（根据 baggage_receipt_time - flight_actual_arrival_time 计算，结果保留1位小数；**仅当 baggage_receipt_time_source 为 actual_receipt/airport_counter/courier_delivery 时才可计算**，其他来源一律输出 unknown。无签收证明时绝不计算）",
   "has_id_proof": "true/false/unknown（是否存在被保险人身份证）",
   "has_passport": "true/false/unknown（材料中是否出现护照照片页，含本人照片、姓名、护照号码）",
   "has_exit_entry_record": "true/false/unknown（材料中是否出现中国海关出入境盖章页或电子出入境记录）",
   "exit_datetime": "YYYY-MM-DD HH:MM/unknown（出境时间，从出入境记录中提取）",
   "insured_name_in_materials": "乘机人姓名（从登机牌/行程单上提取的实际乘客姓名，即被保险人，见下方认定规则）/unknown",
   "has_bank_card_proof": "true/false/unknown（是否存在银行卡/借记卡信息，用于赔款打款验证）",
-  "risk_flags": ["handwritten/multilang/conflict/fraud_suspect（如有多语言材料、手写涂改、时间冲突或疑似伪造，在此列出）"],
+  "risk_flags": ["handwritten/multilang/conflict/fraud_suspect（如有多语言材料、手写涂改、时间冲突或疑似伪造，在此列出）。**重要：handwritten 仅指图片/扫描件材料中存在手写填写、涂改、修改痕迹。旅客在事故描述文字中提到'手写纸条'等不属于 handwritten，handwritten 只针对图片材料本身的视觉特征判断**）"],
   "notes": "识别依据及特殊说明（多份签收证明时需说明各份来源；材料不清晰时注明）"
 
 ## 完整输出 JSON
@@ -106,77 +232,91 @@
 
 | 材料类型 | 对应字段 | 判定标准 |
 |---------|---------|---------|
-| **PIR 报告**（含 RELATORIO DE IRREGULARIDADE、PIR编号/行李参考号、航司抬头、旅客姓名、航班信息、行李件数） | `has_baggage_delay_proof = true` | PIR 报告即为承运人出具的行李延误证明，识别到即填 true |
-| **行李签收/交付单**（含 RECEIPT OF、SIGNATURE FOR RECEIPT、签收日期、旅客姓名、行李件数，可能有英文/葡萄牙语/其他语言） | `has_baggage_receipt_time_proof = true` | 此类单据即为行李签收时间证明，识别到即填 true |
-| **行李牌贴纸**（窄条状，含航司 logo + 航班号 + 三字码 + 行李牌号 O 开头的数字串 + SEQ + 乘客姓名） | `has_baggage_tag_proof = true` | 贴纸可能贴在 PIR 报告上、行李箱上、护照上、登机牌背面等任意位置，只要画面中存在即填 true |
-| **PIR 报告**（同上） | `has_baggage_tag_proof = true` | PIR 报告含旅客姓名 + 航班号 + 行李件数 + PIR 编号，等同于行李牌，识别到即填 true |
+| **PIR 报告**（含 RELATORIO DE IRREGULARIDADE、PIR编号/行李参考号、航司抬头、旅客姓名、航班信息、行李件数） | has_baggage_delay_proof = true | PIR 报告即为承运人出具的行李延误证明，识别到即填 true |
+| **行李签收/交付单**（含 RECEIPT OF、SIGNATURE FOR RECEIPT、签收日期、旅客姓名、行李件数，可能有英文/葡萄牙语/其他语言） | has_baggage_receipt_time_proof = true | 此类单据即为行李签收时间证明，识别到即填 true |
+| **航空公司行李交接/损坏处理单**（含投递日/投递时间/通知时间字段 + 航班信息 + 航司官方抬头，如国航"行李不正常行李运输交接单"） | has_baggage_receipt_time_proof = true | 此类交接单是航司将行李交还旅客的官方凭证，投递日/投递时间即为实际交付时间，识别到即填 true |
+| **GDS/航司系统结案记录**（行李追踪系统截图，状态 CLOSED/结案 + 结案时间戳 + 航班信息） | has_baggage_receipt_time_proof = true | 结案状态表明行李问题已解决，结案时间可作为签收时间的间接证据，识别到即填 true |
+| **行李牌贴纸**（窄条状，含航司 logo + 航班号 + 三字码 + 行李牌号 O 开头的数字串 + SEQ + 乘客姓名） | has_baggage_tag_proof = true | 贴纸可能贴在 PIR可能贴在 PIR 报告上、行李箱上、护照上、登机牌背面等任意位置，只要画面中存在即填 true |
+| **PIR 报告**（同上） | has_baggage_tag_proof = true | PIR 报告含旅客姓名 + 航班号 + 行李件数 + PIR 编号，等同于行李牌，识别到即填 true |
 
-**重要提醒**：
-- 如果 `baggage_delay_proof_source` 填写了 PIR 编号/航司名称等内容，则 `has_baggage_delay_proof` **必须**为 true，不得为 false
-- 如果识别到含"RECEIPT"或"SIGNATURE FOR RECEIPT"的交付单据，则 `has_baggage_receipt_time_proof` **必须**为 true，不得为 false
-- 如果画面中存在行李牌贴纸（含航班号+行李牌号），则 `has_baggage_tag_proof` **必须**为 true，不得为 false
+**重要提醒：**
+- 如果 baggage_delay_proof_source 填写了 PIR 编号/航司名称等内容，则 has_baggage_delay_proof **必须**为 true，不得为 false
+- 如果识别到含"RECEIPT"或"SIGNATURE FOR RECEIPT"的交付单据，则 has_baggage_receipt_time_proof **必须**为 true，不得为 false
+- 如果识别到含"投递日/投递时间/通知时间"字段的航空公司交接单，则 has_baggage_receipt_time_proof **必须**为 true，不得为 false
+- 如果识别到 GDS/航司系统截图显示 CLOSED/结案状态+结案时间戳，则 has_baggage_receipt_time_proof **必须**为 true，不得为 false
+- 如果画面中存在行李牌贴纸（含航班号+行李牌号），则 has_baggage_tag_proof **必须**为 true，不得为 false
 - **不要**因为材料是葡萄牙语、西班牙语等非英语/中文就填 false —— 判断依据是文件结构特征，不是语言
 
 ---
 
-### ⚠️ 行李签收时间提取规则（非常重要，严格执行）
+### ️ 行李签收时间提取规则（非常重要，严格执行）
 
 **行李签收时间（baggage_receipt_time）是计算延误时长的终止点，直接决定赔付结果。以下5种常见错误必须避免：**
 
-| 材料类型 | 是实际签收时间吗？ | `baggage_receipt_time_source` | `baggage_receipt_time` | 说明 |
+| 材料类型 | 是实际签收时间吗？ | baggage_receipt_time_source | baggage_receipt_time | 说明 |
 |---------|------------------|------------------------------|----------------------|------|
-| **行李交付/签收单**（含 RECEIPT OF / SIGNATURE FOR RECEIPT / 签收人签名栏 / 实际交付日期时间） | ✅ 是 | `actual_receipt` | 填写实际签收时间 | 最权威的签收时间证据 |
-| **机场行李服务柜台交付确认单**（航司地服出具，含旅客签名确认收到行李） | ✅ 是 | `airport_counter` | 填写柜台确认时间 | 机场行李服务柜台出具 |
-| **快递配送单**（行李由快递公司配送到家，含配送日期+签收人签名） | ✅ 是 | `courier_delivery` | 填写配送签收时间 | 需确认是实际配送，非预估 |
-| **PIR 报告**（行李异常报告，含 PIR 编号/行李参考号/航班信息） | ❌ 不是 | `pir_creation` | **必须填 unknown** | PIR 报告创建时间≠行李签收时间！PIR 是在行李未到时就开具的异常记录 |
-| **航司邮件/通知中的预计到达时间**（如"您的行李将搭乘XX航班，预计XX:XX到达"） | ❌ 不是 | `email_estimate` | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | 邮件中的时间是预估值，非实际发生时间 |
-| **航旅APP/航司APP中的航班追踪信息**（显示航班到达时间/行李状态） | ❌ 不是 | `app_tracking` | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | APP中的时间是航班信息，非行李实际交付时间 |
-| **旅客文字描述中的签收时间**（如"我于次日10:00收到行李"） | ⚠️ 需谨慎 | 见下方判断流程 | 仅当有对应证明材料时填写 | 纯文字描述不足以作为签收时间证据 |
-| **无任何签收证明，仅凭航班到达时间推算** | ❌ 不是 | `unknown` | **必须填 unknown** | 航班到达≠行李交付，不得将航班到达时间等同于签收时间 |
+| **行李交付/签收单**（含 RECEIPT OF / SIGNATURE FOR RECEIPT / 签收人签名栏 / 实际交付日期时间） | 是 | actual_receipt | 填写实际签收时间 | 最权威的签收时间证据 |
+| **机场行李服务柜台交付确认单**（航司地服出具，含旅客签名确认收到行李） | 是 | airport_counter | 填写柜台确认时间 | 机场行李服务柜台出具 |
+| **航空公司行李交接/损坏处理单**（含投递日/投递时间/通知时间 + 航班信息 + 航司官方抬头，如国航"行李不正常行李运输交接单"） | 是 | airport_counter | 填写投递时间（投递时间空白则填通知时间） | 航司官方交接凭证，无需旅客签名 |
+| **GDS/航司系统结案记录**（行李追踪系统截图，状态 CLOSED/结案 + 结案时间戳 + 航班信息） | 是（间接证明） | gds_close | 填写结案时间 | 结案状态表明行李问题已解决，结案时间可作为签收时间代理 |
+| **快递配送单**（行李由快递公司配送到家，含配送日期+签收人签名） | 是 | courier_delivery | 填写配送签收时间 | 需确认是实际配送，非预估 |
+| **PIR 报告**（行李异常报告，含 PIR 编号/行李参考号/航班信息） | 不是 | pir_creation | **必须填 unknown** | PIR 报告创建时间≠行李签收时间！PIR 是在行李未到时就开具的异常记录 |
+| **航司邮件/通知中的预计到达时间**（如"您的行李将搭乘XX航班，预计XX:XX到达"） | 不是 | email_estimate | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | 邮件中的时间是预估值，非实际发生时间 |
+| **航旅APP/航司APP中的航班追踪信息**（显示航班到达时间/行李状态） | 不是 | app_tracking | **必须填 unknown**（预计时间填入 baggage_estimated_arrival_time） | APP中的时间是航班信息，非行李实际交付时间 |
+| **旅客文字描述中的签收时间**（如"我于次日10:00收到行李"） | 需谨慎 | 见下方判断流程 | 仅当有对应证明材料时填写 | 纯文字描述不足以作为签收时间证据 |
+| **无任何签收证明，仅凭航班到达时间推算** | 不是 | unknown | **必须填 unknown** | 航班到达≠行李交付，不得将航班到达时间等同于签收时间 |
 
 **关键区分规则：**
 1. **PIR创建时间 vs 行李签收时间**：PIR（Property Irregularity Report）是行李未到或延误时旅客在机场开具的**异常报告**，其上的日期时间（如"07FEB26/1752GMT"）是**报告创建时间**，**绝不是行李签收时间**。行李延误证明≠行李签收证明
 2. **邮件预计时间 vs 实际签收时间**：航司邮件/通知中提到的"预计到达""预计交付"都是**预估值**，**不是实际发生时间**。除非邮件明确说"您的行李已送达/已交付"并附有实际时间，否则不得作为 baggage_receipt_time
 3. **航班到达时间 vs 行李交付时间**：航班到达后，行李还需要从机舱卸下、运送到行李提取区、由地服人员确认交付给旅客。这两个时间**通常相差30分钟到数小时**。不得将航班到达时间等同于行李签收时间
 4. **文字描述中的时间 vs 证明材料中的时间**：旅客在事故描述中可能提到"我于XX时间收到行李"，但这是**主观陈述**，**不是证明材料**。只有当有对应的签收单/交付单/快递单等书面材料佐证时，才能将时间填入 baggage_receipt_time
-5. **无签收证明时的处理**：如果材料中没有专门的行李签收/交付单据（含旅客签名+交付时间），`baggage_receipt_time` **必须填 unknown**，`has_baggage_receipt_time_proof` **必须填 false**。不得用PIR时间、邮件预估时间、航班到达时间、文字描述时间替代
+5. **航空公司交接单是有效签收证明**：航司官方出具的行李交接/损坏处理单（含投递日/投递时间/通知时间 + 航班信息）是行李实际交付的官方凭证，无需旅客签名，应作为有效签收证明
+6. **GDS结案记录是间接签收证明**：行李追踪系统显示 CLOSED/结案状态+结案时间戳，表明行李问题已解决（行李已交付），结案时间可作为签收时间的合理代理
+7. **无签收证明时的处理**：如果材料中没有A类、B类或C类签收证明，baggage_receipt_time **必须填 unknown**，has_baggage_receipt_time_proof **必须填 false**。不得用PIR时间、邮件预估时间、航班到达时间、文字描述时间替代
 
 **判断流程（必须严格按顺序执行）：**
 ```
-步骤1：材料中有专门的行李交付/签收单据吗？（含旅客签名+交付日期时间，如 RECEIPT OF / SIGNATURE FOR RECEIPT）
-  → 是：填写实际时间，source = actual_receipt
+步骤1：材料中有A类签收单据吗？（含旅客签名+交付日期时间，如 RECEIPT OF / SIGNATURE FOR RECEIPT）
+  → 是：填写实际时间，source = actual_receipt 或 airport_counter
   → 否：进入步骤2
 
-步骤2：材料有机场行李服务柜台出具的交付确认单吗？（含旅客签名确认收到行李）
-  → 是：填写确认时间，source = airport_counter
+步骤2：材料有B类航空公司行李交接/损坏处理单吗？（航司官方表格，含投递日/投递时间/通知时间字段 + 航班号）
+  → 是：填写投递时间（投递时间空白则填通知时间），source = airport_counter
   → 否：进入步骤3
 
-步骤3：材料有快递配送单吗？（行李由快递配送到家，含配送日期+签收人签名）
-  → 是：填写配送签收时间，source = courier_delivery
+步骤3：材料有C类 GDS/航司系统结案记录吗？（行李追踪系统截图，状态 CLOSED/结案 + 结案时间戳）
+  → 是：填写结案时间，source = gds_close
   → 否：进入步骤4
 
-步骤4：只有PIR报告或航司邮件吗？
+步骤4：材料有快递配送单吗？（行李由快递配送到家，含配送日期+签收人签名）
+  → 是：填写配送签收时间，source = courier_delivery
+  → 否：进入步骤5
+
+步骤5：只有PIR报告或航司邮件吗？
   → 是：baggage_receipt_time = unknown，source = pir_creation 或 email_estimate
   → 否：baggage_receipt_time = unknown，source = unknown
 ```
 
-**⚠️ 自检要求（输出前必须执行）：**
-- 检查 `baggage_receipt_time_source` 的值是否为 actual_receipt/airport_counter/courier_delivery 之一
-- 如果是，确认材料中确实有对应的签收/交付单据（不是PIR报告、不是邮件预估、不是文字描述）
-- 如果不是（即 pir_creation/email_estimate/unknown），`baggage_receipt_time` **必须填 unknown**，`delay_hours` **必须填 unknown**
+**自检要求（输出前必须执行）：**
+- 检查 baggage_receipt_time_source 的值是否为 actual_receipt/airport_counter/courier_delivery/gds_close 之一
+- 如果是，确认材料中确实有对应的签收/交付单据、航空公司交接单或 GDS 结案记录（不是PIR报告、不是邮件预估、不是文字描述）
+- 如果不是（即 pir_creation/email_estimate/unknown），baggage_receipt_time **必须填 unknown**，delay_hours **必须填 unknown**
 - **绝对禁止**：在没有签收证明的情况下，从文字描述或PIR报告中提取时间填入 baggage_receipt_time
+- **特别注意**：检查是否遗漏了B类航空公司交接单（含"投递日/投递时间/通知时间"字段 + 航班信息 + 航司官方抬头）
+- **特别注意**：检查是否遗漏了C类 GDS 结案记录（含 CLOSED/结案状态 + 结案时间戳 + 航班信息）
 
 ---
 
-- **登机牌识别规则（重要）**：以下任一特征出现即可判定为登机牌，`has_boarding_or_ticket = true`：
+- **登机牌识别规则（重要）**：以下任一特征出现即可判定为登机牌，has_boarding_or_ticket = true：
   * 含"BOARDING PASS"或"登机牌"字样——这是最直接的标识
   * 含以下关键字段组合：**座位号（SEAT/SEAT NO）** + **登机口（GATE）** + **登机时间（BOARDING TIME/BDT）** 中的任意两项
   * 含 **BAG / BAGS / 行李件数** + **舱位（CLASS/CABIN）** + **序号（SEQ/序号）** 等登机牌特有字段
   * 含条形码/二维码 + 航班号 + 日期 + 座位号的组合——这是典型登机牌版面结构
   * 电子登机牌（手机截图/邮件附件）：含航司 logo + 二维码 + 航班信息 + 乘客姓名
   * **国外航司登机牌识别**：不要只认中文"登机牌"三字。SAS（北欧）、Lufthansa、Air France、KLM 等国外航司的登机牌通常为英文格式，特征包括 BOARDING PASS 抬头、FROM/TO 机场对、FLT/FLT NO、GATE、SEAT、BAG、ZONE/GROUP 等字段。即使是非标准版面（如手机 APP 内的电子登机牌截图），只要含上述关键字段组合即视为登机牌
-  * 行程单/电子客票（e-ticket itinerary receipt）：含票号（Tkt No）、PNR/订座编码、运价明细、航段行程等，与登机牌是不同材料，但同样满足 `has_boarding_or_ticket = true`
-  * 若材料中只有航班信息截图（如飞常准、航旅纵横、携程行程详情）但无登机牌/行程单原件，`has_boarding_or_ticket = false`
+  * 行程单/电子客票（e-ticket itinerary receipt）：含票号（Tkt No）、PNR/订座编码、运价明细、航段行程等，与登机牌是不同材料，但同样满足 has_boarding_or_ticket = true
+  * 若材料中只有航班信息截图（如飞常准、航旅纵横、携程行程详情）但无登机牌/行程单原件，has_boarding_or_ticket = false
 - **航班日期（flight_date）提取规则（重要）**：flight_date 是**原航班的计划起飞日期**（即行程单上的出发日期，非登机牌上的实际出发时间），用于保单有效期校验，必须是含完整年份的 YYYY-MM-DD 格式。来源优先级：
   1 行程单/电子客票（最权威，直接读取原航班计划起飞日期，含完整年月日）
   2 出入境记录（含出境时间戳，出境日期通常即为乘机日，含完整年份）
@@ -185,37 +325,37 @@
   5 行李运输事故单/PIR（DATE/MONTH/YEAR 字段，必须逐字识别手写体年份，尤其注意后两位如 24 vs 26）
   - **禁止将登机牌上的时间填入 flight_date**：登机牌只有月/日，不含年份，且登机牌显示的是实际起飞时间而非原计划起飞时间，不得单独作为 flight_date 的来源；若只有登机牌，须与行程单或其他含年份材料交叉确认原航班计划起飞日期后才可填写
   - 若所有材料均无法提供含年份的完整原航班计划起飞日期，flight_date 填 unknown，并在 notes 中说明缺少含年份航班日期材料，建议补充行程单或行李延误证明
-- **事故日期提取规则（重要）**：`accident_date_in_materials` 必须从材料中交叉核验，不得直接采用案件基本信息中的 `Date_of_Accident` 字段。提取步骤：
+- **事故日期提取规则（重要）**：accident_date_in_materials 必须从材料中交叉核验，不得直接采用案件基本信息中的 Date_of_Accident 字段。提取步骤：
   * 步骤1：优先读 PIR 行李运输事故单或航司出具的行李延误书面证明/行李签收单中的日期字段（DATE/MONTH/YEAR）——这类材料有完整年份，**必须逐字识别手写体**，尤其是 YEAR 字段：
     - YEAR 通常为 4 位数字，手写时必须看清每一位，尤其是后两位（如 24 vs 26）
-    - 若 YEAR 手写模糊，必须与其他材料（航司邮件、行程单）互相印证后再填写，不得假设与 `Date_of_Accident` 年份相同
+    - 若 YEAR 手写模糊，必须与其他材料（航司邮件、行程单）互相印证后再填写，不得假设与 Date_of_Accident 年份相同
     - 若 OCR 和视觉识别结果不一致，在 notes 中说明并选取更可信的那个
   * 步骤2：若有登机牌，用登机牌的航班日期交叉印证步骤1的结果（注意：登机牌通常只有月/日，无年份，仅作参考）
   * 步骤3：若有航司客服邮件，从邮件正文中读取航班日期（如 "vuelo IB1651 de 14/02/2026" 中提取 2026-02-14）作为事故日期
-  * 步骤4：把从材料提取的事故日期与案件基本信息的 `Date_of_Accident`（值为: 案件基本信息中 Date_of_Accident 字段的值）对比：
-    - 不一致（尤其是年份相差超过 30 天）时，以材料为准，并在 `risk_flags` 中添加 `date_conflict`，在 notes 中说明具体差异
+  * 步骤4：把从材料提取的事故日期与案件基本信息的 Date_of_Accident（值为: 案件基本信息中 Date_of_Accident 字段的值）对比：
+    - 不一致（尤其是年份相差超过 30 天）时，以材料为准，并在 risk_flags 中添加 date_conflict，在 notes 中说明具体差异
     - 一致时正常填写
 - **先枚举、再判断**：不要在看到第一个航班号时就直接填入 flight_no，必须先完成 all_flights_found 的枚举，再根据角色判定规则填写 flight_no。
-- **航班号格式自检（必须执行）**：在输出前，必须检查 `flight_no` 字段的值是否满足以下格式要求：
+- **航班号格式自检（必须执行）**：在输出前，必须检查 flight_no 字段的值是否满足以下格式要求：
   * 标准航班号格式：**2位英文字母（航空公司IATA代码）+ 1~4位数字**（如 CA1234、MU553、IB1343、TK1754、3U3996）
-  * 若 `flight_no` 的值不符合上述格式（如只有1位字母 E134、纯数字、或包含特殊字符），说明提取错误，必须回到 all_flights_found 中重新选择正确的航班号
+  * 若 flight_no 的值不符合上述格式（如只有1位字母 E134、纯数字、或包含特殊字符），说明提取错误，必须回到 all_flights_found 中重新选择正确的航班号
   * 若 all_flights_found 中所有航班号都不符合标准格式，选择最接近标准格式的那个，并在 extraction_notes 中注明"航班号格式异常，已选最接近者"
   * **绝对禁止**输出一个不在 all_flights_found 中的航班号作为 flight_no
-- **被保险人身份识别规则（重要）**：材料中可能出现多个人的身份证件或护照（如申请人为家属代办时，会同时提交申请人与被保险人的证件）。`insured_name_in_materials` 必须只填写**被保险人**的姓名，认定方法如下：
+- **被保险人身份识别规则（重要）**：材料中可能出现多个人的身份证件或护照（如申请人为家属代办时，会同时提交申请人与被保险人的证件）。insured_name_in_materials 必须只填写**被保险人**的姓名，认定方法如下：
   * 登机牌/行程单上的乘客姓名即为被保险人姓名——以此为基准定位被保险人证件
-  * 若有多张证件，核对证件姓名与登机牌乘客姓名一致的，才是被保险人证件；其他证件属于申请人或随行人，`has_id_proof`/`has_passport` 只记录被保险人那份
-  * 若无法从登机牌确认，则对照案件基本信息（案件基本信息中的 `Insured_And_Policy` 字段）识别被保险人姓名，并在 notes 中注明"依据案件基本信息确认被保险人"
-  * 若材料中确实没有被保险人的证件（只有申请人证件），`has_id_proof` 和 `has_passport` 均填 false，并在 notes 中注明"材料中仅见申请人证件，未见被保险人证件"
-- **托运行李牌识别规则（重要）**：以下任一格式出现且含姓名 + 航班信息 + 行李牌号，即 `has_baggage_tag_proof = true`：
+  * 若有多张证件，核对证件姓名与登机牌乘客姓名一致的，才是被保险人证件；其他证件属于申请人或随行人，has_id_proof/has_passport 只记录被保险人那份
+  * 若无法从登机牌确认，则对照案件基本信息（案件基本信息中的 Insured_And_Policy 字段）识别被保险人姓名，并在 notes 中注明"依据案件基本信息确认被保险人"
+  * 若材料中确实没有被保险人的证件（只有申请人证件），has_id_proof 和 has_passport 均填 false，并在 notes 中注明"材料中仅见申请人证件，未见被保险人证件"
+- **托运行李牌识别规则（重要）**：以下任一格式出现且含姓名 + 航班信息 + 行李牌号，即 has_baggage_tag_proof = true：
   * **行李牌贴纸（最高频场景）**：贴在行李箱上或乘客撕下保存的条形/二维码贴纸，特征：窄条状贴纸 + 航司 logo（如 QATAR AIRWAYS）+ 航班号（如 QR817）+ 出发/到达三字码（如 DOH→GRU）+ 行李牌号（以 O 或 0 开头的长数字串，如 O 157 587635）+ SEQ/序号 + 乘客姓名（如 LIEXIN/YAN MR）。**注意：贴纸可能贴在行李箱上、PIR报告上、护照本上、登机牌背面或其他材料的空白区域，不要只盯着"独立照片"，只要页面中存在这种贴纸即判定为存在**
   * **标准行李牌（贴在行李箱上或撕下的存根）**：含航司 logo + 航班号 + 出发/到达三字码 + 行李牌号（长数字串）+ 乘客姓名 + 日期，即使图片不完整、有折痕、被遮挡或只拍到局部，只要三要素齐全即判定为存在
   * **行李牌存根（乘客持有的撕下联）**：与贴在行李箱上的行李牌内容相同，通常被乘客撕下保存，是理赔常用凭证
   * **行李牌照片/截图**：手机拍摄的行李牌照片、行李箱上贴着的行李牌照片，即使角度倾斜、光线不佳、手指部分遮挡，只要能辨认出三要素即判定为存在
   * **电子行李牌（少见）**：航司 APP 内生成的电子行李牌截图，含行李牌号码、航班信息、乘客姓名
-  * **PIR 不正常行李报告（行李延误案件中的等效替代凭证）**：在行李延误案件中，托运牌通常已随行李运走，乘客无法提供原件。此时**航空公司出具的 PIR 报告（含 PIR 编号/行李参考号 + 航班信息 + 旅客姓名 + 行李件数/描述）等同于托运行李牌**。典型特征：航司官方抬头（如 LATAM AIRLINES GROUP）、PIR 编号（如 CWBLA31684/RELATORIO DE IRREGULARIDADE）、航班信息（FD/VOO 行）、旅客信息（NOME/GIVEN NAME）、行李描述（NUMERO DE VOLUMES/COR/TIPO）、条形码 + 追踪号。满足上述特征即 `has_baggage_tag_proof = true`，不要因为没有"标准行李牌贴纸"就填 false
-  * 若只有登机牌上的行李件数（BAG 1/01/7）但无独立行李牌号码，`has_baggage_tag_proof = false`
-  * 若材料中行李牌被严重遮挡导致无法辨认姓名或航班或行李牌号任一要素，`has_baggage_tag_proof = false`
-  * **航空公司官方行李记录/行李查询单（替代凭证）**：若材料中出现航空公司官方出具的行李运输记录、行李查询单、行李追踪报告等，且包含**旅客姓名 + 航班号 + 行李件数/行李牌号**，即 `has_baggage_tag_proof = true`。这类材料可间接证明行李归属，等同于托运行李牌。典型特征：航司官方抬头/格式、含乘客姓名、航班号、行李件数、行李参考号。若信息完整匹配登机牌/机票信息，视为有效替代凭证
+  * **PIR 不正常行李报告（行李延误案件中的等效替代凭证）**：在行李延误案件中，托运牌通常已随行李运走，乘客无法提供原件。此时**航空公司出具的 PIR 报告（含 PIR 编号/行李参考号 + 航班信息 + 旅客姓名 + 行李件数/描述）等同于托运行李牌**。典型特征：航司官方抬头（如 LATAM AIRLINES GROUP）、PIR 编号（如 CWBLA31684/RELATORIO DE IRREGULARIDADE）、航班信息（FD/VOO 行）、旅客信息（NOME/GIVEN NAME）、行李描述（NUMERO DE VOLUMES/COR/TIPO）、条形码 + 追踪号。满足上述特征即 has_baggage_tag_proof = true，不要因为没有"标准行李牌贴纸"就填 false
+  * 若只有登机牌上的行李件数（BAG 1/01/7）但无独立行李牌号码，has_baggage_tag_proof = false
+  * 若材料中行李牌被严重遮挡导致无法辨认姓名或航班或行李牌号任一要素，has_baggage_tag_proof = false
+  * **航空公司官方行李记录/行李查询单（替代凭证）**：若材料中出现航空公司官方出具的行李运输记录、行李查询单、行李追踪报告等，且包含**旅客姓名 + 航班号 + 行李件数/行李牌号**，即 has_baggage_tag_proof = true。这类材料可间接证明行李归属，等同于托运行李牌。典型特征：航司官方抬头/格式、含乘客姓名、航班号、行李件数、行李参考号。若信息完整匹配登机牌/机票信息，视为有效替代凭证
 - **行李延误时长起算口径**：行李延误时长 = 最晚行李签收时间（baggage_receipt_time） - 首次乘坐航班的实际到达时间（flight_actual_arrival_time），两个时间必须换算为同一时区。
 - **多份签收证明**：将全部签收时间写入 receipt_times，最晚时间写入 baggage_receipt_time，以最晚时间计算延误时长。
 - **不确定时输出 unknown**，不要猜测。

@@ -283,6 +283,19 @@ def _check_actual_arrival_vs_policy(
     eff_dt = _parse_dt_flexible(applied_eff_str) if applied_eff_str else None
 
     if exp_dt and actual_arr > exp_dt:
+        # 行李延误场景特殊处理：若事故日期已在保单 coverage 内，实际到达时间超出保单有效期
+        # 不应直接拒赔（行李延误本身的触发点是事故日期，而非到达时间）
+        coverage_by = validity_detail.get("coverage_hit_by")
+        if coverage_by and actual_arr.date() > exp_dt.date():
+            # 事故日期在保单内，但到达时间跨日超出有效期 — 放行到后续时长核算
+            debug["actual_arrival_vs_policy"] = {
+                "actual_arrival": str(actual_arr),
+                "policy_expiry": str(exp_dt),
+                "applied_expiry": validity_detail.get("used_extension", False),
+                "exceeded": True,
+                "overridden_for_baggage_delay": "事故日期在保单coverage内，到达时间跨日超出不拒赔，放行到时长核算",
+            }
+            return None
         debug["actual_arrival_vs_policy"] = {
             "actual_arrival": str(actual_arr),
             "policy_expiry": str(exp_dt),
@@ -340,6 +353,36 @@ async def _try_transfer_flight_receipt_time(
         or ai_parsed.get("all_flights_found")
         or []
     )
+
+    # 收集乘客本人行程中的所有航班号（联程航段），转运航班不得用乘客本人的航班作为签收时间代理
+    _passenger_flight_nos: set = set()
+    for _seg in (ai_parsed.get("itinerary_segments") or vision_extract.get("itinerary_segments") or []):
+        if isinstance(_seg, dict):
+            _ofn = str(_seg.get("original_flight_no") or "").strip().upper()
+            if _ofn and _ofn not in ("UNKNOWN", ""):
+                _passenger_flight_nos.add(_ofn)
+
+    # 收集行李转运航班号（防止将其误当作行李转运签收时间代理）
+    _BAGGAGE_FORWARDING_HINTS = [
+        "行李装载", "行李装在", "行李装在今日", "行李转运", "行李已装载",
+        "行李将搭乘", "行李运抵", "行李托运回", "行李送达", "行李将运",
+        "您的行李将", "行李会搭乘", "行李后续",
+        "baggage loaded", "baggage forwarded", "baggage will arrive",
+        "baggage will travel", "luggage will arrive",
+    ]
+    _baggage_forwarding_nos: set = set()
+    for _src in (ai_parsed, vision_extract):
+        for _fl in (_src.get("all_flights_found") or []):
+            if not isinstance(_fl, dict):
+                continue
+            _fn = str(_fl.get("flight_no") or "").strip()
+            if not _fn:
+                continue
+            _role = str(_fl.get("role_hint") or "").strip()
+            _src_f = str(_fl.get("source") or "").strip()
+            if any(h in _role or h in _src_f for h in _BAGGAGE_FORWARDING_HINTS):
+                _baggage_forwarding_nos.add(_fn.upper())
+
     for f in all_flights:
         if not isinstance(f, dict):
             continue
@@ -350,6 +393,12 @@ async def _try_transfer_flight_receipt_time(
         if "原航班" in role_hint:
             continue
         if fno.upper() in main_flight_nos:
+            continue
+        # 排除乘客本人的联程航班，防止将其误当作行李转运航班
+        if fno.upper() in _passenger_flight_nos:
+            continue
+        # 排除行李转运航班，防止用转运航班到达时间覆盖真实签收时间
+        if fno.upper() in _baggage_forwarding_nos:
             continue
         fdate = str(f.get("date") or "").strip()
         if not fdate or fdate.lower() in ("unknown", "未知", ""):
@@ -367,20 +416,24 @@ async def _try_transfer_flight_receipt_time(
     if isinstance(alternate, dict):
         alt_fno = str(alternate.get("alt_flight_no") or "").strip().upper()
         if alt_fno and alt_fno not in ("UNKNOWN", "") and alt_fno not in main_flight_nos:
-            alt_date_raw = str(alternate.get("alt_dep") or alternate.get("alt_arr") or "")
-            if alt_date_raw and alt_date_raw.lower() not in ("unknown", "未知", ""):
-                alt_date = _extract_date_yyyy_mm_dd(alt_date_raw)
+            # 若 alternate 航班是行李转运航班，跳过
+            if alt_fno in _baggage_forwarding_nos:
+                debug["alternate_skipped_baggage_forwarding"] = f"alternate航班{alt_fno}为行李转运航班，排除"
             else:
-                alt_date = _extract_date_yyyy_mm_dd(
-                    ai_parsed.get("flight_date")
-                ) or _extract_date_yyyy_mm_dd(
-                    ai_parsed.get("accident_date_in_materials")
-                )
-            if alt_date:
-                key = (alt_fno, alt_date)
-                if key not in seen:
-                    seen.add(key)
-                    candidates.append({"flight_no": alt_fno, "date": alt_date, "source": "alternate_field"})
+                alt_date_raw = str(alternate.get("alt_dep") or alternate.get("alt_arr") or "")
+                if alt_date_raw and alt_date_raw.lower() not in ("unknown", "未知", ""):
+                    alt_date = _extract_date_yyyy_mm_dd(alt_date_raw)
+                else:
+                    alt_date = _extract_date_yyyy_mm_dd(
+                        ai_parsed.get("flight_date")
+                    ) or _extract_date_yyyy_mm_dd(
+                        ai_parsed.get("accident_date_in_materials")
+                    )
+                if alt_date:
+                    key = (alt_fno, alt_date)
+                    if key not in seen:
+                        seen.add(key)
+                        candidates.append({"flight_no": alt_fno, "date": alt_date, "source": "alternate_field"})
 
     if not candidates:
         debug["reason"] = "no transfer flight candidates"

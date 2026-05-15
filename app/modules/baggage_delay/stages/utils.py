@@ -5,7 +5,7 @@ baggage_delay stages — 纯工具函数（parsing、formatting、classification
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 
@@ -88,6 +88,84 @@ def _parse_dt_flexible(value: Any) -> Optional[datetime]:
     return None
 
 
+def _has_tz_info(s: str) -> bool:
+    """检查时间字符串是否含时区信息。"""
+    return bool(re.search(r'[Zz]|[+-]\d{2}:?\d{2}$', s))
+
+
+def _resolve_iana_fallback(iata: str) -> Optional[str]:
+    """通过IATA机场代码获取IANA时区（调用airport.resolve_country）。"""
+    try:
+        from app.skills.airport import resolve_country
+        result = resolve_country(iata.upper())
+        if result.get("found"):
+            return result.get("timezone")
+    except Exception:
+        pass
+    return None
+
+
+def _parse_dt_to_utc(value: Any, iana_hint: Optional[str] = None) -> Optional[datetime]:
+    """
+    将时间字符串解析为 UTC 时区的 naive datetime（用于时间差计算）。
+
+    优先级：
+    1. ISO 格式含时区 → 转 UTC → 返回 naive UTC datetime
+    2. 无时区 + IANA hint → 附加时区后转 UTC
+    3. 无时区 + 无 hint → 返回 naive（与原行为兼容）
+    4. strptime fallback → naive
+    """
+    if value is None:
+        return None
+    s = str(value).strip()
+    if not s or s.lower() == "unknown":
+        return None
+
+    # 1. 尝试解析 ISO 格式（含时区）
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        if dt.tzinfo is not None:
+            # 转 UTC 并返回 naive
+            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        else:
+            # ISO 解析成功但无时区，进入 2/3
+            pass
+    except Exception:
+        pass
+
+    # 2. 无时区 + IANA hint → 附加时区
+    if iana_hint and not _has_tz_info(s):
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo(iana_hint)
+            # 先解析为 naive
+            for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M", "%Y-%m-%dT%H:%M:%S"):
+                try:
+                    dt_naive = datetime.strptime(s, fmt)
+                    dt_aware = dt_naive.replace(tzinfo=tz)
+                    return dt_aware.astimezone(timezone.utc).replace(tzinfo=None)
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+    # 3. strptime fallback（返回 naive，保持兼容）
+    for fmt in (
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d %H:%M",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y%m%d%H%M%S",
+        "%Y%m%d",
+    ):
+        try:
+            return datetime.strptime(s, fmt)
+        except Exception:
+            continue
+    return None
+
+
 def _extract_date_yyyy_mm_dd(value: Any) -> str:
     if value is None:
         return ""
@@ -98,15 +176,15 @@ def _extract_date_yyyy_mm_dd(value: Any) -> str:
     return m.group(1).replace("/", "-")
 
 
-def _collect_receipt_times(parsed: Dict[str, Any]) -> List[datetime]:
+def _collect_receipt_times(parsed: Dict[str, Any], iana_hint: Optional[str] = None) -> List[datetime]:
     values: List[datetime] = []
     if not isinstance(parsed, dict):
         return values
-    direct = _parse_dt_flexible(parsed.get("baggage_receipt_time"))
+    direct = _parse_dt_to_utc(parsed.get("baggage_receipt_time"), iana_hint=iana_hint)
     if direct:
         values.append(direct)
     for item in parsed.get("receipt_times") or []:
-        dt = _parse_dt_flexible(item)
+        dt = _parse_dt_to_utc(item, iana_hint=iana_hint)
         if dt:
             values.append(dt)
     return values

@@ -48,15 +48,17 @@ def run_full_analysis():
     cursor.execute("SELECT COUNT(*) FROM ai_review_result")
     results['total_records'] = cursor.fetchone()[0]
 
-    # 2. 交叉统计（排除取消理赔）
+    # 2. 交叉统计（排除取消理赔、零结关、待定）
     cursor.execute('''
         SELECT audit_result, manual_status, COUNT(*) as cnt
         FROM ai_review_result
         WHERE audit_result IS NOT NULL AND manual_status IS NOT NULL
+          AND manual_status != '待定'
+          AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
           AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
         GROUP BY audit_result, manual_status
         ORDER BY cnt DESC
-    ''', ('%取消理赔%',))
+    ''', ('%取消理赔%', '%零结%'))
     cross_tab = []
     for row in cursor.fetchall():
         cross_tab.append({'ai': row[0], 'manual': row[1], 'count': row[2]})
@@ -69,13 +71,15 @@ def run_full_analysis():
     results['total_with_both'] = total_with_both
     results['consistency_rate'] = round(consistent / total_with_both * 100, 1) if total_with_both > 0 else 0
 
-    # 4. P0: AI通过但人工拒绝（排除取消理赔）
+    # 4. P0: AI通过但人工拒绝（排除取消理赔、零结关、待定）
     cursor.execute('''
         SELECT forceid, claim_type, audit_result, manual_status, manual_conclusion, remark, payout_amount
         FROM ai_review_result
         WHERE audit_result = %s AND manual_status = %s
+          AND manual_status != '待定'
           AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
-    ''', ('通过', '拒绝', '%取消理赔%'))
+          AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
+    ''', ('通过', '拒绝', '%取消理赔%', '%零结%'))
     results['p0'] = []
     for row in cursor.fetchall():
         results['p0'].append({
@@ -83,14 +87,16 @@ def run_full_analysis():
             'manual_note': row[4], 'remark': row[5][:200] if row[5] else None, 'payout': float(row[6]) if row[6] else 0
         })
 
-    # 5. P1: AI补件但人工通过/拒绝（排除取消理赔）
+    # 5. P1: AI补件但人工通过/拒绝（排除取消理赔、零结关、待定）
     cursor.execute('''
         SELECT forceid, claim_type, audit_result, manual_status, manual_conclusion, remark, payout_amount
         FROM ai_review_result
         WHERE audit_result = %s AND manual_status IN (%s, %s)
+          AND manual_status != '待定'
+          AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
           AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
         ORDER BY manual_status, claim_type
-    ''', ('需补齐资料', '通过', '拒绝', '%取消理赔%'))
+    ''', ('需补齐资料', '通过', '拒绝', '%取消理赔%', '%零结%'))
     results['p1'] = []
     for row in cursor.fetchall():
         results['p1'].append({
@@ -98,13 +104,15 @@ def run_full_analysis():
             'manual_note': row[4], 'remark': row[5][:200] if row[5] else None, 'payout': float(row[6]) if row[6] else 0
         })
 
-    # 6. P2: AI拒绝但人工通过（排除取消理赔）
+    # 6. P2: AI拒绝但人工通过（排除取消理赔、零结关、待定）
     cursor.execute('''
         SELECT forceid, claim_type, audit_result, manual_status, manual_conclusion, remark, payout_amount
         FROM ai_review_result
         WHERE audit_result = %s AND manual_status = %s
+          AND manual_status != '待定'
           AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
-    ''', ('拒绝', '通过', '%取消理赔%'))
+          AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
+    ''', ('拒绝', '通过', '%取消理赔%', '%零结%'))
     results['p2'] = []
     for row in cursor.fetchall():
         results['p2'].append({
@@ -134,6 +142,7 @@ def run_full_analysis():
         '境内中转免责': ('境内中转',),
         '欺诈嫌疑': ('欺诈', '虚假'),
         '必备材料缺失': ('材料', '缺失', '补件'),
+        '保险金额不足': ('保额不足', '保险金额不足'),
     }
     p2_flight_reasons = defaultdict(lambda: {'count': 0, 'total_payout': 0.0})
     for r in results['p2']:
@@ -209,16 +218,18 @@ def run_full_analysis():
         pending_stats[row[0] or 'NULL'] = row[1]
     results['pending_stats'] = pending_stats
 
-    # 12. 最近14天趋势（排除取消理赔）
+    # 12. 最近14天趋势（排除取消理赔、零结关、待定）
     cursor.execute('''
         SELECT DATE(created_at) as dt, COUNT(*) as cnt,
                SUM(CASE WHEN audit_result = manual_status THEN 1 ELSE 0 END) as consistent
         FROM ai_review_result
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+          AND manual_status != '待定'
+          AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
           AND (manual_conclusion NOT LIKE %s OR manual_conclusion IS NULL)
         GROUP BY DATE(created_at)
         ORDER BY dt DESC
-    ''', ('%取消理赔%',))
+    ''', ('%取消理赔%', '%零结%'))
     daily_trend = []
     for row in cursor.fetchall():
         daily_trend.append({'date': str(row[0]), 'total': row[1], 'consistent': row[2]})

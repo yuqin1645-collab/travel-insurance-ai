@@ -75,7 +75,15 @@ def _check_name_match(
     claim_info: Dict[str, Any],
     vision_extract: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """校验登机牌/延误证明上的乘客姓名与保单被保险人姓名是否一致。"""
+    """校验登机牌/延误证明上的乘客姓名与保单被保险人姓名是否一致。
+
+    核心逻辑：
+    1. 先比对材料姓名与保单姓名
+    2. 若姓名不匹配，检查 Relationship_with_Insured 字段
+       - 有值（非空/非None/非"本人"）→ 家属代办场景，姓名不同为预期行为 → 通过
+       - "本人"但姓名不匹配 → 数据质量问题 → mismatch
+    3. 拼音 vs 中文跨文字系统 → unknown（人工确认）
+    """
     material_name = ""
     v_passenger = vision_extract.get("passenger_name") or ""
     if not _is_unknown(str(v_passenger).strip()):
@@ -115,7 +123,7 @@ def _check_name_match(
 
     # 跨文字系统检测：一侧为拉丁字母，另一侧含CJK字符
     # 典型场景：登机牌显示拼音(CHEN LAN)，保单显示中文(陈兰)
-    # 无法可靠进行跨文字系统比对，不判定为mismatch
+    # 不再直接返回unknown，而是进入后续 Relationship 检查
     def _has_cjk(s: str) -> bool:
         return bool(re.search(r'[一-鿿㐀-䶿]', s))
 
@@ -127,7 +135,31 @@ def _check_name_match(
     m_is_latin = _is_latin_only(material_name)
     p_is_latin = _is_latin_only(policy_name)
 
-    if (m_is_latin and p_has_cjk) or (p_is_latin and m_has_cjk):
+    cross_script = (m_is_latin and p_has_cjk) or (p_is_latin and m_has_cjk)
+
+    # ── 家属代办场景判定（2026-05-14 新增）──
+    # 当 Relationship_with_Insured 有值且不为"本人"时，说明是家属/他人代办
+    # 材料上的姓名（实际乘机人）与保单被保险人姓名不同是预期行为
+    # 此时不再以姓名为由拒绝，改为通过（需确保材料中有被保险人的身份证件）
+    relationship = str(claim_info.get("Relationship_with_Insured") or "").strip()
+    is_family_proxy = (
+        relationship
+        and relationship.lower() not in ("none", "null", "unknown", "")
+        and relationship != "本人"
+    )
+
+    if is_family_proxy:
+        # 家属代办场景：姓名不同是预期的，不再以姓名为由拒绝
+        return {
+            "match_result": "match",
+            "material_name": material_name,
+            "policy_name": policy_name,
+            "note": f"家属代办（Relationship={relationship}）：材料乘客={material_name}，保单被保险人={policy_name}，姓名不同为预期行为",
+        }
+
+    # 跨文字系统（拼音 vs 中文）→ unknown，人工确认
+    # 注意：此分支仅在 Relationship 为空或"本人"时到达
+    if cross_script:
         return {
             "match_result": "unknown",
             "material_name": material_name,
@@ -135,6 +167,7 @@ def _check_name_match(
             "note": f"姓名跨文字系统（材料={'拼音' if m_is_latin else '中文'}，保单={'拼音' if p_is_latin else '中文'}），无法自动比对，建议人工确认：材料={material_name}，保单={policy_name}",
         }
 
+    # Token 级别匹配（严格：子集关系）
     def _name_tokens(name: str) -> set:
         tokens = set(re.split(r"[\s\-·•/,]+", name.upper()))
         return {t for t in tokens if len(t) > 1}
@@ -152,6 +185,79 @@ def _check_name_match(
             return {
                 "match_result": "match", "material_name": material_name, "policy_name": policy_name,
                 "note": f"姓名部分匹配（含姓或名）：材料={material_name}，保单={policy_name}，建议人工确认",
+            }
+
+    # 新增：模糊匹配容错（OCR/拼写差异）
+    # 同文字系统且差异较小时，视为"可能匹配"→unknown（人工确认），而非mismatch
+
+    # 1. Latin 脚本：Levenshtein 距离容错
+    if m_is_latin and p_is_latin and len(m_norm) >= 3 and len(p_norm) >= 3:
+        # 简化版编辑距离（纯 Python，不依赖第三方库）
+        def _levenshtein(a: str, b: str) -> int:
+            if len(a) < len(b):
+                return _levenshtein(b, a)
+            if not b:
+                return len(a)
+            prev = list(range(len(b) + 1))
+            for i, ca in enumerate(a):
+                curr = [i + 1]
+                for j, cb in enumerate(b):
+                    cost = 0 if ca == cb else 1
+                    curr.append(min(prev[j + 1] + 1, curr[j] + 1, prev[j] + cost))
+                prev = curr
+            return prev[len(b)]
+
+        dist = _levenshtein(m_norm, p_norm)
+        max_len = max(len(m_norm), len(p_norm))
+        similarity = 1.0 - dist / max_len if max_len > 0 else 1.0
+        if similarity >= 0.7:
+            return {
+                "match_result": "unknown",
+                "material_name": material_name,
+                "policy_name": policy_name,
+                "note": f"姓名相似匹配（相似度{similarity:.0%}）：材料={material_name}，保单={policy_name}，建议人工确认",
+            }
+
+    # 2. 中文姓名：仅单字差异 → unknown（OCR 误差容忍）
+    if m_has_cjk and p_has_cjk:
+        m_no_space = re.sub(r"[\s\-·•/]", "", material_name)
+        p_no_space = re.sub(r"[\s\-·•/]", "", policy_name)
+        # 长度相同或差1，且编辑距离 <= 1
+        if abs(len(m_no_space) - len(p_no_space)) <= 1 and len(m_no_space) >= 2:
+            def _lev_cn(a: str, b: str) -> int:
+                if len(a) < len(b):
+                    return _lev_cn(b, a)
+                if not b:
+                    return len(a)
+                prev = list(range(len(b) + 1))
+                for i, ca in enumerate(a):
+                    curr = [i + 1]
+                    for j, cb in enumerate(b):
+                        cost = 0 if ca == cb else 1
+                        curr.append(min(prev[j + 1] + 1, curr[j] + 1, prev[j] + cost))
+                    prev = curr
+                return prev[len(b)]
+
+            dist_cn = _lev_cn(m_no_space, p_no_space)
+            if dist_cn <= 1:
+                return {
+                    "match_result": "unknown",
+                    "material_name": material_name,
+                    "policy_name": policy_name,
+                    "note": f"中文姓名近似（仅{dist_cn}字差异）：材料={material_name}，保单={policy_name}，建议人工确认",
+                }
+
+    # 3. 混合名（如 "陈LAN" vs "陈蓝"）：提取公共部分后比对
+    m_chars = set(m_no_space if m_has_cjk else m_norm)
+    p_chars = set(p_no_space if p_has_cjk else p_norm)
+    if m_chars & p_chars:
+        overlap_ratio = len(m_chars & p_chars) / max(len(m_chars), len(p_chars))
+        if overlap_ratio >= 0.5 and max(len(m_chars), len(p_chars)) >= 3:
+            return {
+                "match_result": "unknown",
+                "material_name": material_name,
+                "policy_name": policy_name,
+                "note": f"姓名重叠度{overlap_ratio:.0%}：材料={material_name}，保单={policy_name}，建议人工确认",
             }
 
     return {
