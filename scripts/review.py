@@ -39,6 +39,7 @@ from app.output.frontend_pusher import push_to_frontend
 from app.state.constants import ClaimStatus
 from app.state.status_manager import get_status_manager
 from app.logging_utils import LOGGER, log_extra as _log_extra
+from app.db.history_helpers import write_ai_history_if_changed, capture_existing_values
 
 import aiohttp
 
@@ -152,6 +153,9 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
             database=os.getenv("DB_NAME", "ai"), charset="utf8mb4",
         )
         try:
+            # 在 UPSERT 前捕获旧值（用于历史版本对比）
+            existing_values = capture_existing_values(conn, forceid)
+
             with conn.cursor() as cur:
                 # 1. 写主表
                 keys = list(main_fields.keys())
@@ -163,6 +167,12 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
                     f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
                 )
                 cur.execute(sql, list(main_fields.values()))
+
+                # 历史版本追踪
+                try:
+                    write_ai_history_if_changed(conn, forceid, main_fields, existing_values)
+                except Exception as e:
+                    LOGGER.warning(f"写入历史失败 {forceid}: {e}")
 
                 # 2. 写子表
                 ct = main_fields.get("claim_type", "")

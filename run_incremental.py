@@ -34,6 +34,7 @@ from app.policy_terms_registry import POLICY_TERMS
 from app.output.frontend_pusher import push_to_frontend
 from app.state.constants import ClaimStatus
 from app.state.status_manager import get_status_manager
+from app.db.history_helpers import write_ai_history_if_changed, capture_existing_values
 
 # ─────────────────────────────────────────────
 # 配置
@@ -274,6 +275,9 @@ async def run(dry_run: bool = False, no_download: bool = False):
                             database=os.getenv("DB_NAME", "ai"), charset="utf8mb4",
                         )
                         try:
+                            # 在 UPSERT 前捕获旧值
+                            existing_values = capture_existing_values(conn, forceid)
+
                             with conn.cursor() as cur:
                                 keys = list(main_fields.keys())
                                 placeholders = ", ".join(["%s"] * len(keys))
@@ -284,6 +288,12 @@ async def run(dry_run: bool = False, no_download: bool = False):
                                     f"ON DUPLICATE KEY UPDATE {update_clause}, updated_at=CURRENT_TIMESTAMP"
                                 )
                                 cur.execute(sql, list(main_fields.values()))
+
+                                # 历史版本追踪
+                                try:
+                                    write_ai_history_if_changed(conn, forceid, main_fields, existing_values)
+                                except Exception:
+                                    pass  # 不阻塞主流程
 
                                 ct = main_fields.get("claim_type", "")
                                 if ct == "flight_delay" and flight_fields:

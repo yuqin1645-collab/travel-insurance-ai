@@ -29,6 +29,7 @@ import aiohttp
 from app.config import config
 from app.output.frontend_pusher import push_to_frontend
 from app.production.main_workflow import ProductionWorkflow
+from app.db.history_helpers import write_ai_history_if_changed, capture_existing_values
 
 REVIEW_DIR = config.REVIEW_RESULTS_DIR
 CLAIMS_DIR = config.CLAIMS_DATA_DIR
@@ -49,6 +50,7 @@ def _build_claim_info_cache() -> dict:
 
 def _sync_to_db(fields: dict) -> bool:
     try:
+        forceid = fields.get("forceid", "")
         conn = pymysql.connect(
             host=os.getenv("DB_HOST", ""),
             port=int(os.getenv("DB_PORT", "3306")),
@@ -58,6 +60,9 @@ def _sync_to_db(fields: dict) -> bool:
             charset="utf8mb4",
         )
         try:
+            # 在 UPSERT 前捕获旧值
+            existing_values = capture_existing_values(conn, forceid)
+
             with conn.cursor() as cur:
                 keys = list(fields.keys())
                 placeholders = ", ".join(["%s"] * len(keys))
@@ -76,6 +81,13 @@ def _sync_to_db(fields: dict) -> bool:
                         f"ON DUPLICATE KEY UPDATE updated_at=CURRENT_TIMESTAMP"
                     )
                 cur.execute(sql, list(fields.values()))
+
+                # 历史版本追踪
+                try:
+                    write_ai_history_if_changed(conn, forceid, fields, existing_values)
+                except Exception:
+                    pass  # push.py 不阻塞
+
             conn.commit()
             return True
         finally:

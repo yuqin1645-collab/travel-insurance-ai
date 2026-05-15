@@ -23,6 +23,7 @@ from app.db.models import (
     TABLE_FLIGHT_DELAY_DATA, TABLE_BAGGAGE_DELAY_DATA,
     ClaimInfoRaw, TABLE_CLAIM_INFO_RAW,
     ReviewSegment, TABLE_REVIEW_SEGMENTS,
+    ReviewHistoryRecord, TABLE_REVIEW_HISTORY,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -819,4 +820,109 @@ class ClaimInfoRawDAO:
 def get_claim_info_raw_dao() -> ClaimInfoRawDAO:
     """获取案件原始信息DAO"""
     return ClaimInfoRawDAO(_db_connection)
+
+
+class ReviewHistoryDAO:
+    """审核历史版本 DAO（ai_review_history）"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def insert_history(self, record: ReviewHistoryRecord) -> int:
+        """插入一条历史版本记录"""
+        d = record.to_dict()
+        exclude = {'id'}
+        fields = {k: v for k, v in d.items() if k not in exclude}
+        keys = list(fields.keys())
+        placeholders = ', '.join(['%s'] * len(keys))
+
+        def _safe(v):
+            if v is None:
+                return None
+            if isinstance(v, (int, float)):
+                return v
+            return str(v)
+
+        values = [_safe(fields[k]) for k in keys]
+
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                sql = f"INSERT INTO {TABLE_REVIEW_HISTORY} ({', '.join(keys)}) VALUES ({placeholders})"
+                await cursor.execute(sql, values)
+                return cursor.lastrowid
+
+    async def get_history_by_forceid(self, forceid: str) -> List[Dict[str, Any]]:
+        """获取某案件的所有历史版本，按创建时间升序"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"""SELECT * FROM {TABLE_REVIEW_HISTORY}
+                        WHERE forceid = %s ORDER BY created_at ASC""",
+                    (forceid,)
+                )
+                return await cursor.fetchall()
+
+    async def get_ai_vs_manual_comparison(
+        self, forceid: Optional[str] = None, limit: int = 1000,
+    ) -> List[Dict[str, Any]]:
+        """全量 AI vs 人工对比查询。
+        每个 AI 历史版本一行，附带当前人工状态和对比标志。
+        """
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                where = "WHERE h.review_type = 'ai'"
+                params: list = []
+                if forceid:
+                    where += " AND h.forceid = %s"
+                    params.append(forceid)
+                await cursor.execute(
+                    f"""SELECT
+                        h.id AS history_id, h.forceid, h.claim_id, h.benefit_name,
+                        h.audit_result AS ai_audit_result,
+                        h.audit_status AS ai_audit_status,
+                        h.confidence_score AS ai_confidence_score,
+                        h.payout_amount AS ai_payout_amount,
+                        h.identity_match AS ai_identity_match,
+                        h.threshold_met AS ai_threshold_met,
+                        h.exclusion_triggered AS ai_exclusion_triggered,
+                        h.manual_status AS ai_snapshot_manual_status,
+                        h.manual_conclusion AS ai_snapshot_manual_conclusion,
+                        r.audit_result AS current_ai_result,
+                        r.audit_status AS current_ai_status,
+                        r.manual_status AS current_manual_status,
+                        r.manual_conclusion AS current_manual_conclusion,
+                        h.audit_time, h.created_at,
+                        CASE
+                            WHEN h.audit_result IS NULL THEN 'N/A'
+                            WHEN h.manual_status IS NULL THEN 'AI_only'
+                            WHEN h.audit_result = r.audit_result AND h.manual_status = r.manual_status THEN '一致'
+                            WHEN h.audit_result != r.audit_result THEN 'AI_changed'
+                            ELSE '其他变更'
+                        END AS comparison_flag
+                    FROM {TABLE_REVIEW_HISTORY} h
+                    LEFT JOIN {TABLE_REVIEW_RESULT} r ON h.forceid = r.forceid
+                    {where}
+                    ORDER BY h.created_at DESC LIMIT %s""",
+                    params + [limit]
+                )
+                return await cursor.fetchall()
+
+    async def get_history_stats(self) -> Dict[str, Any]:
+        """获取历史统计信息"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"""SELECT
+                        COUNT(DISTINCT forceid) AS total_cases,
+                        COUNT(CASE WHEN review_type='ai' THEN 1 END) AS total_ai_versions,
+                        COUNT(CASE WHEN review_type='manual' THEN 1 END) AS total_manual_updates
+                    FROM {TABLE_REVIEW_HISTORY}"""
+                )
+                row = await cursor.fetchone()
+                return row or {}
+
+
+def get_review_history_dao() -> ReviewHistoryDAO:
+    """获取审核历史DAO"""
+    return ReviewHistoryDAO(_db_connection)
 

@@ -354,12 +354,12 @@ class StatusManager:
         if not updated:
             return False, f"更新补件状态失败: {forceid}"
 
-        # 如果收到补件，更新案件状态
+        # 如果收到补件，改为 REVIEW_PENDING，下一周期会自动重新审核
         if status == SupplementaryStatus.RECEIVED:
             await self.update_claim_status(
                 forceid,
-                ClaimStatus.SUPPLEMENTARY_RECEIVED,
-                "收到补件"
+                ClaimStatus.REVIEW_PENDING,
+                "收到补件，等待重新审核"
             )
 
         LOGGER.info(f"✓ 补件状态更新成功: {forceid} -> {status}")

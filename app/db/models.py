@@ -370,6 +370,45 @@ class ReviewResult:
 
 
 @dataclass
+class ReviewHistoryRecord:
+    """审核历史版本记录 — ai_review_history 表"""
+    id: Optional[int] = None
+    forceid: str = ""
+    claim_id: Optional[str] = None
+    benefit_name: Optional[str] = None
+    review_type: str = ""  # 'ai' or 'manual'
+
+    # AI 审核字段
+    audit_result: Optional[str] = None
+    audit_status: Optional[str] = None
+    confidence_score: Optional[float] = None
+    payout_amount: Optional[float] = None
+    identity_match: Optional[str] = None
+    threshold_met: Optional[str] = None
+    exclusion_triggered: Optional[str] = None
+
+    # 人工审核字段
+    manual_status: Optional[str] = None
+    manual_conclusion: Optional[str] = None
+
+    # 版本追溯
+    ai_model_version: Optional[str] = None
+    pipeline_version: Optional[str] = None
+    rule_ids_hit: Optional[str] = None
+    audit_time: Optional[datetime] = None
+    snapshot_json: Optional[str] = None
+
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = asdict(self)
+        for k, v in d.items():
+            if isinstance(v, datetime):
+                d[k] = v.isoformat()
+        return d
+
+
+@dataclass
 class SupplementaryRecord:
     """补件记录"""
     id: Optional[int] = None
@@ -627,3 +666,4 @@ TABLE_SUPPLEMENTARY_RECORDS = "ai_supplementary_records"
 TABLE_SCHEDULER_LOGS = "ai_scheduler_logs"
 TABLE_STATUS_HISTORY = "ai_status_history"
 TABLE_CLAIM_INFO_RAW = "ai_claim_info_raw"
+TABLE_REVIEW_HISTORY = "ai_review_history"

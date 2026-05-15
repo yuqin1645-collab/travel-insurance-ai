@@ -69,6 +69,15 @@ def update_row(conn, forceid: str, benefit_name: Optional[str],
         print(f"  [dry-run] {forceid}: benefit_name={benefit_name} "
               f"manual_status={manual_status} manual_conclusion={str(manual_conclusion or '')[:60]}")
         return
+
+    # 在 UPDATE 前捕获旧值
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT manual_status, manual_conclusion FROM ai_review_result WHERE forceid=%s",
+            (forceid,)
+        )
+        old_manual_row = cur.fetchone()
+
     with conn.cursor() as cur:
         cur.execute(
             """UPDATE ai_review_result
@@ -79,6 +88,20 @@ def update_row(conn, forceid: str, benefit_name: Optional[str],
                WHERE forceid = %s""",
             (benefit_name, manual_status, manual_conclusion, forceid),
         )
+
+    # 历史版本追踪
+    try:
+        from app.db.history_helpers import write_manual_history_if_changed
+        old_status = (old_manual_row or {}).get('manual_status')
+        old_conclusion = (old_manual_row or {}).get('manual_conclusion')
+        if str(old_status or '').strip() != str(manual_status or '').strip() or \
+           str(old_conclusion or '').strip() != str(manual_conclusion or '').strip():
+            write_manual_history_if_changed(conn, forceid, manual_status, manual_conclusion,
+                                            benefit_name=benefit_name,
+                                            old_values=old_manual_row)
+    except Exception:
+        pass  # 不阻塞主流程
+
     conn.commit()
 
 

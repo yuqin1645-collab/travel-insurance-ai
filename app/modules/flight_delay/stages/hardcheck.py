@@ -660,11 +660,20 @@ def _run_hardcheck(
             is_missed_connection = False
             rebooking_override = True
 
+        LOGGER.info(
+            f"[missed_conn_check_line658] after has_rebooking check: is_missed={is_missed_connection}, rebovr={rebooking_override}",
+            extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
+        )
+
         if is_missed_connection and avi_status == "取消" and has_rebooking and not is_conn_rebooking_flag and not causal_check_available:
             is_missed_connection = False
             rebooking_override = True
 
         # 联程改签场景豁免：仅在因果检查未执行时才适用
+        LOGGER.info(
+            f"[missed_conn_check_line668] before is_conn_rebooking check: is_missed={is_missed_connection}, is_conn_rebooking={is_conn_rebooking_flag}, causal_avail={causal_check_available}",
+            extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
+        )
         if is_missed_connection and is_conn_rebooking_flag and not causal_check_available:
             is_missed_connection = False
             rebooking_override = True
@@ -679,6 +688,16 @@ def _run_hardcheck(
         if is_missed_connection and any(kw in _all_texts for kw in _overbooking_keywords):
             is_missed_connection = False
             overbooking_override = True
+
+        # 中转接驳豁免结果调试日志（用于排查 P2 未触发原因）
+        LOGGER.info(
+            f"[missed_conn_debug] is_missed={is_missed_connection}, "
+            f"has_rebooking={has_rebooking}(alt_dep={alt_dep_val!r}, alt_fn={alt_flight_no!r}), "
+            f"is_conn_rebooking={is_conn_rebooking_flag}, causal_avail={causal_check_available}, "
+            f"avi_status={avi_status!r}, "
+            f"rebovr={rebooking_override}, prev_arr_ok={prev_seg_arrived_ok}",
+            extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
+        )
 
         result["missed_connection_check"] = {
             "is_missed_connection": is_missed_connection,

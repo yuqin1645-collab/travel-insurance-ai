@@ -393,11 +393,11 @@ class SupplementaryHandler:
             SupplementaryStatus.RECEIVED
         )
 
-        # 更新案件状态
+        # 更新案件状态：改为 REVIEW_PENDING，下一周期审核步骤 [2/8] 会自动重新审核
         await self.status_manager.update_claim_status(
             forceid,
-            ClaimStatus.SUPPLEMENTARY_RECEIVED,
-            "收到补件材料"
+            ClaimStatus.REVIEW_PENDING,
+            "收到补件材料，等待重新审核"
         )
 
 

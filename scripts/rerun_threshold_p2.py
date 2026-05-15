@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """
-批量重跑 P2 未达门槛案件，统计修复效果。
-用法: python scripts/rerun_threshold_p2.py
+批量重跑 P2 未达门槛案件并统计修复效果。
+用法: python scripts/rerun_threshold_p2.py [--limit N]
 """
 
 import sys
 import os
-import json
-import re
-from collections import Counter
-
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, '.')
 
@@ -19,9 +15,12 @@ load_dotenv()
 import pymysql
 import asyncio
 import aiohttp
+import json
+import re
+import time
 from pathlib import Path
+from collections import Counter
 
-from scripts.find_claim_by_forceid import fetch_by_forceid
 from app.modules.flight_delay.pipeline import review_flight_delay_async
 from app.claim_ai_reviewer import AIClaimReviewer
 
@@ -37,13 +36,12 @@ def get_db_conn():
     )
 
 
-def load_threshold_forceids():
-    """从 DB 加载当前未达门槛 P2 案件。"""
+def load_threshold_forceids(limit=None):
     conn = get_db_conn()
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT forceid, remark, audit_result, manual_status, manual_conclusion
+                SELECT forceid, remark, manual_conclusion, payout_amount
                 FROM ai_review_result
                 WHERE claim_type = 'flight_delay'
                 AND audit_result = '拒绝'
@@ -56,39 +54,45 @@ def load_threshold_forceids():
         for r in rows:
             remark = r.get('remark', '')
             if any(kw in remark for kw in ['未达门槛', '延误0分钟', '延误时长']):
-                forceids.append(r['forceid'])
+                m = re.search(r'延误时长(\d+)分钟', remark)
+                old_delay = int(m.group(1)) if m else 0
+                forceids.append({
+                    'forceid': r['forceid'],
+                    'old_delay': old_delay,
+                    'old_remark': remark[:100],
+                    'manual_conclusion': r.get('manual_conclusion', ''),
+                })
 
-        return forceids
+        return forceids[:limit] if limit else forceids
     finally:
         conn.close()
 
 
-async def rerun_single(forceid: str) -> dict:
-    """重跑单个案件，返回摘要。"""
-    claim_info = fetch_by_forceid(forceid)
-    if not claim_info or isinstance(claim_info, str):
-        return {"forceid": forceid, "status": "error", "reason": "claim not found"}
+def find_claim_path(forceid: str) -> Path | None:
+    """查找案件目录。"""
+    claim_base = Path("claims_data")
+    if not claim_base.exists():
+        return None
 
-    # 查找案件目录
-    from scripts.find_claim_by_forceid import fetch_by_forceid as fetch
-    # fetch_by_forceid returns claim_info dict, we need the path
-    # Try to find the directory
-    claim_base_dir = Path("claims_data")
-    found_path = None
-
-    for d in claim_base_dir.iterdir():
-        if d.is_dir() and d.name not in (".download_progress.json",):
+    for d in claim_base.iterdir():
+        if not d.is_dir():
+            continue
+        try:
             for sub in d.iterdir():
                 if sub.is_dir() and forceid in sub.name:
-                    found_path = sub
-                    break
-        if found_path:
-            break
+                    return sub
+        except PermissionError:
+            continue
+    return None
 
-    if not found_path:
+
+async def rerun_single(forceid: str) -> dict:
+    """重跑单个案件。"""
+    claim_path = find_claim_path(forceid)
+    if not claim_path:
         return {"forceid": forceid, "status": "error", "reason": "directory not found"}
 
-    claim_info_path = found_path / "claim_info.json"
+    claim_info_path = claim_path / "claim_info.json"
     if not claim_info_path.exists():
         return {"forceid": forceid, "status": "error", "reason": "claim_info.json missing"}
 
@@ -101,7 +105,7 @@ async def rerun_single(forceid: str) -> dict:
     async with aiohttp.ClientSession() as session:
         result = await review_flight_delay_async(
             reviewer=reviewer,
-            claim_folder=found_path,
+            claim_folder=claim_path,
             claim_info=claim_info,
             policy_terms=policy_terms,
             index=1,
@@ -109,45 +113,98 @@ async def rerun_single(forceid: str) -> dict:
             session=session,
         )
 
-    remark = result.get("Remark", "")
-    audit = result.get("flight_delay_audit", {})
-    audit_result = audit.get("audit_result", "")
-
-    # Extract delay minutes from Remark
-    delay_m = re.search(r'延误时长?(\d+)分钟', remark)
-    delay_min = int(delay_m.group(1)) if delay_m else None
+    audit = result.get('flight_delay_audit', {})
+    audit_result = audit.get('audit_result', '')
+    key_data = audit.get('key_data', {})
+    delay_min = key_data.get('delay_duration_minutes')
+    explanation = audit.get('explanation', '')
 
     return {
-        "forceid": forceid,
-        "audit_result": audit_result,
-        "delay_minutes": delay_min,
-        "remark": remark[:150],
-        "status": "done",
+        'forceid': forceid,
+        'audit_result': audit_result,
+        'delay_minutes': delay_min,
+        'explanation': explanation[:100],
+        'status': 'done',
     }
 
 
-def main():
-    print("=== P2 未达门槛案件批量重跑 ===\n")
+async def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--limit', type=int, default=None)
+    parser.add_argument('--indices', type=str, default=None, help='Comma-separated indices to run')
+    args = parser.parse_args()
 
-    # Step 1: Load current P2 threshold cases from DB
-    print("Step 1: 从数据库加载未达门槛案件...")
-    forceids = load_threshold_forceids()
-    print(f"  找到 {len(forceids)} 件\n")
+    forceids = load_threshold_forceids(limit=args.limit)
+    print(f'找到 {len(forceids)} 件未达门槛 P2 案件\n')
+
+    # Filter by indices if specified
+    if args.indices:
+        indices = [int(x) for x in args.indices.split(',')]
+        forceids = [forceids[i] for i in indices if i < len(forceids)]
+        print(f'按索引筛选后: {len(forceids)} 件\n')
 
     if not forceids:
-        print("无案件需要重跑。")
+        print('无案件需要重跑。')
         return
 
-    # Step 2: Save list for review.py batch processing
-    output_file = "docs/p2_threshold_forceids.json"
-    with open(output_file, 'w') as f:
-        json.dump(forceids, f, indent=2, ensure_ascii=False)
-    print(f"Step 2: 已保存 forceid 列表到 {output_file}")
-    print(f"  前5个: {forceids[:5]}")
-    print(f"\nStep 3: 使用以下命令批量重跑:")
-    print(f"  python scripts/review.py --forceid {' --forceid '.join(forceids[:5])} ...")
-    print(f"\n或使用循环脚本逐个重跑。")
+    results = []
+    passed = 0
+    rejected = 0
+    errors = 0
+
+    for i, item in enumerate(forceids):
+        fid = item['forceid']
+        print(f'[{i+1}/{len(forceids)}] 重跑 {fid} (原延误={item["old_delay"]}min)...')
+
+        try:
+            result = await rerun_single(fid)
+        except Exception as e:
+            print(f'  异常: {e}')
+            results.append({'forceid': fid, 'status': 'error', 'reason': str(e)[:80]})
+            errors += 1
+            continue
+
+        if result['status'] == 'error':
+            print(f'  错误: {result.get("reason", "unknown")}')
+            errors += 1
+            continue
+
+        new_delay = result.get('delay_minutes', '?')
+        audit = result['audit_result']
+        print(f'  结果: AI={audit}, 延误={new_delay}min')
+
+        if audit == '通过':
+            passed += 1
+            print(f'  ✅ 修复成功')
+        elif audit == '拒绝':
+            rejected += 1
+            if new_delay and isinstance(new_delay, int) and new_delay >= 300:
+                print(f'  ⚠️  延误达标但仍拒绝')
+            else:
+                print(f'  ❌ 仍未达标')
+        elif audit == '需补齐资料':
+            print(f'  ⏸️  需补齐资料')
+
+        results.append(result)
+
+        # Rate limiting to avoid API overload
+        if i < len(forceids) - 1:
+            await asyncio.sleep(2)
+
+    # Summary
+    print(f'\n{"="*60}')
+    print(f'批量重跑完成: {len(results)} 件')
+    print(f'  通过: {passed}')
+    print(f'  拒绝: {rejected}')
+    print(f'  错误: {errors}')
+    print(f'  修复率: {passed}/{len(results)} = {passed*100/len(results):.1f}%' if results else 'N/A')
+
+    # Save detailed results
+    with open('docs/p2_rerun_results.json', 'w', encoding='utf-8') as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
+    print(f'\n详细结果已保存到 docs/p2_rerun_results.json')
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    asyncio.run(main())

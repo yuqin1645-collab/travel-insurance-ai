@@ -23,6 +23,7 @@ from app.supplementary.handler import get_supplementary_handler, SupplementaryHa
 from app.output.coordinator import get_output_coordinator, OutputCoordinator
 from app.state.status_manager import get_status_manager, StatusManager
 from app.db.database import get_db_connection
+from app.db.history_helpers import write_ai_history_if_changed, write_manual_history_if_changed
 
 LOGGER = logging.getLogger(__name__)
 
@@ -250,6 +251,13 @@ class ProductionWorkflow:
                         claim_info = info_cache.get(forceid, {})
                         main_fields, flight_fields, baggage_fields = self._extract_review_fields(data, claim_info)
 
+                        # 在 UPSERT 前捕获旧值（用于历史版本对比）
+                        try:
+                            from app.db.history_helpers import capture_existing_values
+                            existing_values = capture_existing_values(conn, forceid)
+                        except Exception:
+                            existing_values = None
+
                         # 主表：防止 update_clause 为空导致 SQL 语法错误
                         keys = list(main_fields.keys())
                         placeholders = ", ".join(["%s"] * len(keys))
@@ -268,6 +276,12 @@ class ProductionWorkflow:
                                 f"ON DUPLICATE KEY UPDATE updated_at=CURRENT_TIMESTAMP"
                             )
                         cur.execute(sql, list(main_fields.values()))
+
+                        # 历史版本追踪
+                        try:
+                            write_ai_history_if_changed(conn, forceid, main_fields, existing_values)
+                        except Exception as e:
+                            LOGGER.warning(f"写入历史历史失败 {forceid}: {e}")
 
                         claim_type = main_fields.get("claim_type", "")
                         if claim_type == "flight_delay" and flight_fields:
@@ -995,12 +1009,26 @@ class ProductionWorkflow:
                         else:
                             manual_status, manual_conclusion = "待定", final_status
 
+                        # 在 UPDATE 前捕获旧值（用于历史版本对比）
+                        with conn.cursor() as cur_pre:
+                            cur_pre.execute(
+                                "SELECT manual_status, manual_conclusion FROM ai_review_result WHERE forceid=%s",
+                                (forceid,)
+                            )
+                            old_manual_row = cur_pre.fetchone()
+
                         cur.execute(
                             """UPDATE ai_review_result
                                SET manual_status=%s, manual_conclusion=%s, updated_at=CURRENT_TIMESTAMP
                                WHERE forceid=%s""",
                             (manual_status, manual_conclusion, forceid)
                         )
+
+                        # 历史版本追踪（传入旧值做对比）
+                        try:
+                            write_manual_history_if_changed(conn, forceid, manual_status, manual_conclusion, old_values=old_manual_row)
+                        except Exception as e:
+                            LOGGER.warning(f"写入人工历史失败 {forceid}: {e}")
                         success += 1
                         batch_count += 1
                         if batch_count >= BATCH_SIZE:

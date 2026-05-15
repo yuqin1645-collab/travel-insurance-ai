@@ -496,21 +496,7 @@ def _augment_with_computed_delay(
             computed["proof_delay_ceiling_applied"] = True
             computed["proof_delay_ceiling_original"] = computed_minutes
             computed.setdefault("missing", []).append(cap_note)
-    else:
-        # 回退：延误证明中计划=实际（提取异常），尝试从飞常准数据获取延误上限
-        avi_delay = _extract_aviation_delay_ceiling(parsed)
-        if avi_delay is not None:
-            computed_minutes = computed.get("final_minutes")
-            if isinstance(computed_minutes, int) and computed_minutes > avi_delay:
-                cap_note = (
-                    f"延误证明提取异常（计划=实际），飞常准记录延误{avi_delay}分钟，"
-                    f"计算值{computed_minutes}分钟严重偏大，以飞常准值为上限"
-                )
-                computed["final_minutes"] = avi_delay
-                computed["method"] = f"以飞常准延误记录为准({avi_delay}分钟)"
-                computed["aviation_delay_ceiling_applied"] = True
-                computed["aviation_delay_ceiling_original"] = computed_minutes
-                computed.setdefault("missing", []).append(cap_note)
+    # 注：当 proof_delay 为 None 时，无需额外回退，_compute_delay_minutes 已使用飞常准/chain 数据计算
 
     computed["threshold_minutes"] = threshold_minutes
     computed["threshold_source"] = "policy_terms_excerpt" if _parse_threshold_minutes(policy_terms_excerpt) else "default(5h)"

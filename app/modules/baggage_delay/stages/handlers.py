@@ -35,7 +35,7 @@ def _check_policy_validity(
             info.setdefault("First_Exit_Date", exit_dt)
         accident_dt = vision_extract.get("accident_date_in_materials")
         if accident_dt and str(accident_dt).strip().lower() not in ("", "unknown"):
-            info["Date_of_Accident"] = accident_dt
+            info.setdefault("Date_of_Accident", accident_dt)
         flight_date_v = vision_extract.get("flight_date")
         if flight_date_v and str(flight_date_v).strip().lower() not in ("", "unknown"):
             info.setdefault("Flight_Date", str(flight_date_v).strip())
