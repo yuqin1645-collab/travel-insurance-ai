@@ -54,16 +54,18 @@ def fetch_all_cases(conn):
     with conn.cursor() as cur:
         cur.execute("""
             SELECT
-                forceid, benefit_name, claim_type,
-                audit_result, audit_status, audit_time,
-                manual_status, manual_conclusion,
-                confidence_score, payout_amount,
-                identity_match, threshold_met, exclusion_triggered,
-                first_ai_audit_time, first_ai_manual_status,
-                created_at, updated_at
-            FROM ai_review_result
-            WHERE created_at >= '2026-05-15 17:00:00'
-            ORDER BY created_at
+                r.forceid, r.claim_id, r.benefit_name, r.claim_type,
+                r.audit_result, r.audit_status, r.audit_time,
+                r.manual_status, r.manual_conclusion,
+                r.confidence_score, r.payout_amount,
+                r.identity_match, r.threshold_met, r.exclusion_triggered,
+                r.first_ai_audit_time, r.first_ai_manual_status,
+                r.created_at, r.updated_at,
+                h.created_at as first_audit_time, h.updated_at as last_audit_update
+            FROM ai_review_result r
+            LEFT JOIN ai_review_history h ON r.forceid = h.forceid AND h.review_type = 'ai'
+            WHERE r.created_at >= '2026-05-15 17:00:00'
+            ORDER BY r.created_at
         """)
         return cur.fetchall()
 
@@ -220,16 +222,16 @@ def main():
     ws1.sheet_properties.tabColor = '1F4E79'
 
     write_title_row(ws1, 1, "AI审核案件总览（2026-05-15 至今）")
-    ws1.merge_cells('A1:N1')
+    ws1.merge_cells('A1:Q1')
 
     write_title_row(ws1, 2, f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  |  共 {len(cases)} 件案件")
-    ws1.merge_cells('A2:N2')
+    ws1.merge_cells('A2:Q2')
 
     headers = [
-        "序号", "ForceID", "险种", "ClaimType",
+        "序号", "ForceID", "ClaimID", "险种", "ClaimType",
         "AI结论", "人工状态", "是否一致", "赔付金额",
         "置信度", "身份匹配", "门槛满足", "除外触发",
-        "创建时间", "更新时间"
+        "首次审核时间", "最后更新时间"
     ]
     write_header_row(ws1, 4, headers)
 
@@ -247,22 +249,24 @@ def main():
         fnt = CONSISTENT_FONT if consistent else (INCONSISTENT_FONT if consistent is False else DATA_FONT)
 
         vals = [
-            i, case['forceid'], case['benefit_name'] or '—', case['claim_type'] or '—',
+            i, case['forceid'], case['claim_id'] or '—',
+            case['benefit_name'] or '—', case['claim_type'] or '—',
             case['audit_result'] or '—', case['manual_status'] or '—',
             consistent_label, case['payout_amount'] or '—',
             case['confidence_score'] or '—',
             case['identity_match'] or '—',
             case['threshold_met'] or '—',
             case['exclusion_triggered'] or '—',
-            case['created_at'], case['updated_at']
+            case.get('first_audit_time') or case['created_at'],
+            case.get('last_audit_update') or case['updated_at']
         ]
         for c, v in enumerate(vals, 1):
-            write_cell(ws1, r, c, v, font=fnt if c == 7 else DATA_FONT, fill=fill if c == 7 else None,
-                       alignment=Alignment(horizontal='center', vertical='center') if c <= 12 else Alignment(horizontal='left', vertical='center'))
+            write_cell(ws1, r, c, v, font=fnt if c == 8 else DATA_FONT, fill=fill if c == 8 else None,
+                       alignment=Alignment(horizontal='center', vertical='center') if c <= 15 else Alignment(horizontal='left', vertical='center'))
 
     # 列宽
     from openpyxl.utils import get_column_letter
-    widths = [6, 18, 10, 14, 12, 12, 10, 10, 10, 10, 10, 10, 18, 18]
+    widths = [6, 18, 18, 10, 14, 12, 12, 10, 10, 10, 10, 10, 10, 20, 20]
     for c, w in enumerate(widths, 1):
         ws1.column_dimensions[get_column_letter(c)].width = w
 

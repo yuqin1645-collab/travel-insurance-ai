@@ -67,6 +67,7 @@ def backfill():
                 'rule_ids_hit': row.get('rule_ids_hit'),
                 'audit_time': row.get('audit_time'),
                 'created_at': row.get('created_at'),
+                'updated_at': row.get('updated_at'),
             }
 
             snapshot = {k: v for k, v in row.items() if v is not None}

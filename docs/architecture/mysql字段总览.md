@@ -2,16 +2,17 @@
 
 ## 数据库表结构概览
 
-该系统共有 **5 个主要表**和 **2 个视图**：
+该系统共有 **8 个主要表**和 **2 个视图**：
 
 ### 主表
 1. **ai_claim_status** - 案件状态管理表
 2. **ai_review_result** - AI审核结果主表（核心）
-3. **ai_review_segments** - 联程航段子表（一对多，forceid 关联）
-4. **ai_supplementary_records** - 补件记录表
-5. **ai_scheduler_logs** - 定时任务日志表
-6. **ai_status_history** - 状态变更历史表
-7. **ai_claim_info_raw** - 案件原始下载信息存档表（数据追溯备份）
+3. **ai_review_history** - 审核历史版本追踪表
+4. **ai_review_segments** - 联程航段子表（一对多，forceid 关联）
+5. **ai_supplementary_records** - 补件记录表
+6. **ai_scheduler_logs** - 定时任务日志表
+7. **ai_status_history** - 状态变更历史表
+8. **ai_claim_info_raw** - 案件原始下载信息存档表（数据追溯备份）
 
 ### 视图
 1. **v_claim_audit_summary** - 案件审核汇总视图
@@ -181,6 +182,16 @@
 | manual_status | VARCHAR(32) | NULL | 人工处理状态（支付成功/拒绝/补件等） |
 | manual_conclusion | TEXT | NULL | 人工审核结论文本 |
 
+#### 首次AI审核里程碑（首次审核时快照，后续不覆盖）
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| first_ai_audit_result | VARCHAR(32) | NULL | 首次AI审核结果（通过/拒绝/需补件） |
+| first_ai_audit_status | VARCHAR(32) | NULL | 首次AI审核流程状态 |
+| first_ai_audit_time | DATETIME | NULL | 首次AI审核时间 |
+| first_ai_confidence | DECIMAL(5,2) | NULL | 首次AI审核置信度（%） |
+| first_ai_manual_status | VARCHAR(32) | NULL | 首次AI审核时的人工状态快照 |
+| first_ai_manual_conclusion | TEXT | NULL | 首次AI审核时的人工结论快照 |
+
 #### 赔付信息
 | 字段名 | 类型 | 默认值 | 说明 |
 |--------|------|---------|------|
@@ -251,6 +262,55 @@
 - KEY idx_is_connecting (is_connecting)
 - KEY idx_origin_dest (origin_iata, destination_iata)
 - KEY idx_missed_connection (missed_connection)
+
+---
+
+### 2.5 ai_review_history（审核历史版本追踪表）
+
+记录每次 AI 审核结果变更和人工状态同步的历史快照，用于追溯审核结论的演变过程。
+
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| id | BIGINT UNSIGNED | AUTO_INCREMENT | 主键ID |
+| forceid | VARCHAR(64) | | 案件唯一ID |
+| claim_id | VARCHAR(64) | NULL | 上游案件ID |
+| benefit_name | VARCHAR(64) | NULL | 险种名称 |
+| review_type | ENUM('ai', 'manual') | | 版本类型（AI审核 / 人工状态同步） |
+
+#### AI 审核字段（review_type='ai'）
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| audit_result | VARCHAR(32) | NULL | AI 审核结果（通过/拒绝/需补件） |
+| audit_status | VARCHAR(32) | NULL | AI 审核流程状态 |
+| confidence_score | DECIMAL(5,2) | NULL | 置信度（%） |
+| payout_amount | DECIMAL(10,2) | NULL | 赔付金额 |
+| identity_match | CHAR(1) | NULL | 身份是否匹配 |
+| threshold_met | CHAR(1) | NULL | 是否达到赔付门槛 |
+| exclusion_triggered | CHAR(1) | NULL | 是否触发免责 |
+| ai_model_version | VARCHAR(32) | NULL | AI 模型版本 |
+| pipeline_version | VARCHAR(32) | NULL | Pipeline 版本 |
+| rule_ids_hit | TEXT | NULL | 命中的规则ID列表 |
+| audit_time | DATETIME | NULL | 审核时间 |
+
+#### 人工状态字段（review_type='manual'）
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| manual_status | VARCHAR(32) | NULL | 人工处理状态 |
+| manual_conclusion | TEXT | NULL | 人工审核结论 |
+
+#### 快照与时间戳
+| 字段名 | 类型 | 默认值 | 说明 |
+|--------|------|---------|------|
+| snapshot_json | LONGTEXT | | 完整状态快照（JSON） |
+| created_at | DATETIME | CURRENT_TIMESTAMP | 首次审核/同步时间（记录该版本产生时间） |
+| updated_at | DATETIME | NULL | 最后更新时间（回填时记录主表的updated_at） |
+
+**索引**：
+- KEY idx_forceid (forceid)
+- KEY idx_review_type (review_type)
+- KEY idx_forceid_type (forceid, review_type)
+- KEY idx_audit_time (audit_time)
+- KEY idx_created_at (created_at)
 
 ---
 
@@ -426,14 +486,15 @@
 
 ### 按表统计字段数量
 - ai_claim_status: **19 个字段**
-- ai_review_result: **87 个字段**（核心表，航班延误与行李延误共用）
+- ai_review_result: **93 个字段**（核心表，含6个里程碑列）
+- ai_review_history: **23 个字段**（审核历史版本追踪）
 - ai_review_segments: **19 个字段**（联程航段子表）
 - ai_supplementary_records: **13 个字段**
 - ai_scheduler_logs: **11 个字段**
 - ai_status_history: **8 个字段**
 - ai_claim_info_raw: **35 个字段**（含 raw_json 完整备份）
 
-### ai_review_result 相较原始版本新增字段（2026-04 迭代）
+### ai_review_result 相较原始版本新增字段
 
 | 字段名 | 新增时间 | 说明 |
 |--------|---------|------|
@@ -448,7 +509,13 @@
 | has_baggage_receipt_proof | 2026-04 | 是否有签收时间证明（行李延误险专属） |
 | has_baggage_tag_proof | 2026-04 | 是否有行李牌（行李延误险专属） |
 | pir_no | 2026-04 | PIR 报告编号/来源描述（行李延误险专属） |
+| first_ai_audit_result | 2026-05 | 首次AI审核结果（里程碑，不覆盖） |
+| first_ai_audit_status | 2026-05 | 首次AI审核流程状态 |
+| first_ai_audit_time | 2026-05 | 首次AI审核时间 |
+| first_ai_confidence | 2026-05 | 首次AI审核置信度 |
+| first_ai_manual_status | 2026-05 | 首次AI审核时的人工状态快照 |
+| first_ai_manual_conclusion | 2026-05 | 首次AI审核时的人工结论快照 |
 
 ---
 
-*更新时间: 2026-04-22*
+*更新时间: 2026-05-20*

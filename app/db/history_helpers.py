@@ -9,6 +9,7 @@
 
 import json
 import logging
+from datetime import datetime
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ def _safe_value(v):
 
 def capture_existing_values(conn, forceid: str) -> Optional[Dict[str, Any]]:
     """读取当前行的追踪字段值，不存在返回 None"""
-    fields_str = ', '.join(TRACKED_AI_FIELDS) + ', manual_status, manual_conclusion, first_ai_audit_time'
+    fields_str = ', '.join(TRACKED_AI_FIELDS) + ', manual_status, manual_conclusion, first_ai_audit_time, created_at'
     with conn.cursor() as cur:
         cur.execute(
             f"SELECT {fields_str} FROM {TABLE_REVIEW_RESULT} WHERE forceid=%s",
@@ -98,6 +99,7 @@ def write_ai_history_if_changed(conn, forceid: str, new_fields: Dict[str, Any],
         return None
 
     # 构建历史记录
+    now = datetime.now()
     history = {
         'forceid': forceid,
         'claim_id': new_fields.get('claim_id'),
@@ -116,6 +118,8 @@ def write_ai_history_if_changed(conn, forceid: str, new_fields: Dict[str, Any],
         'pipeline_version': new_fields.get('pipeline_version'),
         'rule_ids_hit': new_fields.get('rule_ids_hit'),
         'audit_time': new_fields.get('audit_time'),
+        'created_at': existing.get('created_at') if existing and existing.get('created_at') else now,
+        'updated_at': now,
     }
 
     # snapshot_json: 完整快照
@@ -174,6 +178,7 @@ def write_manual_history_if_changed(conn, forceid: str,
         return None  # 无变化
 
     # 构建历史记录（同时保存当前 AI 状态作为快照上下文）
+    now = datetime.now()
     history = {
         'forceid': forceid,
         'benefit_name': benefit_name,
@@ -187,6 +192,8 @@ def write_manual_history_if_changed(conn, forceid: str,
         'identity_match': existing.get('identity_match'),
         'threshold_met': existing.get('threshold_met'),
         'exclusion_triggered': existing.get('exclusion_triggered'),
+        'created_at': now,
+        'updated_at': now,
     }
     history['snapshot_json'] = json.dumps({
         'forceid': forceid,
