@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys, json, asyncio
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dotenv import load_dotenv
 load_dotenv()

@@ -34,16 +34,7 @@ CONCLUDED_STATUSES = {
 LOGGER = logging.getLogger(__name__)
 
 
-def _detect_claim_type(benefit_name: str, claim_type_hint: str = "") -> str:
-    combined = f"{benefit_name or ''} {claim_type_hint or ''}"
-    lowered = combined.lower()
-    if "行李延误" in combined or "baggage_delay" in lowered:
-        return "baggage_delay"
-    if "航班延误" in combined or "flight_delay" in lowered:
-        return "flight_delay"
-    if "行李" in combined or "baggage" in lowered:
-        return "baggage_damage"
-    return "flight_delay"
+from app.modules.router import detect_claim_type
 
 
 class IncrementalDownloadScheduler:
@@ -275,7 +266,7 @@ class IncrementalDownloadScheduler:
                 if not forceid:
                     continue
                 benefit_name = record.get("benefitName", "")
-                claim_type = _detect_claim_type(benefit_name=benefit_name)
+                claim_type = detect_claim_type(benefit=benefit_name)
                 try:
                     existing = await self.status_manager.get_claim_status(forceid)
                     if existing is None:
@@ -513,7 +504,7 @@ class IncrementalDownloadScheduler:
         benefit_name = claim.get('BenefitName', '') or claim.get('benefit_name', '')
         claim_type = claim.get('claim_type', '') or claim.get('type', '')
 
-        detected = _detect_claim_type(benefit_name=benefit_name, claim_type_hint=claim_type)
+        detected = detect_claim_type(benefit=benefit_name, folder_hint=claim_type)
         if detected in {'flight_delay', 'baggage_delay', 'baggage_damage'}:
             return detected
         elif '行李' in benefit_name or 'baggage' in claim_type.lower():

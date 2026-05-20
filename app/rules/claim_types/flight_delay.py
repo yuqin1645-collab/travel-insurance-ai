@@ -65,9 +65,9 @@ def check_rebooking_scenario(
     def _parse(s: Optional[str]):
         if not s:
             return None
-        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
             try:
-                return datetime.strptime(s[:len(fmt)], fmt)
+                return datetime.strptime(s, fmt)
             except Exception:
                 continue
         return None

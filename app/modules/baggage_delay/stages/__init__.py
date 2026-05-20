@@ -35,6 +35,11 @@ from .calculator import (
 
 from .vision_merge import _merge_vision_to_parsed
 
+from .aviation_lookup import run_aviation_lookup
+from .accident_validation import validate_accident_type
+from .material_gate import run_material_gate
+from .post_process import run_post_process
+
 __all__ = [
     # utils
     "_safe_float", "_parse_date", "_extract_delay_hours",
@@ -51,4 +56,12 @@ __all__ = [
     "_compute_tier_amount",
     # vision_merge
     "_merge_vision_to_parsed",
+    # aviation_lookup
+    "run_aviation_lookup",
+    # accident_validation
+    "validate_accident_type",
+    # material_gate
+    "run_material_gate",
+    # post_process
+    "run_post_process",
 ]

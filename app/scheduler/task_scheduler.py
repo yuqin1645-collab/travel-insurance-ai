@@ -24,20 +24,15 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 
 from app.config import config
 from app.production.main_workflow import get_production_workflow, ProductionWorkflow
-from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
+from app.claim_ai_reviewer import AIClaimReviewer
+from app.runner import review_claim_async
 from app.policy_terms_registry import POLICY_TERMS
 from app.output.frontend_pusher import push_to_frontend
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _detect_claim_type(benefit: str) -> str:
-    text = str(benefit or "")
-    if "行李延误" in text:
-        return "baggage_delay"
-    if "航班延误" in text or "延误" in text:
-        return "flight_delay"
-    return "baggage_damage"
+from app.modules.router import detect_claim_type
 
 
 class TaskScheduler:
@@ -289,7 +284,7 @@ class TaskScheduler:
                         continue
 
                     benefit = str(data.get("BenefitName") or "")
-                    claim_type = _detect_claim_type(benefit)
+                    claim_type = detect_claim_type(benefit=benefit)
                     claim_id = data.get("ClaimId") or forceid
 
                     await self.workflow.status_manager.create_claim_status(

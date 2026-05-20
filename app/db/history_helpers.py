@@ -83,16 +83,18 @@ def write_ai_history_if_changed(conn, forceid: str, new_fields: Dict[str, Any],
         conn: pymysql connection（已开启事务）
         forceid: 案件唯一ID
         new_fields: 刚刚 UPSERT 的字段字典
-        existing: 可选，调用方已读取的旧值（避免重复查询）。
-                  如果为 None，本函数会重新查询。
+        existing: 调用方在 UPSERT 前读取的旧值。
+                  如果为 None，说明是首次插入，会跳过变化检测直接写入历史。
 
     Returns:
         历史行 ID（有变化时）或 None（无变化）
     """
-    if existing is None:
-        existing = capture_existing_values(conn, forceid)
+    # existing 是调用方在 UPSERT 前捕获的旧值，此处不应重新查询，
+    # 因为 UPSERT 已经执行完毕，重新查询拿到的就是新写入的值，
+    # _fields_differ 永远返回 False（这是之前 0 条 AI 历史记录的根因）。
+    is_first_insert = existing is None
 
-    if not _fields_differ(existing, new_fields, TRACKED_AI_FIELDS):
+    if not is_first_insert and not _fields_differ(existing, new_fields, TRACKED_AI_FIELDS):
         return None
 
     # 构建历史记录
@@ -122,9 +124,9 @@ def write_ai_history_if_changed(conn, forceid: str, new_fields: Dict[str, Any],
 
     row_id = insert_history_row(conn, history)
 
-    # 设置里程碑列（仅首次）
-    is_first = existing is None or existing.get('first_ai_audit_time') is None
-    if is_first:
+    # 设置里程碑列（首次插入，或已有行但尚未设置过 first_ai_audit_time）
+    already_has_milestone = existing is not None and existing.get('first_ai_audit_time') is not None
+    if is_first_insert or not already_has_milestone:
         _set_milestone_columns(conn, forceid, new_fields, existing)
 
     logger.debug(f"历史版本记录: forceid={forceid}, history_id={row_id}, type=ai")

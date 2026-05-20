@@ -1,3 +1,5 @@
+# 此文件保留作为过渡。主依赖声明在 pyproject.toml 中。
+# 仍可使用 pip install -r requirements.txt 安装。
 requests
 python-dotenv
 urllib3<2

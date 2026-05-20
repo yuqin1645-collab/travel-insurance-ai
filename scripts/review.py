@@ -33,7 +33,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.config import config
-from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
+from app.claim_ai_reviewer import AIClaimReviewer
+from app.runner import review_claim_async
 from app.policy_terms_registry import POLICY_TERMS
 from app.output.frontend_pusher import push_to_frontend
 from app.state.constants import ClaimStatus
@@ -57,13 +58,7 @@ CONCLUDED_STATUSES = {
 # 工具函数
 # ─────────────────────────────────────────────
 
-def detect_claim_type(claim_info: Dict) -> str:
-    benefit = str(claim_info.get("BenefitName") or "")
-    if "航班延误" in benefit:
-        return "flight_delay"
-    if "行李延误" in benefit:
-        return "baggage_delay"
-    return "baggage_damage"
+from app.modules.router import detect_claim_type
 
 
 def find_claim_folder(forceid: str) -> Path | None:

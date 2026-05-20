@@ -28,13 +28,7 @@ from app.db.history_helpers import write_ai_history_if_changed, write_manual_his
 LOGGER = logging.getLogger(__name__)
 
 
-def _detect_claim_type(benefit: str) -> str:
-    text = str(benefit or "")
-    if "行李延误" in text:
-        return "baggage_delay"
-    if "航班延误" in text or "延误" in text:
-        return "flight_delay"
-    return "baggage_damage"
+from app.modules.router import detect_claim_type
 
 
 class ProductionWorkflow:
@@ -1049,7 +1043,7 @@ class ProductionWorkflow:
         """
         孤儿案件兜底扫描：扫描本地 claims_data，对已下载但未在 claim_status 表注册、
         且没有审核结果的案件，注册状态并推入审核队列。
-        解决 run_incremental.py 等路径下载后未注册的问题。
+        解决 scripts/run_incremental.py 等路径下载后未注册的问题。
         """
         LOGGER.info("开始孤儿案件兜底扫描...")
 
@@ -1096,7 +1090,7 @@ class ProductionWorkflow:
 
                 # 判断案件类型
                 benefit = str(data.get("BenefitName") or "")
-                claim_type = _detect_claim_type(benefit)
+                claim_type = detect_claim_type(benefit)
 
                 # 注册到审核队列
                 claim_id = data.get("ClaimId") or data.get("caseNo") or forceid

@@ -19,7 +19,8 @@ from app.state.status_manager import get_status_manager, StatusManager
 from app.state.constants import ClaimStatus, ReviewStatus
 from app.db.models import ClaimStatusRecord, SchedulerLog, TaskType, TaskStatus
 from app.db.database import get_scheduler_log_dao, get_db_connection
-from app.claim_ai_reviewer import AIClaimReviewer, review_claim_async
+from app.claim_ai_reviewer import AIClaimReviewer
+from app.runner import review_claim_async
 from app.policy_terms_registry import POLICY_TERMS
 from app.output.frontend_pusher import push_to_frontend
 
@@ -262,7 +263,7 @@ class ReviewScheduler:
             LOGGER.warning(f"条款文件读取失败: {e}")
             policy_terms = ""
 
-        # 使用与 run_incremental.py 相同的审核入口
+        # 使用与 scripts/run_incremental.py 相同的审核入口
         reviewer = AIClaimReviewer()
         connector = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=connector, trust_env=True) as session:
