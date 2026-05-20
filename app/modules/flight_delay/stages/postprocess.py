@@ -154,13 +154,27 @@ def _postprocess_audit_result(
 
             capacity_check = hardcheck.get("capacity_check") or {}
             if capacity_check.get("needs_guardian"):
-                if isinstance(audit["logic_check"], dict):
-                    audit["logic_check"]["needs_guardian"] = True
-                note = str(capacity_check.get("note") or "被保险人为未成年人或限制民事行为能力人")
-                if str(audit.get("audit_result") or "") not in ("拒绝",):
-                    audit["audit_result"] = "需补齐资料"
-                    audit["explanation"] = f"【需监护人材料】{note}，请补充监护人身份证明及监护关系证明"
-                    return audit
+                # 检查是否已提供监护人材料
+                guardian_check = hardcheck.get("guardian_materials_check") or {}
+                if guardian_check.get("has_guardian_materials"):
+                    # 监护人材料已齐全，豁免补件要求
+                    if isinstance(audit["logic_check"], dict):
+                        audit["logic_check"]["needs_guardian"] = True
+                        audit["logic_check"]["guardian_materials_provided"] = True
+                    # 添加备注说明监护人材料已提供
+                    guardian_note = str(guardian_check.get("note") or "已提供监护人材料")
+                    if isinstance(audit.get("debug_notes"), list):
+                        audit["debug_notes"].append(f"监护人材料检查: {guardian_note}")
+                    # 不返回，继续后续审核流程
+                else:
+                    # 监护人材料不齐全，要求补件
+                    if isinstance(audit["logic_check"], dict):
+                        audit["logic_check"]["needs_guardian"] = True
+                    note = str(capacity_check.get("note") or "被保险人为未成年人或限制民事行为能力人")
+                    if str(audit.get("audit_result") or "") not in ("拒绝",):
+                        audit["audit_result"] = "需补齐资料"
+                        audit["explanation"] = f"【需监护人材料】{note}，请补充监护人身份证明及监护关系证明"
+                        return audit
 
             same_day_check = hardcheck.get("same_day_policy_check") or {}
             if same_day_check.get("is_denied") is True:

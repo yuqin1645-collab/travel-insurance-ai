@@ -26,6 +26,7 @@ from .validators import (
     _check_name_match,
     _check_same_day_policy,
     _check_coverage_area_text,
+    _check_guardian_materials,
 )
 
 # 模块级常量
@@ -220,6 +221,7 @@ def _run_hardcheck(
     policy_excerpt: str,
     free_text: str = "",
     vision_extract: Optional[Dict[str, Any]] = None,
+    claim_folder: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """代码侧硬校验集合（不依赖AI，确定性判定）。"""
     result: Dict[str, Any] = {
@@ -913,6 +915,38 @@ def _run_hardcheck(
         result["fraud_foreseeability_check"] = fraud_check
         result["inheritance_check"] = _check_inheritance_scenario(claim_info=claim_info)
         result["capacity_check"] = _check_legal_capacity(claim_info=claim_info)
+
+        # 检查监护人材料是否已提供
+        # 从 claim_folder 中获取实际的文件名（优先使用本地文件名，因为可能包含原始文件名）
+        file_names = []
+        if claim_folder:
+            try:
+                for f in claim_folder.iterdir():
+                    if f.is_file() and f.name != "claim_info.json":
+                        file_names.append(f.name)
+            except Exception:
+                pass
+
+        # 如果本地文件名获取失败，回退到 FileList URL 中的文件名
+        if not file_names:
+            file_list = claim_info.get("FileList") or []
+            for item in file_list:
+                if isinstance(item, dict):
+                    url = item.get("FileUrl") or item.get("fileUrl") or item.get("url") or ""
+                    if url:
+                        fname = url.split("/")[-1].split("?")[0] if "/" in url else url
+                        if fname:
+                            file_names.append(fname)
+                elif isinstance(item, str):
+                    file_names.append(item)
+
+        result["guardian_materials_check"] = _check_guardian_materials(
+            claim_info=claim_info,
+            vision_extract=vision_extract or {},
+            file_names=file_names,
+            claim_folder=claim_folder,
+        )
+
         result["name_match_check"] = _check_name_match(
             parsed=parsed, claim_info=claim_info, vision_extract=vision_extract or {},
         )

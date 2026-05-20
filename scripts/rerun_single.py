@@ -25,7 +25,7 @@ def find_claim_folder(forceid: str):
     return None
 
 async def main():
-    forceid = "a0nC800000Ll6vVIAR"
+    forceid = "a0nC800000Oopb3IAB"
     folder = find_claim_folder(forceid)
     if not folder:
         print(f"未找到案件目录: {forceid}")

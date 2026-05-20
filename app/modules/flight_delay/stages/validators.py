@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from app.skills.policy_booking import _parse_datetime_str
@@ -68,6 +69,120 @@ def _check_legal_capacity(claim_info: Dict[str, Any]) -> Dict[str, Any]:
         "id_number": id_number,
         "note": f"证件类型({id_type or '未知'})无法从证件号提取年龄，如申请人为未成年人请人工核查",
     }
+
+
+def _check_guardian_materials(
+    claim_info: Dict[str, Any],
+    vision_extract: Dict[str, Any],
+    file_names: Optional[list] = None,
+    claim_folder: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """检查是否已提供监护人材料（监护人身份证 + 监护关系证明）。
+
+    核心逻辑：
+    1. 优先检查 vision_extract 中的 guardian_materials 字段（由 AI 视觉模型识别）
+    2. 如果没有，则检查文件名和文本中的关键词
+    3. 如果同时有监护人身份证明和监护关系证明，则认为材料已齐全
+    """
+    # 优先检查 vision_extract 中的 guardian_materials 字段
+    guardian_data = vision_extract.get("guardian_materials", {})
+    if guardian_data:
+        has_guardian_id = guardian_data.get("has_guardian_id", False)
+        has_relationship_proof = guardian_data.get("has_relationship_proof", False)
+        
+        if has_guardian_id and has_relationship_proof:
+            return {
+                "has_guardian_materials": True,
+                "has_guardian_id": has_guardian_id,
+                "has_relationship_proof": has_relationship_proof,
+                "note": "已提供监护人身份证明及监护关系证明（AI视觉识别）",
+            }
+        elif has_guardian_id or has_relationship_proof:
+            missing = []
+            if not has_guardian_id:
+                missing.append("监护人身份证明")
+            if not has_relationship_proof:
+                missing.append("监护关系证明")
+            return {
+                "has_guardian_materials": False,
+                "has_guardian_id": has_guardian_id,
+                "has_relationship_proof": has_relationship_proof,
+                "note": f"部分监护人材料已提供（AI视觉识别），缺少：{'、'.join(missing)}",
+            }
+    
+    # 回退到关键词匹配
+    text_parts = []
+
+    # 从 claim_info 收集信息
+    for key, value in claim_info.items():
+        if isinstance(value, str) and value:
+            text_parts.append(value.lower())
+
+    # 从 vision_extract 收集信息
+    for key, value in vision_extract.items():
+        if isinstance(value, str) and value:
+            text_parts.append(value.lower())
+        elif isinstance(value, dict):
+            for v in value.values():
+                if isinstance(v, str) and v:
+                    text_parts.append(v.lower())
+
+    # 从文件名收集信息
+    if file_names:
+        for fname in file_names:
+            text_parts.append(fname.lower())
+
+    joined_text = " ".join(text_parts)
+
+    # 监护人身份证明关键词
+    guardian_id_keywords = [
+        "监护人", "guardian", "父亲", "母亲", "parent", "father", "mother",
+        "身份证", "identity card", "id card",
+    ]
+
+    # 监护关系证明关键词
+    relationship_keywords = [
+        "出生", "出生证", "出生医学证明", "birth certificate", "birth cert",
+        "户口簿", "户口本", "household register", "hukou",
+        "监护关系", "guardian relationship", "关系证明",
+        "父子", "母子", "父女", "母女",
+    ]
+
+    # 检查是否找到监护人身份证明
+    has_guardian_id = any(kw in joined_text for kw in guardian_id_keywords)
+
+    # 检查是否找到监护关系证明
+    has_relationship_proof = any(kw in joined_text for kw in relationship_keywords)
+
+    # 判断材料是否齐全
+    materials_complete = has_guardian_id and has_relationship_proof
+
+    if materials_complete:
+        return {
+            "has_guardian_materials": True,
+            "has_guardian_id": has_guardian_id,
+            "has_relationship_proof": has_relationship_proof,
+            "note": "已提供监护人身份证明及监护关系证明",
+        }
+    elif has_guardian_id or has_relationship_proof:
+        missing = []
+        if not has_guardian_id:
+            missing.append("监护人身份证明")
+        if not has_relationship_proof:
+            missing.append("监护关系证明")
+        return {
+            "has_guardian_materials": False,
+            "has_guardian_id": has_guardian_id,
+            "has_relationship_proof": has_relationship_proof,
+            "note": f"部分监护人材料已提供，缺少：{'、'.join(missing)}",
+        }
+    else:
+        return {
+            "has_guardian_materials": False,
+            "has_guardian_id": False,
+            "has_relationship_proof": False,
+            "note": "未检测到监护人材料",
+        }
 
 
 def _check_name_match(

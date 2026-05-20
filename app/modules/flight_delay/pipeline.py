@@ -146,7 +146,7 @@ async def review_flight_delay_async(
 
     # ========== stage_hardcheck: 代码侧硬校验集合 ==========
     LOGGER.info(f"[{index}/{total}] 航班延误-硬校验: Skills B/C/E/H/I...", extra=log_extra(forceid=forceid, stage="fd_hardcheck", attempt=0))
-    hardcheck = _run_hardcheck(parsed=parsed, claim_info=claim_info, policy_excerpt=policy_excerpt, free_text=free_text, vision_extract=ctx.get("flight_delay_vision_extract") or {})
+    hardcheck = _run_hardcheck(parsed=parsed, claim_info=claim_info, policy_excerpt=policy_excerpt, free_text=free_text, vision_extract=ctx.get("flight_delay_vision_extract") or {}, claim_folder=claim_folder)
     ctx["flight_delay_hardcheck"] = hardcheck
 
     # ========== 阶段10: 赔付金额预计算（代码侧） ==========
