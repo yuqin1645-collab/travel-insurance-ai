@@ -230,6 +230,7 @@ class ProductionWorkflow:
             database=os.getenv("DB_NAME", "ai"),
             charset="utf8mb4",
             autocommit=False,
+            cursorclass=pymysql.cursors.DictCursor,
         )
         BATCH_SIZE = 100
         success = fail = 0
