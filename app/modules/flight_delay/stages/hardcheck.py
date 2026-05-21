@@ -550,34 +550,9 @@ def _run_hardcheck(
         is_connecting_flight = _truthy(itinerary.get("is_connecting_or_transit"))
         aviation_delay_proof = _truthy((parsed or {}).get("evidence", {}).get("aviation_delay_proof"))
 
-        def _has_connecting_keyword(text: str) -> bool:
-            t = text.lower()
-            for kw in [
-                "missed their connecting", "misconnection", "connecting flight",
-                "接驳", "误机后续", "错过后续", "未能搭乘后续", "错过接驳",
-                # 新增：更多中转接驳相关表述
-                "前序航班", "前段航班", "前序延误", "前段延误",
-                "转机", "中转", "中转延误", "联程延误",
-                "衔接不上", "赶不上", "来不及",
-                "missed connection", "missed transit", "transit delay",
-                "connection missed", "unable to connect",
-            ]:
-                for m in re.finditer(re.escape(kw), t):
-                    prefix = t[max(0, m.start()-15):m.start()]
-                    if any(neg in prefix for neg in ["未见", "未发现", "未检测", "无", "not ", "no ", "未提及", "不涉及"]):
-                        continue
-                    return True
-            return False
-
-        explanation_text = str((parsed or {}).get("explanation") or "")
-        extraction_notes = str((vision_extract or {}).get("extraction_notes") or "")
-        free_text_lower = (free_text or "")
-        if (
-            _has_connecting_keyword(explanation_text)
-            or _has_connecting_keyword(extraction_notes)
-            or _has_connecting_keyword(free_text_lower)
-        ):
-            mention_missed_connection = True
+        # 删除 _has_connecting_keyword 函数（2026-05-21）：
+        # 关键词匹配容易误判否定语境（如"非中转接驳"、"未说明是否中转"）
+        # 改为完全依赖 Vision 模型的 itinerary.mentions_missed_connection 输出
 
         delay_reason = str((parsed or {}).get("delay_reason") or "").lower()
         missed_connection_keywords = ["前序", "接驳", "误机", "missed connection", "connecting", "transit delay"]
@@ -775,7 +750,9 @@ def _run_hardcheck(
         has_insurance_certificate = _truthy(evidence.get("has_insurance_certificate"))
         has_id_proof = _truthy(evidence.get("has_id_proof"))
         has_delay_proof = _truthy(evidence.get("has_delay_proof"))
-        has_boarding_pass = _truthy(evidence.get("has_boarding_pass"))
+        # 登机牌信息优先从 vision_extract 获取（2026-05-21修复）
+        vision_evidence = (vision_extract or {}).get("evidence") or {}
+        has_boarding_pass = _truthy(evidence.get("has_boarding_pass")) or _truthy(vision_evidence.get("has_boarding_pass"))
         has_passport = _truthy(evidence.get("has_passport"))
         has_exit_entry_record = _truthy(evidence.get("has_exit_entry_record"))
         exit_dt = str(evidence.get("exit_datetime") or "").strip()
