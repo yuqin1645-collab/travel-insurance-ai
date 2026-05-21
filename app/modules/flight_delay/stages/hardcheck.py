@@ -758,6 +758,25 @@ def _run_hardcheck(
         exit_dt = str(evidence.get("exit_datetime") or "").strip()
         if has_exit_entry_record is not True and not _is_unknown(exit_dt):
             has_exit_entry_record = True
+        # 出入境记录日期合理性校验（2026-05-21新增）：
+        # 出境日期与航班日期相差超过1天，视为无效记录（可能是Vision幻觉）
+        if has_exit_entry_record is True and exit_dt:
+            try:
+                from datetime import datetime
+                # 解析出境日期（格式可能是 "2026-04-28 10:00" 或 "2026-04-28"）
+                exit_date_parsed = datetime.strptime(exit_dt[:10], "%Y-%m-%d").date()
+                # 获取航班日期（优先使用 schedule_local 的 planned_dep）
+                flight_date_str = str((parsed or {}).get("schedule_local", {}).get("planned_dep") or "")[:10]
+                if flight_date_str:
+                    flight_date_parsed = datetime.strptime(flight_date_str, "%Y-%m-%d").date()
+                    date_diff = abs((exit_date_parsed - flight_date_parsed).days)
+                    if date_diff > 1:
+                        has_exit_entry_record = False
+                        result["debug_notes"].append(
+                            f"出入境记录日期不合理：出境日期({exit_dt[:10]})与航班日期({flight_date_str})相差{date_diff}天，视为无效"
+                        )
+            except Exception as e:
+                result["debug_notes"].append(f"出入境记录日期校验降级: {e}")
         # 预计算国际航班判定（出入境兜底和护照兜底共用）
         route_dep_cc = str(dep_info.get("country_code") or "").strip().upper()
         route_arr_cc = str(arr_info.get("country_code") or "").strip().upper()
