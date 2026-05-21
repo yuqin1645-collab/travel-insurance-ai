@@ -269,18 +269,41 @@ def _run_hardcheck(
         dep_found = dep_info.get("found", False)
         arr_found = arr_info.get("found", False)
 
+        # 检查 itinerary_segments 中是否有任何国际段
+        itinerary_segments = (vision_extract or {}).get("itinerary_segments") or []
+        has_international_segment = False
+        international_segments = []
+        for seg in itinerary_segments:
+            seg_dep = str(seg.get("original_dep_iata") or seg.get("dep_iata") or "").strip().upper()
+            seg_arr = str(seg.get("original_arr_iata") or seg.get("arr_iata") or "").strip().upper()
+            if seg_dep and seg_arr:
+                seg_dep_info = resolve_country(seg_dep)
+                seg_arr_info = resolve_country(seg_arr)
+                seg_dep_cc = seg_dep_info.get("country_code", "")
+                seg_arr_cc = seg_arr_info.get("country_code", "")
+                # 只要有一段不是纯国内（出发地或目的地有一个不是CN），就算国际段
+                if seg_dep_cc != "CN" or seg_arr_cc != "CN":
+                    has_international_segment = True
+                    international_segments.append(f"{seg_dep}[{seg_dep_cc}]→{seg_arr}[{seg_arr_cc}]")
+
         if dep_iata and arr_iata and dep_found and arr_found:
-            is_pure_domestic_cn = (dep_cc == "CN" and arr_cc == "CN")
+            is_pure_domestic_cn = (dep_cc == "CN" and arr_cc == "CN") and not has_international_segment
             result["domestic_flight_check"] = {
                 "is_pure_domestic_cn": is_pure_domestic_cn,
                 "dep_iata": dep_iata,
                 "arr_iata": arr_iata,
                 "dep_country": dep_cc,
                 "arr_country": arr_cc,
+                "has_international_segment": has_international_segment,
+                "international_segments": international_segments,
                 "note": (
                     f"纯中国大陆国内航班（{dep_iata}→{arr_iata}），不在承保范围内"
                     if is_pure_domestic_cn
-                    else f"含国际/境外段（{dep_iata}[{dep_cc}]→{arr_iata}[{arr_cc}]），在承保范围内"
+                    else (
+                        f"含国际/境外段（{dep_iata}[{dep_cc}]→{arr_iata}[{arr_cc}]），在承保范围内"
+                        if not has_international_segment
+                        else f"行程含国际段（{'；'.join(international_segments)}），在承保范围内"
+                    )
                 ),
             }
         else:
@@ -288,7 +311,13 @@ def _run_hardcheck(
                 "is_pure_domestic_cn": None,
                 "dep_iata": dep_iata,
                 "arr_iata": arr_iata,
-                "note": "出发地或目的地机场未知，无法判定是否纯国内航班",
+                "has_international_segment": has_international_segment,
+                "international_segments": international_segments,
+                "note": (
+                    f"行程含国际段（{'；'.join(international_segments)}），在承保范围内"
+                    if has_international_segment
+                    else "出发地或目的地机场未知，无法判定是否纯国内航班"
+                ),
             }
 
         war_checks = []
@@ -429,15 +458,14 @@ def _run_hardcheck(
                 elif _cov.get("in_coverage") is False:
                     failed_times.append((_label, _time_beijing))
 
-            # 有效期判定逻辑（修正 2026-05-08）：
-            # - 如果有实际时间（实际出发/到达、替代航班起飞/到达），以实际时间为准：
-            #   至少一个实际时间在有效期内 → 通过；全部实际时间超出 → 拒绝
-            # - 如果没有实际时间，降级使用计划/参考时间（OR逻辑）
-            if has_actual_times:
+            # 有效期判定逻辑（修正 2026-05-20）：
+            # OR逻辑：只要有任何一个时间点在有效期内就通过
+            # 优先级：实际时间 > 计划/参考时间
+            if passed_times:
+                in_coverage = True
+                # 优先使用实际时间作为判定依据
                 actual_passed = [t for t in passed_times if t[0] in actual_time_labels]
-                actual_failed = [t for t in failed_times if t[0] in actual_time_labels]
                 if actual_passed:
-                    in_coverage = True
                     final_check_result = check_delay_in_coverage(
                         delay_time=actual_passed[0][1],
                         effective_from=effective_from,
@@ -447,35 +475,7 @@ def _run_hardcheck(
                         time_basis_label=actual_passed[0][0],
                     )
                     final_basis = f"{actual_passed[0][0]}: {actual_passed[0][1]}"
-                elif actual_failed:
-                    # 所有实际时间都超出有效期 → 拒绝
-                    in_coverage = False
-                    final_check_result = {
-                        "in_coverage": False,
-                        "applied_from": effective_from or "unknown",
-                        "applied_to": effective_to or "unknown",
-                        "used_extension": False,
-                        "note": "所有实际航班时间均超出保单有效期",
-                        "basis": f"实际时间全部超出: {', '.join(f'{l}({t})' for l, t in actual_failed)}",
-                    }
-                    final_basis = f"实际时间全部超出有效期"
                 else:
-                    # 实际时间全部无法判定 → 降级OR
-                    if passed_times:
-                        in_coverage = True
-                        final_check_result = check_delay_in_coverage(
-                            delay_time=passed_times[0][1],
-                            effective_from=effective_from,
-                            effective_to=effective_to,
-                            is_allianz=is_allianz,
-                            first_exit_date=first_exit_date,
-                            time_basis_label=passed_times[0][0],
-                        )
-                        final_basis = f"{passed_times[0][0]}: {passed_times[0][1]}"
-            else:
-                # 无实际时间，使用计划/参考时间（OR逻辑）
-                if passed_times:
-                    in_coverage = True
                     final_check_result = check_delay_in_coverage(
                         delay_time=passed_times[0][1],
                         effective_from=effective_from,
@@ -613,15 +613,73 @@ def _run_hardcheck(
         aviation_delay_proof_override = False
         prev_seg_arrived_ok = False  # 前程正常到达（飞常准确认）
         causal_check_available = False  # 因果检查是否执行
+        claim_flight_is_first_segment = False  # 理赔航班是否为第一程（无前序航班）
+        has_terminal_code_issue = False  # 是否存在航站楼代码问题（新增 2026-05-20）
 
         # 业务规则（2026-05-11明确）：不管延误时长够不够，
         # 都要检查是否前序航班延误导致到达中转站时间延后，造成赶不上后续航班。
         # 因果检查优先于改签豁免：先判断前序是否延误，再决定是否豁免。
 
+        # ── 新增（2026-05-20）：判断理赔航班是否为第一程 ──
+        # 如果理赔航班是行程的第一段（没有前序航班），则中转接驳免责不成立
+        # 包括：整个行程的第一段，或者返程的第一段
+        claim_dep_iata = str((parsed or {}).get("route", {}).get("dep_iata") or "").strip().upper()
+        claim_flight_no = str((parsed or {}).get("flight", {}).get("ticket_flight_no") or "").strip().upper()
+        itinerary_segs = (vision_extract or {}).get("itinerary_segments") or []
+
+        # ── 新增（2026-05-20）：检测航站楼代码问题 ──
+        # 视觉模型可能把航站楼代码（T1/T2/T3/T4/T4S等）误识别为机场代码
+        # 这种情况下无法正确执行因果检查，应跳过中转接驳免责
+        _TERMINAL_CODES = {"T1", "T2", "T3", "T4", "T4S", "T5", "T6", "T7", "T8", "T9"}
+        for seg in itinerary_segs:
+            seg_dep = str(seg.get("original_dep_iata") or "").strip().upper()
+            seg_arr = str(seg.get("original_arr_iata") or "").strip().upper()
+            if seg_dep in _TERMINAL_CODES or seg_arr in _TERMINAL_CODES:
+                has_terminal_code_issue = True
+                break
+
+        if claim_dep_iata and itinerary_segs:
+            # 检查理赔航班是否是 itinerary_segments 中的第一段
+            first_seg = itinerary_segs[0] if itinerary_segs else {}
+            first_seg_dep = str(first_seg.get("original_dep_iata") or "").strip().upper()
+            first_seg_flight_no = str(first_seg.get("original_flight_no") or "").strip().upper()
+            # 如果理赔航班的出发地等于第一段的出发地，且航班号匹配，则是第一程
+            if claim_dep_iata == first_seg_dep and (claim_flight_no == first_seg_flight_no or not claim_flight_no):
+                claim_flight_is_first_segment = True
+
+            # 新增：检查理赔航班是否是返程的第一段
+            # 方法：查找 itinerary_segments 中是否有从国外返回国内的段，且该段的出发地不等于整个行程的出发地
+            if not claim_flight_is_first_segment:
+                # 获取整个行程的原始出发地（第一段出发地）
+                trip_origin = first_seg_dep  # 例如 HGH
+                for i, seg in enumerate(itinerary_segs):
+                    seg_dep = str(seg.get("original_dep_iata") or "").strip().upper()
+                    seg_arr = str(seg.get("original_arr_iata") or "").strip().upper()
+                    seg_fn = str(seg.get("original_flight_no") or "").strip().upper()
+                    # 如果该段的出发地等于理赔航班的出发地，且该段不是整个行程的第一段
+                    # 且该段的前一段的到达地等于该段的出发地（说明是中转）
+                    # 但更简单的判断：如果理赔航班的出发地不是 trip_origin，且该段是某个方向的第一段
+                    if seg_dep == claim_dep_iata and seg_dep != trip_origin:
+                        # 检查前一段的到达地是否等于该段的出发地
+                        if i > 0:
+                            prev_seg_arr = str(itinerary_segs[i-1].get("original_arr_iata") or "").strip().upper()
+                            # 如果前一段的到达地等于该段的出发地，说明是中转点
+                            # 但如果前一段是去程的最后一段，该段是返程的第一段
+                            if prev_seg_arr == seg_dep:
+                                # 这是返程的第一段（在中转点开始返程）
+                                claim_flight_is_first_segment = True
+                                break
+
         # ── 因果检查：前程 actual_arr vs 末段 planned_dep ──
         connecting_segments = (parsed or {}).get("connecting_segments_data") or []
         last_seg_dep_iata_val = str((parsed.get("schedule_local") or {}).get("last_seg_dep_iata") or "").strip()
-        if connecting_segments and last_seg_dep_iata_val:
+        # 新增：如果理赔航班是第一程，因果检查不适用
+        if claim_flight_is_first_segment:
+            causal_check_available = False
+        # 新增：如果存在航站楼代码问题，因果检查不适用
+        elif has_terminal_code_issue:
+            causal_check_available = False
+        elif connecting_segments and last_seg_dep_iata_val:
             causal_check_available = True
             for seg in connecting_segments:
                 if str(seg.get("arr_iata") or "").strip().upper() == last_seg_dep_iata_val.upper():
@@ -655,30 +713,9 @@ def _run_hardcheck(
         if is_missed_connection and causal_check_available and prev_seg_arrived_ok:
             is_missed_connection = False
 
-        # 改签豁免：仅在因果检查未执行或确认前程正常到达时才适用
-        # 如果因果检查确认前序延误导致了误机，即使有改签也不豁免
-        if is_missed_connection and has_rebooking and not causal_check_available:
-            # 无法确认前序是否延误 → 默认适用改签豁免
-            is_missed_connection = False
-            rebooking_override = True
-
-        LOGGER.info(
-            f"[missed_conn_check_line658] after has_rebooking check: is_missed={is_missed_connection}, rebovr={rebooking_override}",
-            extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
-        )
-
-        if is_missed_connection and avi_status == "取消" and has_rebooking and not is_conn_rebooking_flag and not causal_check_available:
-            is_missed_connection = False
-            rebooking_override = True
-
-        # 联程改签场景豁免：仅在因果检查未执行时才适用
-        LOGGER.info(
-            f"[missed_conn_check_line668] before is_conn_rebooking check: is_missed={is_missed_connection}, is_conn_rebooking={is_conn_rebooking_flag}, causal_avail={causal_check_available}",
-            extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
-        )
-        if is_missed_connection and is_conn_rebooking_flag and not causal_check_available:
-            is_missed_connection = False
-            rebooking_override = True
+        # 改签不豁免中转接驳免责：根据条款，只要前序航班延误导致错过后续航班，就应免责
+        # 无论是否航司安排改签，都不影响免责判定
+        # 删除了原有的 rebooking_override 逻辑（2026-05-21修复）
 
         _overbooking_keywords = ["超售", "overbooking", "overbooked", "denied boarding", "denied_boarding", "拒绝登机"]
         _all_texts = " ".join([
@@ -697,7 +734,9 @@ def _run_hardcheck(
             f"has_rebooking={has_rebooking}(alt_dep={alt_dep_val!r}, alt_fn={alt_flight_no!r}), "
             f"is_conn_rebooking={is_conn_rebooking_flag}, causal_avail={causal_check_available}, "
             f"avi_status={avi_status!r}, "
-            f"rebovr={rebooking_override}, prev_arr_ok={prev_seg_arrived_ok}",
+            f"prev_arr_ok={prev_seg_arrived_ok}, "
+            f"claim_first_seg={claim_flight_is_first_segment}, "
+            f"terminal_code_issue={has_terminal_code_issue}",
             extra=log_extra(forceid=str((claim_info or {}).get("forceid", "unknown")), stage="fd_hardcheck", attempt=0),
         )
 
@@ -709,24 +748,21 @@ def _run_hardcheck(
             "vision_confirms_missed": vision_confirms_missed,
             "aviation_delay_proof_override": aviation_delay_proof_override,
             "overbooking_override": overbooking_override,
-            "rebooking_override": rebooking_override,
             "prev_seg_arrived_ok": prev_seg_arrived_ok,
+            "claim_flight_is_first_segment": claim_flight_is_first_segment,
+            "has_terminal_code_issue": has_terminal_code_issue,
             "note": (
                 "前序航班延误导致无法搭乘后续接驳航班，属于免责情形4，不予赔付" if is_missed_connection
                 else (
-                    "原航班取消后承运人整体改签，旅客未乘坐原联程航班，不适用中转接驳免责"
-                    if rebooking_override
+                    "飞常准确认前程正常到达中转机场，末段独立取消/延误，不属于前程延误导致的误机，不适用联程免责"
+                    if prev_seg_arrived_ok
                     else (
-                        "飞常准确认前程正常到达中转机场，末段独立取消/延误，不属于前程延误导致的误机，不适用联程免责"
-                        if prev_seg_arrived_ok
+                        "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
+                        if aviation_delay_proof_override
                         else (
-                            "飞常准已确认被保险航班自身延误/取消，理赔事由明确，豁免中转接驳免责判定"
-                            if aviation_delay_proof_override
-                            else (
-                                "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
-                                if overbooking_override
-                                else "未检测到中转接驳延误特征"
-                            )
+                            "超售/拒绝登机属于外部原因，豁免中转接驳免责判定"
+                            if overbooking_override
+                            else "未检测到中转接驳延误特征"
                         )
                     )
                 )
@@ -855,17 +891,10 @@ def _run_hardcheck(
             missing_required.append("申请人身份证明（身份证/护照）")
         if has_delay_proof is False:
             missing_required.append("承运人延误书面证明")
-        if has_boarding_pass is not True and not (_truthy(evidence.get("aviation_delay_proof")) is True):
-            # 兜底：有延误证明 + 有身份证明 → 登机牌非必须（延误证明已含航班信息）
-            if has_delay_proof is True and has_id_proof is True:
-                has_boarding_pass = True
-                result["debug_notes"].append("登机牌兜底：延误证明+身份证明齐全，推断登机牌已满足")
-            # 兜底：Vision提取到有效航班数据 → 推断登机牌/行程单已提供
-            elif vision_extract and vision_extract.get("flight_no") and not _is_unknown(str(vision_extract.get("flight_no") or "")):
-                has_boarding_pass = True
-                result["debug_notes"].append("登机牌兜底：Vision已提取到航班号，推断登机牌/行程单已提供")
-            else:
-                missing_required.append("登机牌或电子客票行程单")
+        if has_boarding_pass is not True:
+            # 严格要求：必须有登机牌或电子客票行程单，不允许兜底
+            # 注意：延误证明+身份证明齐全不能替代登机牌，Vision提取到航班号也不能替代登机牌
+            missing_required.append("登机牌或电子客票行程单")
         if is_id_card_policy:
             if has_exit_entry_record is True and has_passport is False:
                 # 兜底：身份证保单但确认国际旅行 → 护照必然存在

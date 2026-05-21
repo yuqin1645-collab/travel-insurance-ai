@@ -481,14 +481,15 @@ def _check_coverage_area_text(
     _ASIA_CC = {
         "CN", "JP", "KR", "TH", "SG", "MY", "ID", "PH", "VN", "IN",
         "HK", "MO", "TW", "MM", "KH", "LA", "BD", "NP", "LK", "PK",
-        "MN", "KZ", "UZ", "AZ", "GE", "AM", "TJ", "TM", "KG",
-        "AE", "SA", "QA", "KW", "BH", "OM", "JO", "IL", "TR", "IR", "IQ",
+        "MN", "KZ", "UZ", "GE", "AM", "TJ", "TM", "KG",
+        "AE", "SA", "QA", "KW", "BH", "OM", "JO", "IL", "IR", "IQ",
     }
     _EUROPE_CC = {
         "GB", "FR", "DE", "IT", "ES", "NL", "BE", "CH", "AT", "SE",
         "NO", "DK", "FI", "PT", "GR", "PL", "CZ", "HU", "RO", "BG",
         "HR", "SK", "SI", "EE", "LV", "LT", "IE", "LU", "MT", "CY",
         "IS", "AL", "BA", "ME", "MK", "RS", "UA", "BY", "MD", "RU", "AZ",
+        "TR",  # 土耳其横跨欧亚，伊斯坦布尔位于欧洲部分，欧洲计划应覆盖
     }
     _AMERICA_CC = {
         "US", "CA", "MX", "BR", "AR", "CL", "CO", "PE", "VE", "EC",

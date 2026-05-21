@@ -229,6 +229,7 @@ def _check_domestic_flight(
     """纯国内航班检测：出发国和到达国均为中国时，不符合境外险承保范围。
 
     优先级策略：
+    0. 检查 itinerary_segments 中是否有任何国际段（新增 2026-05-20）
     1. IATA 机场代码 + resolve_country() 确定性查询（最可靠）
     2. Vision/AI 提取的国家字符串（回退方案）
     3. 出入境记录兜底：存在出境记录直接豁免
@@ -243,6 +244,24 @@ def _check_domestic_flight(
     # 港澳台机场代码和城市关键词
     hk_macau_tw_iata = {"HKG", "MFM", "TPE", "KHH", "RMQ", "TSA"}
     hk_macau_tw_city = {"香港", "澳门", "台湾", "台北", "高雄", "台中", "Hong Kong", "Macau", "Taiwan", "Taipei"}
+
+    # 策略0: 检查 itinerary_segments 中是否有任何国际段（新增 2026-05-20）
+    itinerary_segments = vision_extract.get("itinerary_segments") or []
+    for seg in itinerary_segments:
+        seg_dep = str(seg.get("original_dep_iata") or "").strip().upper()
+        seg_arr = str(seg.get("original_arr_iata") or "").strip().upper()
+        if seg_dep and seg_arr:
+            # 检查是否涉及港澳台
+            if seg_dep in hk_macau_tw_iata or seg_arr in hk_macau_tw_iata:
+                return None
+            seg_dep_info = resolve_country(seg_dep)
+            seg_arr_info = resolve_country(seg_arr)
+            if seg_dep_info.get("found") and seg_arr_info.get("found"):
+                seg_dep_cc = seg_dep_info.get("country_code", "").upper()
+                seg_arr_cc = seg_arr_info.get("country_code", "").upper()
+                # 只要有一段不是纯国内（出发地或目的地有一个不是CN），就算国际段
+                if seg_dep_cc != "CN" or seg_arr_cc != "CN":
+                    return None
 
     # 策略1: IATA 机场代码确定性查询
     dep_iata = str(vision_extract.get("dep_iata") or ai_parsed.get("dep_iata") or "").strip().upper()

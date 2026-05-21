@@ -42,7 +42,11 @@ def capture_existing_values(conn, forceid: str) -> Optional[Dict[str, Any]]:
             (forceid,)
         )
         row = cur.fetchone()
-    return row
+    # 将 tuple 转为 dict
+    if row is None:
+        return None
+    field_names = TRACKED_AI_FIELDS + ['manual_status', 'manual_conclusion', 'first_ai_audit_time', 'created_at']
+    return dict(zip(field_names, row))
 
 
 def insert_history_row(conn, record: Dict[str, Any]) -> int:

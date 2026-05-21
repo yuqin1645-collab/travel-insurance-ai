@@ -307,6 +307,10 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
             alt_dep_delay = delta
             if not dep_iata_match:
                 missing.append(f"alt_dep机场不匹配({orig_dep_iata}→{alt_dep_iata})，但仍计入延误")
+        else:
+            # 改签后提前出发，记录提前时间（负数）
+            alt_dep_delay = delta  # 负数表示提前
+            missing.append(f"改签后提前起飞{abs(delta)}分钟（非延误）")
     else:
         if not baseline_dep_utc:
             missing.append("planned_dep(需可换算时区)")
@@ -319,6 +323,10 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
             alt_arr_delay = delta
             if not arr_iata_match:
                 missing.append(f"alt_arr机场不匹配({orig_arr_iata}→{alt_arr_iata})，但仍计入延误")
+        else:
+            # 改签后提前到达，记录提前时间（负数）
+            alt_arr_delay = delta  # 负数表示提前
+            missing.append(f"改签后提前到达{abs(delta)}分钟（非延误）")
     else:
         if not baseline_arr_utc:
             missing.append("planned_arr(需可换算时区)")
@@ -356,14 +364,45 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
         )
     )
 
-    # 联程改签延误计算规则（修正 2026-05-07）：
-    # 1. 先看末段实际延误：末段实际出发/到达 vs 末段计划出发/到达
-    # 2. 如果前序导致（missed_connection）→ 追溯计算：
-    #    延误 = max(首段实际出发-原计划出发, 末段实际到达-原计划到达)
-    # 3. 否则 → 仅按末段实际延误计算
+    # 联程改签延误计算规则（修正 2026-05-20）：
+    # 核心原则：以整个行程为单位计算延误
+    # 延误 = 改签后末段实际到达时间 - 原航班计划到达时间（chain[0]）
+    # 场景示例：原航班 LX523 NCE→GVA 09:55→10:55（直飞）
+    #          改签后 LX565+LX2806 NCE→ZRH→GVA 11:19→13:56（联程）
+    #          延误 = 13:56 - 10:55 = 181分钟（未达300分钟起赔标准）
     if is_conn_rebooking or connecting_rebooking_suspicion:
         missed_connection = _truthy(itinerary.get("mentions_missed_connection"))
 
+        # 原航班计划到达时间（chain[0]）
+        chain0 = chain[0] if chain else {}
+        orig_planned_arr_str = _sanitize_date(str(chain0.get("planned_arr") or "").strip())
+        orig_planned_arr_tz = str(chain0.get("arr_timezone_hint") or "").strip()
+        
+        orig_planned_arr_utc = (
+            _try_parse_utc(orig_planned_arr_str)
+            or _try_parse_local(orig_planned_arr_str, orig_planned_arr_tz, _arr_iana)
+        )
+
+        # 改签后实际到达时间（优先用 alt_arr_utc，其次用 connecting_segments_data 末段实际到达）
+        rebooked_actual_arr_utc = alt_arr_utc
+        
+        # 如果 alt_arr_utc 不可用，尝试从 connecting_segments_data 获取末段实际到达
+        if not rebooked_actual_arr_utc:
+            connecting_segs = (parsed or {}).get("connecting_segments_data") or []
+            if connecting_segs and isinstance(connecting_segs, list) and len(connecting_segs) > 0:
+                last_seg = connecting_segs[-1]
+                if isinstance(last_seg, dict):
+                    last_actual_arr = str(last_seg.get("actual_arr") or "").strip()
+                    if last_actual_arr:
+                        rebooked_actual_arr_utc = _try_parse_utc(last_actual_arr)
+
+        # 计算联程改签延误：改签后实际到达 - 原计划到达
+        conn_rebooking_arr_delay: Optional[int] = None
+        if orig_planned_arr_utc and rebooked_actual_arr_utc:
+            delta = int((rebooked_actual_arr_utc - orig_planned_arr_utc).total_seconds() // 60)
+            conn_rebooking_arr_delay = delta  # 可为负数（提前到达）
+
+        # 同时计算末段实际延误（末段实际 vs 末段计划）用于对比
         # 末段机场 IANA（优先用 alternate_local 的机场，降级用 route 的机场）
         _last_dep_iata = str((alternate_local.get("alt_dep_iata") or "")).strip().upper()
         _last_arr_iata = str((alternate_local.get("alt_arr_iata") or "")).strip().upper()
@@ -398,9 +437,11 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
             if delta >= 0:
                 last_seg_arr_delay = delta
 
+        # 完整追溯延误（alt_dep_delay / alt_arr_delay）
+        conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
+
         if missed_connection:
             # 前序导致：追溯计算，从原计划到末段实际
-            conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
             if conn_candidates:
                 final_minutes = max(conn_candidates)
                 method = f"联程改签(前序导致)-取max(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 首段实际出发vs原计划出发, 末段实际到达vs原计划到达"
@@ -408,31 +449,23 @@ def _compute_delay_minutes(parsed: Dict[str, Any]) -> Dict[str, Any]:
                 final_minutes = None
                 method = "联程改签(前序导致)-无法计算：缺少改签航班实际时间数据"
         else:
-            # 非前序导致：仅按末段实际延误计算
-            last_seg_candidates = [m for m in [last_seg_dep_delay, last_seg_arr_delay] if isinstance(m, int) and m > 0]
-            # 兜底：末段延误很小但完整追溯延误很大（≥5倍）→ 实际是简单改签（同航线改次日），
-            # 非真正的联程改签，应使用完整追溯（原计划→改签实际）
-            conn_candidates = [m for m in [alt_dep_delay, alt_arr_delay] if isinstance(m, int)]
-            if last_seg_candidates and conn_candidates:
-                last_seg_max = max(last_seg_candidates)
-                conn_max = max(conn_candidates)
-                if conn_max > last_seg_max * 5:
-                    final_minutes = conn_max
-                    method = f"联程改签-降级追溯(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 末段延误({last_seg_max}分)远小于完整追溯({conn_max}分)，判定为简单改签"
+            # 非前序导致：以整个行程为单位计算延误
+            # 优先使用：改签后实际到达 - 原计划到达
+            if conn_rebooking_arr_delay is not None:
+                final_minutes = conn_rebooking_arr_delay
+                if final_minutes < 0:
+                    # 改签后提前到达，不是延误
+                    final_minutes = 0
+                    method = f"联程改签-提前到达(提前{abs(conn_rebooking_arr_delay)}分): 改签后实际到达早于原计划到达"
                 else:
-                    final_minutes = last_seg_max
-                    method = f"联程改签-末段延误(起飞{last_seg_dep_delay}分/到达{last_seg_arr_delay}分): 末段实际vs末段计划"
-            elif last_seg_candidates:
-                final_minutes = max(last_seg_candidates)
-                method = f"联程改签-末段延误(起飞{last_seg_dep_delay}分/到达{last_seg_arr_delay}分): 末段实际vs末段计划"
+                    method = f"联程改签-全程延误(到达延误{conn_rebooking_arr_delay}分): 改签后实际到达vs原计划到达"
+            elif conn_candidates:
+                # 降级使用完整追溯
+                final_minutes = max(conn_candidates)
+                method = f"联程改签-降级追溯(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 缺少原计划到达时间"
             else:
-                # 末段无法计算，降级使用完整追溯
-                if conn_candidates:
-                    final_minutes = max(conn_candidates)
-                    method = f"联程改签-降级追溯(起飞延误{alt_dep_delay}分,到达延误{alt_arr_delay}分): 末段计划时间缺失"
-                else:
-                    final_minutes = None
-                    method = "联程改签-无法计算：缺少时间数据"
+                final_minutes = None
+                method = "联程改签-无法计算：缺少时间数据"
     elif final_alt is not None and final_actual is not None:
         final_minutes = max(final_alt, final_actual)
         method = f"取长: alt(起飞{alt_dep_delay}分/到达{alt_arr_delay}分) vs 实际(起飞{actual_dep_delay}分/到达{actual_arr_delay}分)"
