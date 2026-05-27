@@ -45,6 +45,9 @@ def capture_existing_values(conn, forceid: str) -> Optional[Dict[str, Any]]:
     # 将 tuple 转为 dict
     if row is None:
         return None
+    # DictCursor 已经返回 dict，直接使用；否则手动 zip
+    if isinstance(row, dict):
+        return row
     field_names = TRACKED_AI_FIELDS + ['manual_status', 'manual_conclusion', 'first_ai_audit_time', 'created_at']
     return dict(zip(field_names, row))
 
