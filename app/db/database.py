@@ -341,7 +341,9 @@ class ReviewResultDAO:
                 parse = flight_delay.get('flight_delay_parse', {}) or {}
                 aviation = flight_delay.get('flight_delay_aviation_lookup', {}) or {}
 
-                # 构建审核结果
+                # 注意：payout_basis, delay_duration_minutes, delay_reason 已迁移到
+                # ai_flight_delay_data 子表，不再写入 ReviewResult 主表。
+                # 如需写入子表，应通过 FlightDelayData 模型单独操作。
                 result = ReviewResult(
                     forceid=forceid,
                     claim_id=data.get('claim_id'),
@@ -355,9 +357,6 @@ class ReviewResultDAO:
                     audit_time=datetime.now(),
                     payout_amount=payout.get('amount'),
                     payout_currency=payout.get('currency', 'CNY'),
-                    payout_basis=payout.get('basis'),
-                    delay_duration_minutes=audit.get('key_data', {}).get('delay_duration_minutes'),
-                    delay_reason=audit.get('key_data', {}).get('reason'),
                     identity_match='Y' if logic_check.get('identity_match') else 'N',
                     threshold_met='Y' if logic_check.get('threshold_met') else 'N',
                     exclusion_triggered='Y' if logic_check.get('exclusion_triggered') else 'N',

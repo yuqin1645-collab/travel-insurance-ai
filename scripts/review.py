@@ -19,6 +19,7 @@ import json
 import asyncio
 import argparse
 import re
+import ssl
 import pymysql
 from pathlib import Path
 from collections import Counter, defaultdict
@@ -142,10 +143,18 @@ async def _save_and_push(result: Dict, session: aiohttp.ClientSession):
         if folder:
             claim_info = json.loads((folder / "claim_info.json").read_text(encoding="utf-8"))
         main_fields, flight_fields, baggage_fields = workflow._extract_review_fields(result, claim_info)
+        db_host = os.getenv("DB_HOST")
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_host:
+            raise RuntimeError("数据库连接失败: DB_HOST 未配置")
+        if not db_password:
+            raise RuntimeError("数据库连接失败: DB_PASSWORD 未配置")
+        ssl_ctx = ssl.create_default_context()
         conn = pymysql.connect(
-            host=os.getenv("DB_HOST", ""), port=int(os.getenv("DB_PORT", "3306")),
-            user=os.getenv("DB_USER", ""), password=os.getenv("DB_PASSWORD", ""),
+            host=db_host, port=int(os.getenv("DB_PORT", "3306")),
+            user=os.getenv("DB_USER", ""), password=db_password,
             database=os.getenv("DB_NAME", "ai"), charset="utf8mb4",
+            ssl=ssl_ctx,
         )
         try:
             # 在 UPSERT 前捕获旧值（用于历史版本对比）

@@ -24,6 +24,10 @@ import aiohttp
 from typing import Dict, List, Optional
 from enum import Enum
 from json_repair import repair_json
+
+# json_repair 存在深度嵌套输入导致栈溢出的风险，设置输入长度上限
+_JSON_REPAIR_MAX_LENGTH = 500_000
+
 from app.config import config
 
 LOGGER = logging.getLogger(__name__)
@@ -104,6 +108,8 @@ def _parse_json_with_fallbacks(
     """
     # 1) json_repair 优先
     try:
+        if len(content) > _JSON_REPAIR_MAX_LENGTH:
+            raise ValueError(f"响应过长({len(content)} chars)，超过限制({_JSON_REPAIR_MAX_LENGTH})，跳过 JSON repair")
         return json.loads(repair_json(content)), False
     except Exception:
         pass
@@ -118,7 +124,10 @@ def _parse_json_with_fallbacks(
     json_match = re.search(r'\{.*\}', content, re.DOTALL)
     if json_match:
         try:
-            return json.loads(repair_json(json_match.group())), False
+            extracted = json_match.group()
+            if len(extracted) > _JSON_REPAIR_MAX_LENGTH:
+                raise ValueError(f"提取的 JSON 过长({len(extracted)} chars)，跳过 JSON repair")
+            return json.loads(repair_json(extracted)), False
         except Exception:
             pass
 

@@ -220,7 +220,6 @@ class MaterialExtractor:
                     async with session.get(
                         url,
                         proxy=proxy,
-                        ssl=False,
                         timeout=aiohttp.ClientTimeout(total=60),
                     ) as resp:
                         if resp.status == 200:

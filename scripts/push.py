@@ -15,6 +15,7 @@ import sys
 import json
 import asyncio
 import os
+import ssl
 import argparse
 import pymysql
 from pathlib import Path
@@ -51,13 +52,21 @@ def _build_claim_info_cache() -> dict:
 def _sync_to_db(fields: dict) -> bool:
     try:
         forceid = fields.get("forceid", "")
+        db_host = os.getenv("DB_HOST")
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_host:
+            raise RuntimeError("数据库连接失败: DB_HOST 未配置")
+        if not db_password:
+            raise RuntimeError("数据库连接失败: DB_PASSWORD 未配置")
+        ssl_ctx = ssl.create_default_context()
         conn = pymysql.connect(
-            host=os.getenv("DB_HOST", ""),
+            host=db_host,
             port=int(os.getenv("DB_PORT", "3306")),
             user=os.getenv("DB_USER", ""),
-            password=os.getenv("DB_PASSWORD", ""),
+            password=db_password,
             database=os.getenv("DB_NAME", "ai"),
             charset="utf8mb4",
+            ssl=ssl_ctx,
         )
         try:
             # 在 UPSERT 前捕获旧值
@@ -205,13 +214,21 @@ def cmd_sync_db(dry_run: bool = False):
         print(f"(dry-run 模式，共 {len(results)} 条)")
         return
 
+    db_host = os.getenv("DB_HOST")
+    db_password = os.getenv("DB_PASSWORD")
+    if not db_host:
+        raise RuntimeError("数据库连接失败: DB_HOST 未配置")
+    if not db_password:
+        raise RuntimeError("数据库连接失败: DB_PASSWORD 未配置")
+    ssl_ctx = ssl.create_default_context()
     conn = pymysql.connect(
-        host=os.getenv("DB_HOST", ""),
+        host=db_host,
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", ""),
-        password=os.getenv("DB_PASSWORD", ""),
+        password=db_password,
         database=os.getenv("DB_NAME", "ai"),
         charset="utf8mb4",
+        ssl=ssl_ctx,
     )
     success = fail = 0
     try:

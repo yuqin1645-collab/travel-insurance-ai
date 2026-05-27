@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import json
@@ -15,35 +15,7 @@ from app.modules.baggage_damage.extractors import (
 )
 from app.vision_preprocessor import prepare_attachments_for_claim
 
-
-def summarize_ocr_results(ocr_results: Dict) -> Dict:
-    summary = {
-        "total_files": len(ocr_results),
-        "documents": [],
-    }
-
-    for filename, result in ocr_results.items():
-        summary["documents"].append(
-            {
-                "filename": filename,
-                "type": result.get("key_info", {}).get("document_type", "未知"),
-                "confidence": result.get("confidence", 0),
-                "key_info": result.get("key_info", {}),
-            }
-        )
-
-    return summary
-
-
-def extract_section(text: str, start_marker: str, end_marker: str) -> str:
-    try:
-        start_idx = text.find(start_marker)
-        end_idx = text.find(end_marker)
-        if start_idx != -1 and end_idx != -1:
-            return text[start_idx:end_idx]
-        return ""
-    except Exception:
-        return ""
+from .helpers import summarize_ocr_results, extract_section
 
 
 async def ai_check_coverage_async(
@@ -441,7 +413,7 @@ async def ai_calculate_compensation_async(
                 pass
 
             if purchase_info.get("amount") is None:
-                result["reason"] = "未在购买凭证中识别到“实付/实付款”金额，无法可靠确定原价，请人工核对购买凭证金额。"
+                result["reason"] = "未在购买凭证中识别到"实付/实付款"金额，无法可靠确定原价，请人工核对购买凭证金额。"
             else:
                 result["reason"] = "已从购买凭证识别到实付金额作为原价，并按折旧/第三方赔付/限额/保额规则重算。"
         except Exception:

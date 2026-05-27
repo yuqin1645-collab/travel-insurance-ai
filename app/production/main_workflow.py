@@ -1007,7 +1007,7 @@ class ProductionWorkflow:
                         # 在 UPDATE 前捕获旧值（用于历史版本对比）
                         with conn.cursor() as cur_pre:
                             cur_pre.execute(
-                                "SELECT manual_status, manual_conclusion FROM ai_review_result WHERE forceid=%s",
+                                "SELECT benefit_name, manual_status, manual_conclusion FROM ai_review_result WHERE forceid=%s",
                                 (forceid,)
                             )
                             old_manual_row = cur_pre.fetchone()
@@ -1019,9 +1019,12 @@ class ProductionWorkflow:
                             (manual_status, manual_conclusion, forceid)
                         )
 
-                        # 历史版本追踪（传入旧值做对比）
+                        # 历史版本追踪（传入 benefit_name + 旧值做对比）
                         try:
-                            write_manual_history_if_changed(conn, forceid, manual_status, manual_conclusion, old_values=old_manual_row)
+                            benefit_name_for_history = (old_manual_row or {}).get('benefit_name')
+                            write_manual_history_if_changed(conn, forceid, manual_status, manual_conclusion,
+                                                            benefit_name=benefit_name_for_history,
+                                                            old_values=old_manual_row)
                         except Exception as e:
                             LOGGER.warning(f"写入人工历史失败 {forceid}: {e}")
                         success += 1

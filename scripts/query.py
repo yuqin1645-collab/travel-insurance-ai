@@ -12,6 +12,7 @@
 import sys
 import json
 import os
+import ssl
 import argparse
 import pymysql
 from pathlib import Path
@@ -58,13 +59,21 @@ def cmd_forceid(forceid: str):
 
 def cmd_status():
     """查看数据库状态概览"""
+    db_host = os.getenv("DB_HOST")
+    db_password = os.getenv("DB_PASSWORD")
+    if not db_host:
+        raise RuntimeError("数据库连接失败: DB_HOST 未配置")
+    if not db_password:
+        raise RuntimeError("数据库连接失败: DB_PASSWORD 未配置")
+    ssl_ctx = ssl.create_default_context()
     conn = pymysql.connect(
-        host=os.getenv("DB_HOST", ""),
+        host=db_host,
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", ""),
-        password=os.getenv("DB_PASSWORD", ""),
+        password=db_password,
         database=os.getenv("DB_NAME", "ai"),
         charset="utf8mb4",
+        ssl=ssl_ctx,
         cursorclass=pymysql.cursors.DictCursor,
     )
     try:
