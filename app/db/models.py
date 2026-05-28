@@ -398,6 +398,10 @@ class ReviewHistoryRecord:
     audit_time: Optional[datetime] = None
     snapshot_json: Optional[str] = None
 
+    # 重审溯源
+    triggered_by: Optional[str] = None
+    rerun_queue_id: Optional[int] = None
+
     created_at: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -667,3 +671,37 @@ TABLE_SCHEDULER_LOGS = "ai_scheduler_logs"
 TABLE_STATUS_HISTORY = "ai_status_history"
 TABLE_CLAIM_INFO_RAW = "ai_claim_info_raw"
 TABLE_REVIEW_HISTORY = "ai_review_history"
+TABLE_RERUN_QUEUE = "ai_rerun_queue"
+
+
+@dataclass
+class RerunQueue:
+    """AI重审队列表（ai_rerun_queue）"""
+    id: Optional[int] = None
+    forceid: str = ""
+    triggered_by: str = "manual_status_change"
+    rerun_status: str = "pending"  # pending | processing | completed | failed
+    retry_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'RerunQueue':
+        datetime_fields = ['created_at', 'updated_at']
+        for field_name in datetime_fields:
+            if field_name in data and data[field_name]:
+                if isinstance(data[field_name], str):
+                    try:
+                        data[field_name] = datetime.fromisoformat(data[field_name].replace('Z', '+00:00'))
+                    except ValueError:
+                        data[field_name] = None
+        known = {f.name for f in fields(cls)}
+        data = {k: v for k, v in data.items() if k in known}
+        return cls(**data)
