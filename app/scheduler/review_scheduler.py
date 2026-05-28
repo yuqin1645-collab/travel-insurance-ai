@@ -389,8 +389,12 @@ class ReviewScheduler:
 
                     # 2e. 执行 AI Pipeline（新建 reviewer 实例，避免竞态）
                     reviewer = AIClaimReviewer()
-                    result = await review_claim_async(
-                        reviewer, claim_folder, policy_terms, 1, 1, session
+                    rerun_timeout = int(getattr(config, 'RERUN_TIMEOUT_SECONDS', 600) or 600)
+                    result = await asyncio.wait_for(
+                        review_claim_async(
+                            reviewer, claim_folder, policy_terms, 1, 1, session
+                        ),
+                        timeout=rerun_timeout,
                     )
 
                     if not result:
@@ -422,7 +426,13 @@ class ReviewScheduler:
                         benefit_name=review_obj.benefit_name,
                         audit_result=review_obj.audit_result,
                         audit_status=review_obj.audit_status,
+                        confidence_score=review_obj.confidence_score,
                         payout_amount=review_obj.payout_amount,
+                        identity_match=review_obj.identity_match,
+                        threshold_met=review_obj.threshold_met,
+                        exclusion_triggered=review_obj.exclusion_triggered,
+                        manual_status=old_row.manual_status if old_row else None,
+                        manual_conclusion=old_row.manual_conclusion if old_row else None,
                     )
 
                     # 2h. 推前端
