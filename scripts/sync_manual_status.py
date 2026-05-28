@@ -110,19 +110,8 @@ def update_row(conn, forceid: str, benefit_name: Optional[str],
     # 重审队列入队（仅在人工结论变化时）
     if has_change:
         try:
-            with conn.cursor() as cur:
-                # 检查是否已有 pending/processing 状态的行
-                cur.execute(
-                    "SELECT id FROM ai_rerun_queue "
-                    "WHERE forceid = %s AND rerun_status IN ('pending', 'processing')",
-                    (forceid,)
-                )
-                existing = cur.fetchone()
-                if not existing:
-                    cur.execute(
-                        "INSERT INTO ai_rerun_queue (forceid, triggered_by) VALUES (%s, 'manual_status_change')",
-                        (forceid,)
-                    )
+            from app.db.rerun_queue_sync import enqueue_if_no_pending
+            enqueue_if_no_pending(conn, forceid, triggered_by='manual_status_change')
         except Exception as _err:
             pass  # 不阻塞主流程
 
