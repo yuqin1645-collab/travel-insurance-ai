@@ -984,17 +984,17 @@ class RerunQueueDAO:
                 return cursor.rowcount > 0
 
     async def complete(self, queue_id: int) -> bool:
-        """标记为 completed（删除行）"""
+        """标记为 completed（软删除，保留审计痕迹）"""
         async with self.db.get_connection() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(
-                    f"DELETE FROM {TABLE_RERUN_QUEUE} WHERE id = %s",
+                    f"UPDATE {TABLE_RERUN_QUEUE} SET rerun_status = 'completed' WHERE id = %s",
                     (queue_id,),
                 )
                 return True
 
     async def fail(self, queue_id: int, max_retries: int = 5) -> bool:
-        """标记失败：retry_count++，超过 max_retries 则标记 completed"""
+        """标记失败：retry_count++，超过 max_retries 则标记 abandoned"""
         async with self.db.get_connection() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 await cursor.execute(
@@ -1009,7 +1009,7 @@ class RerunQueueDAO:
                 if new_count > max_retries:
                     await cursor.execute(
                         f"UPDATE {TABLE_RERUN_QUEUE} "
-                        f"SET rerun_status = 'completed', retry_count = %s "
+                        f"SET rerun_status = 'abandoned', retry_count = %s "
                         f"WHERE id = %s",
                         (new_count, queue_id),
                     )

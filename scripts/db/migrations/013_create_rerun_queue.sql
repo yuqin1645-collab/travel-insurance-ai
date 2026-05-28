@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ai_rerun_queue (
     id INT AUTO_INCREMENT PRIMARY KEY,
     forceid VARCHAR(64) NOT NULL COMMENT '案件唯一标识',
     triggered_by VARCHAR(32) DEFAULT 'manual_status_change' COMMENT '触发来源: manual_status_change / system_retry / force',
-    rerun_status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+    rerun_status ENUM('pending', 'processing', 'completed', 'failed', 'abandoned') DEFAULT 'pending',
     retry_count INT DEFAULT 0 COMMENT '重审尝试次数',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
