@@ -24,6 +24,7 @@ from app.db.models import (
     ClaimInfoRaw, TABLE_CLAIM_INFO_RAW,
     ReviewSegment, TABLE_REVIEW_SEGMENTS,
     ReviewHistoryRecord, TABLE_REVIEW_HISTORY,
+    RerunQueue, TABLE_RERUN_QUEUE,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -919,6 +920,129 @@ class ReviewHistoryDAO:
                 )
                 row = await cursor.fetchone()
                 return row or {}
+
+
+class RerunQueueDAO:
+    """重审队列数据访问对象"""
+
+    def __init__(self, db: DatabaseConnection):
+        self.db = db
+
+    async def enqueue(self, forceid: str, triggered_by: str = "manual_status_change") -> int:
+        """入队：INSERT INTO ai_rerun_queue
+
+        如果同一 forceid 已有 pending 或 processing 状态的行，不重复入队。
+
+        Returns:
+            新插入的行 ID，如果已存在则返回 0
+        """
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                # 检查是否已有 pending/processing 状态的行
+                await cursor.execute(
+                    f"SELECT id FROM {TABLE_RERUN_QUEUE} "
+                    f"WHERE forceid = %s AND rerun_status IN ('pending', 'processing')",
+                    (forceid,)
+                )
+                existing = await cursor.fetchone()
+                if existing:
+                    return 0  # 已存在，不重复入队
+
+                await cursor.execute(
+                    f"INSERT INTO {TABLE_RERUN_QUEUE} (forceid, triggered_by) VALUES (%s, %s)",
+                    (forceid, triggered_by),
+                )
+                return cursor.lastrowid
+
+    async def dequeue_pending(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """取出 pending 状态的行，按 created_at 升序
+
+        Returns:
+            列表，每项包含 id, forceid, triggered_by, retry_count, created_at
+        """
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT id, forceid, triggered_by, retry_count, created_at "
+                    f"FROM {TABLE_RERUN_QUEUE} "
+                    f"WHERE rerun_status = 'pending' "
+                    f"ORDER BY created_at ASC "
+                    f"LIMIT %s",
+                    (limit,),
+                )
+                rows = await cursor.fetchall()
+                return [dict(row) for row in rows]
+
+    async def mark_processing(self, queue_id: int) -> bool:
+        """标记为 processing"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    f"UPDATE {TABLE_RERUN_QUEUE} SET rerun_status = 'processing' WHERE id = %s",
+                    (queue_id,),
+                )
+                return cursor.rowcount > 0
+
+    async def complete(self, queue_id: int) -> bool:
+        """标记为 completed（删除行）"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    f"DELETE FROM {TABLE_RERUN_QUEUE} WHERE id = %s",
+                    (queue_id,),
+                )
+                return True
+
+    async def fail(self, queue_id: int, max_retries: int = 5) -> bool:
+        """标记失败：retry_count++，超过 max_retries 则标记 completed"""
+        async with self.db.get_connection() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                await cursor.execute(
+                    f"SELECT retry_count FROM {TABLE_RERUN_QUEUE} WHERE id = %s",
+                    (queue_id,),
+                )
+                row = await cursor.fetchone()
+                if not row:
+                    return False
+
+                new_count = (row["retry_count"] or 0) + 1
+                if new_count > max_retries:
+                    await cursor.execute(
+                        f"UPDATE {TABLE_RERUN_QUEUE} "
+                        f"SET rerun_status = 'completed', retry_count = %s "
+                        f"WHERE id = %s",
+                        (new_count, queue_id),
+                    )
+                else:
+                    await cursor.execute(
+                        f"UPDATE {TABLE_RERUN_QUEUE} "
+                        f"SET rerun_status = 'pending', retry_count = %s "
+                        f"WHERE id = %s",
+                        (new_count, queue_id),
+                    )
+                return True
+
+    async def reset_stale_processing(self, timeout_minutes: int = 30) -> int:
+        """将 processing 超过 timeout_minutes 的行重置为 pending
+
+        Returns:
+            重置的行数
+        """
+        async with self.db.get_connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    f"UPDATE {TABLE_RERUN_QUEUE} "
+                    f"SET rerun_status = 'pending', updated_at = CURRENT_TIMESTAMP "
+                    f"WHERE rerun_status = 'processing' "
+                    f"AND updated_at < DATE_SUB(NOW(), INTERVAL %s MINUTE)",
+                    (timeout_minutes,),
+                )
+                return cursor.rowcount
+
+
+def get_rerun_queue_dao() -> RerunQueueDAO:
+    """获取重审队列DAO"""
+    return RerunQueueDAO(_db_connection)
 
 
 def get_review_history_dao() -> ReviewHistoryDAO:
