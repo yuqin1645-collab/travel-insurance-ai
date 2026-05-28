@@ -18,7 +18,7 @@ from app.config import config
 from app.state.status_manager import get_status_manager, StatusManager
 from app.state.constants import ClaimStatus, ReviewStatus
 from app.db.models import ClaimStatusRecord, SchedulerLog, TaskType, TaskStatus
-from app.db.database import get_scheduler_log_dao, get_db_connection
+from app.db.database import get_scheduler_log_dao, get_db_connection, get_rerun_queue_dao, get_review_result_dao
 from app.claim_ai_reviewer import AIClaimReviewer
 from app.runner import review_claim_async
 from app.policy_terms_registry import POLICY_TERMS
@@ -40,6 +40,10 @@ class ReviewScheduler:
         self.db = get_db_connection()
         self.scheduler_log_dao = get_scheduler_log_dao()
         self._lock = asyncio.Lock()
+
+        # 重审队列 DAO
+        self.rerun_queue_dao = get_rerun_queue_dao()
+        self.review_result_dao = get_review_result_dao()
 
     async def initialize(self):
         """初始化"""
@@ -81,6 +85,9 @@ class ReviewScheduler:
         error_message = None
 
         try:
+            # 0. 先消费重审队列（人工变更触发的重审）
+            await self._process_rerun_queue(limit=limit)
+
             # 1. 获取待审核案件（只取已启用险种）
             pending_claims = await self.status_manager.get_pending_claims(
                 status_filter=[ClaimStatus.DOWNLOADED, ClaimStatus.REVIEW_PENDING],
@@ -299,6 +306,188 @@ class ReviewScheduler:
                         await asyncio.sleep(3)
 
         raise RuntimeError(f"审核彻底失败: {forceid}")
+
+    async def _process_rerun_queue(self, limit: int) -> int:
+        """处理重审队列中的人工变更触发案件
+
+        流程：
+        1. 取 pending 状态的行
+        2. 标记 processing
+        3. 快照旧行到 history
+        4. 执行 AI Pipeline（新建 reviewer 实例）
+        5. UPSERT ai_review_result
+        6. 写 history（新版快照）
+        7. 推前端
+        8. 删除 queue 行
+
+        Returns:
+            处理的案件数
+        """
+        from app.db.history_helpers import insert_history_row
+        from app.db.models import ReviewResult
+        import pymysql
+        import ssl
+
+        # 0. 重置超时的 processing 行
+        await self.rerun_queue_dao.reset_stale_processing(timeout_minutes=30)
+
+        # 1. 取 pending 状态的行
+        queue_items = await self.rerun_queue_dao.dequeue_pending(limit=limit)
+        if not queue_items:
+            return 0
+
+        LOGGER.info(f"重审队列: 找到 {len(queue_items)} 个待重审案件")
+
+        processed = 0
+        connector = aiohttp.TCPConnector()
+        async with aiohttp.ClientSession(connector=connector, trust_env=True) as session:
+            for item in queue_items:
+                queue_id = item["id"]
+                forceid = item["forceid"]
+
+                try:
+                    # 2. 标记 processing
+                    await self.rerun_queue_dao.mark_processing(queue_id)
+
+                    # 2b. 快照旧行到 history（使用同步连接）
+                    old_row = await self.review_result_dao.get_result_by_forceid(forceid)
+                    if old_row:
+                        self._write_rerun_snapshot(
+                            forceid=forceid,
+                            snapshot_json=json.dumps(old_row.to_dict(), ensure_ascii=False, default=str),
+                            review_type='ai',
+                            triggered_by='rerun',
+                            rerun_queue_id=queue_id,
+                            benefit_name=old_row.benefit_name,
+                            audit_result=old_row.audit_result,
+                            audit_status=old_row.audit_status,
+                            confidence_score=old_row.confidence_score,
+                            payout_amount=old_row.payout_amount,
+                            identity_match=old_row.identity_match,
+                            threshold_met=old_row.threshold_met,
+                            exclusion_triggered=old_row.exclusion_triggered,
+                            manual_status=old_row.manual_status,
+                            manual_conclusion=old_row.manual_conclusion,
+                        )
+
+                    # 2c. 找到案件目录
+                    claim_folder = self._find_claim_folder(forceid)
+                    if not claim_folder:
+                        LOGGER.warning(f"重审找不到案件目录: {forceid}")
+                        await self.rerun_queue_dao.fail(queue_id)
+                        continue
+
+                    # 2d. 加载条款（从 old_row 推断 claim_type）
+                    claim_type = "flight_delay"
+                    if old_row and old_row.claim_type:
+                        claim_type = old_row.claim_type
+                    try:
+                        terms_file = POLICY_TERMS.resolve(claim_type)
+                        policy_terms = terms_file.read_text(encoding="utf-8")
+                    except Exception:
+                        policy_terms = ""
+
+                    # 2e. 执行 AI Pipeline（新建 reviewer 实例，避免竞态）
+                    reviewer = AIClaimReviewer()
+                    result = await review_claim_async(
+                        reviewer, claim_folder, policy_terms, 1, 1, session
+                    )
+
+                    if not result:
+                        raise RuntimeError("AI 审核返回空结果")
+
+                    # 2f. UPSERT ai_review_result
+                    review_obj = ReviewResult(
+                        forceid=forceid,
+                        claim_id=result.get('claim_id'),
+                        claim_type=result.get('claim_type'),
+                        benefit_name=result.get('benefit_name'),
+                        audit_result=result.get('audit_result'),
+                        audit_status='completed',
+                        payout_amount=result.get('payout_amount'),
+                        remark=result.get('Remark', '')[:2000] if result.get('Remark') else None,
+                        is_additional=result.get('IsAdditional', 'N'),
+                        key_conclusions=json.dumps(result.get('KeyConclusions', []), ensure_ascii=False),
+                        raw_result=json.dumps(result, ensure_ascii=False),
+                    )
+                    await self.review_result_dao.create_or_update_result(review_obj)
+
+                    # 2g. 写 history（新版快照）
+                    self._write_rerun_snapshot(
+                        forceid=forceid,
+                        snapshot_json=json.dumps(result, ensure_ascii=False, default=str),
+                        review_type='ai',
+                        triggered_by='rerun',
+                        rerun_queue_id=queue_id,
+                        benefit_name=review_obj.benefit_name,
+                        audit_result=review_obj.audit_result,
+                        audit_status=review_obj.audit_status,
+                        payout_amount=review_obj.payout_amount,
+                    )
+
+                    # 2h. 推前端
+                    try:
+                        push_result = await push_to_frontend(result, session)
+                        if push_result.get("success"):
+                            LOGGER.info(f"重审推送前端成功: {forceid}")
+                    except Exception as _push_err:
+                        LOGGER.warning(f"重审推送前端异常: {forceid}, 错误: {_push_err}")
+
+                    # 2i. 标记完成
+                    await self.rerun_queue_dao.complete(queue_id)
+                    processed += 1
+                    LOGGER.info(f"重审成功: {forceid}")
+
+                except Exception as e:
+                    LOGGER.error(f"重审失败: {forceid} - {e}", exc_info=True)
+                    await self.rerun_queue_dao.fail(queue_id)
+
+        return processed
+
+    def _write_rerun_snapshot(self, forceid: str, snapshot_json: str, review_type: str,
+                              triggered_by: str, rerun_queue_id: int, **kwargs) -> None:
+        """写入重审快照到 history 表（使用同步连接）"""
+        import pymysql
+        import ssl
+        from app.db.history_helpers import insert_history_row
+
+        db_host = os.getenv("DB_HOST")
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_host or not db_password:
+            LOGGER.warning("重审快照写入失败: 数据库凭据未配置")
+            return
+
+        try:
+            ssl_ctx = ssl.create_default_context()
+            conn = pymysql.connect(
+                host=db_host,
+                port=int(os.getenv("DB_PORT", "3306")),
+                user=os.getenv("DB_USER", ""),
+                password=db_password,
+                database=os.getenv("DB_NAME", "ai"),
+                charset="utf8mb4",
+                cursorclass=pymysql.cursors.DictCursor,
+                ssl=ssl_ctx,
+            )
+            try:
+                record = {
+                    'forceid': forceid,
+                    'review_type': review_type,
+                    'snapshot_json': snapshot_json,
+                    'triggered_by': triggered_by,
+                    'rerun_queue_id': rerun_queue_id,
+                    'created_at': datetime.now(),
+                }
+                # 将 kwargs 中的字段添加到 record
+                for k, v in kwargs.items():
+                    if v is not None:
+                        record[k] = v
+                insert_history_row(conn, record)
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception as e:
+            LOGGER.warning(f"重审快照写入失败: {e}")
 
     def _find_claim_folder(self, forceid: str) -> Optional[Path]:
         """根据 forceid 在 claims_data 中找到案件目录"""
