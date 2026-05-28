@@ -78,6 +78,14 @@ def update_row(conn, forceid: str, benefit_name: Optional[str],
         )
         old_manual_row = cur.fetchone()
 
+    # 判断是否真的有变化
+    old_status = (old_manual_row or {}).get('manual_status')
+    old_conclusion = (old_manual_row or {}).get('manual_conclusion')
+    has_change = (
+        str(old_status or '').strip() != str(manual_status or '').strip() or
+        str(old_conclusion or '').strip() != str(manual_conclusion or '').strip()
+    )
+
     with conn.cursor() as cur:
         cur.execute(
             """UPDATE ai_review_result
@@ -92,15 +100,31 @@ def update_row(conn, forceid: str, benefit_name: Optional[str],
     # 历史版本追踪
     try:
         from app.db.history_helpers import write_manual_history_if_changed
-        old_status = (old_manual_row or {}).get('manual_status')
-        old_conclusion = (old_manual_row or {}).get('manual_conclusion')
-        if str(old_status or '').strip() != str(manual_status or '').strip() or \
-           str(old_conclusion or '').strip() != str(manual_conclusion or '').strip():
+        if has_change:
             write_manual_history_if_changed(conn, forceid, manual_status, manual_conclusion,
                                             benefit_name=benefit_name,
                                             old_values=old_manual_row)
     except Exception:
         pass  # 不阻塞主流程
+
+    # 重审队列入队（仅在人工结论变化时）
+    if has_change:
+        try:
+            with conn.cursor() as cur:
+                # 检查是否已有 pending/processing 状态的行
+                cur.execute(
+                    "SELECT id FROM ai_rerun_queue "
+                    "WHERE forceid = %s AND rerun_status IN ('pending', 'processing')",
+                    (forceid,)
+                )
+                existing = cur.fetchone()
+                if not existing:
+                    cur.execute(
+                        "INSERT INTO ai_rerun_queue (forceid, triggered_by) VALUES (%s, 'manual_status_change')",
+                        (forceid,)
+                    )
+        except Exception as _err:
+            pass  # 不阻塞主流程
 
     conn.commit()
 
