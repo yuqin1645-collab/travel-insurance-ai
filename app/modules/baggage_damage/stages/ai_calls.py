@@ -413,7 +413,7 @@ async def ai_calculate_compensation_async(
                 pass
 
             if purchase_info.get("amount") is None:
-                result["reason"] = "未在购买凭证中识别到"实付/实付款"金额，无法可靠确定原价，请人工核对购买凭证金额。"
+                result["reason"] = "未在购买凭证中识别到实付/实付款金额，无法可靠确定原价，请人工核对购买凭证金额。"
             else:
                 result["reason"] = "已从购买凭证识别到实付金额作为原价，并按折旧/第三方赔付/限额/保额规则重算。"
         except Exception:
